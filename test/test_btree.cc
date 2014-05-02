@@ -14,8 +14,8 @@ int main() {
   uint8_t * memory = new uint8_t[size];
   ANAlloc::BTree tree(10, memory);
   
-  TestTreeSetGet<ANAlloc::BTree>(tree, "BTree");
-  
+  TestTreeSetGet(tree, "BTree");
+  TestTreeFindFree(tree, "BTree");
   
   return 0;
 }

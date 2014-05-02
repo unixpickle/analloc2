@@ -1,11 +1,25 @@
 #include <string>
 #include <iostream>
 
+struct ScopedPass {
+  ~ScopedPass() {
+    std::cout << "passed!" << std::endl;
+  }
+};
+
 template <class T>
-void TestTreeSetGet(T & tree, std::string className) {
-  std::cout << "testing " << className << "::[Set/Get]() ... ";
-  
-  // allocate every node
+void FreeAll(T & tree) {
+  ANAlloc::Path pathCount = (1 << (tree.Depth() - 1));
+  for (ANAlloc::Path i = 0; i < pathCount; i++) {
+    if (tree.GetType(pathCount - i - 1) != T::NodeTypeFree) {
+      tree.SetType(pathCount - i - 1, T::NodeTypeFree);
+    }
+  }
+}
+
+template <class T>
+ANAlloc::Path AllocAll(T & tree) {
+  FreeAll(tree);
   ANAlloc::Path p = 0;
   for (int i = 0; i < tree.Depth() - 1; i++) {
     for (int j = 0; j < (1 << i); j++) {
@@ -17,6 +31,17 @@ void TestTreeSetGet(T & tree, std::string className) {
     tree.SetType(p, T::NodeTypeData);
     p++;
   }
+  return p;
+}
+
+template <class T>
+void TestTreeSetGet(T & tree, std::string className) {
+  ScopedPass scope;
+  
+  std::cout << "testing " << className << "::[Set/Get]() ... ";
+  
+  // allocate every node
+  ANAlloc::Path p = AllocAll(tree);
   
   // verify that the tree is the way we set it up to be
   p = 0;
@@ -44,11 +69,34 @@ void TestTreeSetGet(T & tree, std::string className) {
     assert(tree.GetType(p - 2) == T::NodeTypeFree);
     assert(tree.GetType(parent) == T::NodeTypeFree);
   }
-  
-  std::cout << "passed!" << std::endl;
 }
 
 template <class T>
 void TestTreeFindFree(T & tree, std::string className) {
-  // TODO: here, make sure the whole tree is free
+  ScopedPass scope;
+  
+  std::cout << "testing " << className << "::FindFree() ... ";
+  
+  FreeAll(tree);
+  
+  // make sure the first chunk is the biggest chunk
+  ANAlloc::Path p;
+  for (int i = 0; i < tree.Depth(); i++) {
+    bool result = tree.FindFree(i, p);
+    assert(result);
+    assert(p == 0);
+  }
+  
+  if (tree.Depth() < 2) return;
+  
+  tree.SetType(0, T::NodeTypeContainer);
+  tree.SetType(1, T::NodeTypeData);
+  
+  assert(!tree.FindFree(0, p));
+  
+  for (int i = 1; i < tree.Depth(); i++) {
+    bool result = tree.FindFree(i, p);
+    assert(result);
+    assert(p == 2);
+  }
 }
