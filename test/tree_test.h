@@ -47,3 +47,8 @@ void TestTreeSetGet(T & tree, std::string className) {
   
   std::cout << "passed!" << std::endl;
 }
+
+template <class T>
+void TestTreeFindFree(T & tree, std::string className) {
+  // TODO: here, make sure the whole tree is free
+}
