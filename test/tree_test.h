@@ -89,6 +89,7 @@ void TestTreeFindFree(T & tree, std::string className) {
   
   if (tree.Depth() < 2) return;
   
+  // allocate the root node, and create a child data node
   tree.SetType(0, T::NodeTypeContainer);
   tree.SetType(1, T::NodeTypeData);
   
@@ -99,4 +100,26 @@ void TestTreeFindFree(T & tree, std::string className) {
     assert(result);
     assert(p == 2);
   }
+  
+  // for each level under this, allocate chunks of a certain size and then
+  // allocate the left child of each chunk.
+  for (int i = 1; i < tree.Depth(); i++) {
+    ANAlloc::Path minPath = (1L << i) - 1;
+    ANAlloc::Path maxPath = (1L << (i + 1)) - 1;
+    bool result = tree.FindFree(i, p);
+    assert(result);
+    assert(p >= minPath && p < maxPath);
+    assert(!(p & 1));
+    if (i + 1 < tree.Depth()) {
+      tree.SetType(p, T::NodeTypeContainer);
+      tree.SetType(ANAlloc::PathLeft(p), T::NodeTypeData);
+      tree.SetType(ANAlloc::PathRight(p), T::NodeTypeFree);
+    } else {
+      tree.SetType(p, T::NodeTypeData);
+    }
+    assert(!tree.FindFree(i, p));
+  }
+  
+  // verify nothing is left
+  assert(!tree.FindFree(tree.Depth() - 1, p));
 }
