@@ -30,4 +30,24 @@ bool Bitmap::GetBit(uintptr_t idx) const {
   return (ptr[byteIndex] & (1 << bitIndex)) != 0;
 }
 
+uintptr_t Bitmap::GetMultibit(uintptr_t idx, int len) const {
+  // there are len bits, and the one at idx is the most significant
+  // TODO: figure out if this can be optimized
+  assert(idx + len <= bitCount);
+  uintptr_t result = 0;
+  for (int i = 0; i < len; i++) {
+    result += (uintptr_t)GetBit(i + idx) << (len - i - 1);
+  }
+  return result;
+}
+
+void Bitmap::SetMultibit(uintptr_t idx, int len, uintptr_t value) {
+  // TODO: optimize this
+  assert(idx + len <= bitCount);
+  for (int i = 0; i < len; i++) {
+    bool flag = value & (1L << i) ? 1 : 0;
+    SetBit(idx + len - i - 1, flag);
+  }
+}
+
 }

@@ -27,9 +27,19 @@ public:
   void SetBit(uintptr_t idx, bool value);
   
   /**
+   * Set a glob of bits.
+   */
+  void SetMultibit(uintptr_t idx, int len, uintptr_t value);
+  
+  /**
    * Return the bit at a given index.
    */
   bool GetBit(uintptr_t idx) const;
+  
+  /**
+   * Get a glob of bits.
+   */
+  uintptr_t GetMultibit(uintptr_t idx, int len) const;
 };
 
 }
