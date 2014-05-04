@@ -20,6 +20,7 @@ void TestWithBTree() {
   ANAlloc::Allocator<ANAlloc::BTree> alloc(&tree);
   TestBaseAlloc(alloc, tree, "BTree");
   TestFragAlloc(alloc, tree, "BTree");
+  TestSplit(alloc, tree, "BTree");
   delete memory;
 }
 
@@ -30,5 +31,6 @@ void TestWithBBTree() {
   ANAlloc::Allocator<ANAlloc::BBTree> alloc(&tree);
   TestBaseAlloc(alloc, tree, "BBTree");
   TestFragAlloc(alloc, tree, "BBTree");
+  TestSplit(alloc, tree, "BBTree");
   delete memory;
 }

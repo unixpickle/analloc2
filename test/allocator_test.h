@@ -109,3 +109,41 @@ void TestFragAlloc(ANAlloc::Allocator<T> & alloc, T & tree,
   alloc.Free(1);
   assert(tree.GetType(0) == T::NodeTypeFree);
 }
+
+template <class T>
+void TestSplit(ANAlloc::Allocator<T> & alloc, T & tree,
+               std::string typeName) {
+  ScopedPass scope;
+  std::cout << "testing Allocator<" 
+    << typeName << ">::Split() ... ";
+  
+  FreeAll(tree);
+  
+  ANAlloc::Path p;
+  alloc.Alloc(0, p);
+  assert(p == 0);
+  assert(tree.GetType(0) == T::NodeTypeData);
+  
+  alloc.Split(0);
+  assert(tree.GetType(0) == T::NodeTypeContainer);
+  assert(tree.GetType(1) == T::NodeTypeData);
+  assert(tree.GetType(2) == T::NodeTypeData);
+  
+  alloc.Free(2);
+  
+  // continually split the path and free the right node
+  p = 1;
+  for (int i = 1; i < tree.Depth() - 1; i++) {
+    alloc.Split(p);
+    ANAlloc::Path left = ANAlloc::PathLeft(p);
+    ANAlloc::Path right = ANAlloc::PathRight(p);
+    assert(tree.GetType(p) == T::NodeTypeContainer);
+    assert(tree.GetType(left) == T::NodeTypeData);
+    assert(tree.GetType(right) == T::NodeTypeData);
+    alloc.Free(right);
+    p = left;
+  }
+  
+  alloc.Free(p);
+  assert(tree.GetType(0) == T::NodeTypeFree);
+}
