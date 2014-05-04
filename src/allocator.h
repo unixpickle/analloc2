@@ -21,20 +21,51 @@ public:
    * Allocate a path at a certain `depth`. If the allocation can be completed,
    * true is returned and `path` is set.
    */
-  bool Alloc(int depth, Path & path);
+  bool Alloc(int depth, Path & path) {
+    int foundDepth = 0;
+    if (!tree->FindFree(depth, path)) {
+      return false;
+    }
+    foundDepth = ANAlloc::PathDepth(path);
+    while (foundDepth < depth) {
+      tree->SetType(path, T::NodeTypeContainer);
+      
+      ANAlloc::Path right = PathRight(path);
+      tree->SetType(right, T::NodeTypeFree);
+      path = right - 1;
+      foundDepth++;
+    }
+    tree->SetType(path, T::NodeTypeFree);
+  }
   
   /**
    * Frees a node allocated at a path. The behavior of this function is
    * undefined if no node is allocated at `path`.
    */
-  void Free(Path path);
+  void Free(Path path) {
+    assert(tree->GetType(path) == T::NodeTypeData);
+    tree->SetType(path, T::NodeTypeFree);
+    
+    int depth = Depth(path);
+    for (int i = 0; i < depth; i++) {
+      if (tree->GetType(PathSibling(path)) != T::NodeTypeFree) break;
+      path = PathParent(path);
+      tree->SetType(path, T::NodeTypeFree);
+    }
+  }
   
   /**
    * Splits the allocated node at `path`, resulting in the two children being
    * allocated separately. This may be used to shorten a chunk of allocated
    * memory.
    */
-  void Split(Path path);
+  void Split(Path path) {
+    assert(tree->GetType(path) == T::NodeTypeData);
+    tree->SetType(path, T::NodeTypeContainer);
+    ANAlloc::Path right = PathRight(path);
+    tree->SetType(right, T::NodeTypeData);
+    tree->SetType(right - 1, T::NodeTypeData);
+  }
   
   /**
    * Let's say you get an address and you want to calculate what its size is.
@@ -51,7 +82,11 @@ public:
    * @param path On successful search, this will be set to the path found.
    * @return true if the index belongs to an allocated node; false otherwise.
    */
-  bool Find(int idx, Path & path);
+  bool Find(int idx, Path & path) {
+    // TODO: this is actually pretty Tree specific, so I will implement this
+    // there when the time comes
+    return false;
+  }
 };
 
 }
