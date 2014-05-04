@@ -47,6 +47,11 @@ int PathDepth(Path p);
 uintptr_t PathIndex(Path p);
 
 /**
+ * Returns the number of paths belonging to a certain depth.
+ */
+uintptr_t PathsForDepth(int d);
+
+/**
  * This is essentially an interface for a "Tree"
  */
 class Tree {
@@ -61,6 +66,14 @@ public:
     return 0;
   }
   
+  /**
+   * Set the type of a node at a certain path. Here's what the types do:
+   * - NodeTypeFree: frees the node
+   * - NodeTypeData: the node is completely reserved for data
+   * - NodeTypeContainer: the node may contain one or two child nodes. Right
+   *   after you set this type, you must set the type of the node's two
+   *   children.
+   */
   void SetType(Path path, NodeType type) {
     (void)path;
     (void)type;

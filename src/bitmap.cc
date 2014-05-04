@@ -22,6 +22,15 @@ void Bitmap::SetBit(uintptr_t idx, bool value) {
   }
 }
 
+void Bitmap::SetMultibit(uintptr_t idx, int len, uintptr_t value) {
+  // TODO: optimize this
+  assert(idx + len <= bitCount);
+  for (int i = 0; i < len; i++) {
+    bool flag = value & (1L << i) ? 1 : 0;
+    SetBit(idx + len - i - 1, flag);
+  }
+}
+
 bool Bitmap::GetBit(uintptr_t idx) const {
   assert(idx < bitCount);
   
@@ -41,13 +50,9 @@ uintptr_t Bitmap::GetMultibit(uintptr_t idx, int len) const {
   return result;
 }
 
-void Bitmap::SetMultibit(uintptr_t idx, int len, uintptr_t value) {
-  // TODO: optimize this
-  assert(idx + len <= bitCount);
-  for (int i = 0; i < len; i++) {
-    bool flag = value & (1L << i) ? 1 : 0;
-    SetBit(idx + len - i - 1, flag);
-  }
+uintptr_t Bitmap::GetBitCount() const {
+  return bitCount;
 }
+
 
 }

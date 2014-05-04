@@ -20,16 +20,29 @@ private:
   Bitmap bitmap;
   int depth;
 
-public:
-  typedef typename Tree::NodeType NodeType;
+  static uintptr_t BitCount(int depth);
+
+  int ReadNode(Path p);
+  void WriteNode(Path p, int i);
   
-  static MemorySize(int depth);
+  void FreePath(Path p);
+  void AllocPathData(Path p);
+  void AllocPathContainer(Path p);
+  void UpdateParents(Path p);
+  
+  bool FindFreeRecursive(int depth, int curDepth, Path p, Path & path);
+
+public:
+  typedef Tree::NodeType NodeType;
+  
+  static size_t MemorySize(int depth);
   
   BBTree(int depth, uint8_t * bmMemory);
   
   int Depth();
   void SetType(Path path, NodeType type);
   NodeType GetType(Path path);
+  bool FindFree(int depth, Path & path);
 };
 
 }

@@ -40,6 +40,11 @@ public:
    * Get a glob of bits.
    */
   uintptr_t GetMultibit(uintptr_t idx, int len) const;
+  
+  /**
+   * Returns the number of bits in the bitmap
+   */
+  uintptr_t GetBitCount() const;
 };
 
 }

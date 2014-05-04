@@ -55,4 +55,8 @@ uintptr_t PathIndex(Path path) {
   return (path + 1) ^ (1L << depth);
 }
 
+uintptr_t PathsForDepth(int d) {
+  return (1L << d);
+}
+
 }

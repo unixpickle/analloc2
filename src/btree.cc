@@ -3,12 +3,12 @@
 namespace ANAlloc {
 
 size_t BTree::MemorySize(int depth) {
-  if (depth < 2) return 1;
-  return (1 << (depth - 2));
+  if (depth <= 3) return 1;
+  return (1 << (depth - 3));
 }
 
 BTree::BTree(int _depth, uint8_t * bmMemory)
-  : bitmap(bmMemory, (2 << _depth) - 1) {
+  : bitmap(bmMemory, (1 << _depth) - 1) {
   assert(_depth > 0);
   depth = _depth;
 }
@@ -23,10 +23,13 @@ void BTree::SetType(Path path, NodeType type) {
       bitmap.SetBit(path, false);
       break;
     case NodeTypeData:
+      if (PathDepth(path) != Depth() - 1) {
+        Path right = PathRight(path);
+        bitmap.SetBit(right, false);
+        bitmap.SetBit(right - 1, false);
+      }
     case NodeTypeContainer:
       bitmap.SetBit(path, true);
-      bitmap.SetBit(PathLeft(path), false);
-      bitmap.SetBit(PathRight(path), false);
       break;
     default:
       break;

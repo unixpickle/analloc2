@@ -8,13 +8,19 @@ struct ScopedPass {
 };
 
 template <class T>
-void FreeAll(T & tree) {
-  ANAlloc::Path pathCount = (1 << (tree.Depth() - 1));
-  for (ANAlloc::Path i = 0; i < pathCount; i++) {
-    if (tree.GetType(pathCount - i - 1) != T::NodeTypeFree) {
-      tree.SetType(pathCount - i - 1, T::NodeTypeFree);
+void FreeRecursive(T & tree, ANAlloc::Path p) {
+  if (tree.GetType(p) != T::NodeTypeFree) {
+    if (ANAlloc::PathDepth(p) + 1 != tree.Depth()) {
+      FreeRecursive(tree, ANAlloc::PathRight(p));
+      FreeRecursive(tree, ANAlloc::PathLeft(p));
     }
+    tree.SetType(p, T::NodeTypeFree);
   }
+}
+
+template <class T>
+void FreeAll(T & tree) {
+  FreeRecursive(tree, 0);
 }
 
 template <class T>
@@ -22,16 +28,39 @@ ANAlloc::Path AllocAll(T & tree) {
   FreeAll(tree);
   ANAlloc::Path p = 0;
   for (int i = 0; i < tree.Depth() - 1; i++) {
-    for (int j = 0; j < (1 << i); j++) {
+    for (int j = 0; j < ANAlloc::PathsForDepth(i); j++) {
       tree.SetType(p, T::NodeTypeContainer);
       p++;
     }
   }
-  for (int j = 0; j < (1 << (tree.Depth() - 1)); j++) {
+  for (int j = 0; j < ANAlloc::PathsForDepth(tree.Depth() - 1); j++) {
     tree.SetType(p, T::NodeTypeData);
     p++;
   }
   return p;
+}
+
+template <class T>
+void TestTreeStrictTypes(T & tree, std::string className) {
+  ScopedPass scope;
+  
+  std::cout << "testing " << className << "::[Set/Get]() [strict] ... ";
+  
+  // allocate every node
+  AllocAll(tree);
+  
+  // verify that the tree is the way we set it up to be
+  ANAlloc::Path p = 0;
+  for (int i = 0; i < tree.Depth() - 1; i++) {
+    for (int j = 0; j < ANAlloc::PathsForDepth(i); j++) {
+      assert(tree.GetType(p) == T::NodeTypeContainer);
+      p++;
+    }
+  }
+  for (int j = 0; j < ANAlloc::PathsForDepth(tree.Depth() - 1); j++) {
+    assert(tree.GetType(p) == T::NodeTypeData);
+    p++;
+  }
 }
 
 template <class T>
@@ -42,19 +71,6 @@ void TestTreeSetGet(T & tree, std::string className) {
   
   // allocate every node
   ANAlloc::Path p = AllocAll(tree);
-  
-  // verify that the tree is the way we set it up to be
-  p = 0;
-  for (int i = 0; i < tree.Depth() - 1; i++) {
-    for (int j = 0; j < (1 << i); j++) {
-      assert(tree.GetType(p) == T::NodeTypeContainer);
-      p++;
-    }
-  }
-  for (int j = 0; j < (1 << (tree.Depth() - 1)); j++) {
-    assert(tree.GetType(p) == T::NodeTypeData);
-    p++;
-  }
     
   // try freeing a base node
   tree.SetType(p - 1, T::NodeTypeFree);
@@ -92,6 +108,7 @@ void TestTreeFindFree(T & tree, std::string className) {
   // allocate the root node, and create a child data node
   tree.SetType(0, T::NodeTypeContainer);
   tree.SetType(1, T::NodeTypeData);
+  tree.SetType(2, T::NodeTypeFree);
   
   assert(!tree.FindFree(0, p));
   
