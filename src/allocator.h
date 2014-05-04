@@ -62,7 +62,7 @@ public:
   void Split(Path path) {
     assert(tree->GetType(path) == T::NodeTypeData);
     tree->SetType(path, T::NodeTypeContainer);
-    ANAlloc::Path right = PathRight(path);
+    Path right = PathRight(path);
     tree->SetType(right, T::NodeTypeData);
     tree->SetType(right - 1, T::NodeTypeData);
   }
@@ -82,10 +82,29 @@ public:
    * @param path On successful search, this will be set to the path found.
    * @return true if the index belongs to an allocated node; false otherwise.
    */
-  bool Find(int idx, Path & path) {
-    // TODO: this is actually pretty Tree specific, so I will implement this
-    // there when the time comes
-    return false;
+  bool Find(uintptr_t idx, Path & path) {
+    Path p = 0;
+    uintptr_t theIdx = 0;
+    for (int d = 0; d < tree->Depth(); d++) {
+      T::NodeType t = tree->GetType(p);
+      if (t == T::NodeTypeFree) {
+        return false;
+      } else if (t == T::NodeTypeData) {
+        path = p;
+        return true;
+      }
+      
+      if (d + 1 == tree->Depth()) break;
+      
+      // go right only if we don't pass it
+      uintptr_t nodeSize = 1 << (tree->Depth() - d - 2); // size of lower node
+      if (nodeSize + theIdx > idx) {
+        p = PathLeft(p);
+      } else {
+        p = PathRight(p);
+        theIdx += idx;
+      }
+    }
   }
 };
 
