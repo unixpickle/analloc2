@@ -1,41 +1,34 @@
 #include "../src/allocator.h"
 #include "../src/btree.h"
+#include "../src/bbtree.h"
 #include <iostream>
+#include "allocator_test.h"
 
-using namespace ANAlloc;
+void TestWithBTree();
+void TestWithBBTree();
 
 int main() {
-  std::cout << "testing Allocator<BTree> ... ";
+  TestWithBTree();
+  TestWithBBTree();
+  return 0;
+}
+
+void TestWithBTree() {
   size_t size = ANAlloc::BTree::MemorySize(10);
   uint8_t * memory = new uint8_t[size];
-  BTree tree(10, memory);
-  Allocator<BTree> alloc(&tree);
-  
-  Path p;
-  alloc.Alloc(9, p);
-  assert((1 << 9) - 1 == p);
-  
-  assert(tree.GetType(1) == BTree::NodeTypeContainer); // depth 1
-  assert(tree.GetType(2) == BTree::NodeTypeFree);
-  assert(tree.GetType(3) == BTree::NodeTypeContainer); // depth 2
-  assert(tree.GetType(4) == BTree::NodeTypeFree);
-  assert(tree.GetType(7) == BTree::NodeTypeContainer); // depth 3
-  assert(tree.GetType(8) == BTree::NodeTypeFree);
-  assert(tree.GetType(0xf) == BTree::NodeTypeContainer); // depth 4
-  assert(tree.GetType(0x10) == BTree::NodeTypeFree);
-  assert(tree.GetType(0x1f) == BTree::NodeTypeContainer); // depth 5
-  assert(tree.GetType(0x20) == BTree::NodeTypeFree);
-  assert(tree.GetType(0x3f) == BTree::NodeTypeContainer); // depth 6
-  assert(tree.GetType(0x40) == BTree::NodeTypeFree);
-  assert(tree.GetType(0x7f) == BTree::NodeTypeContainer); // depth 7
-  assert(tree.GetType(0x80) == BTree::NodeTypeFree);
-  assert(tree.GetType(0xff) == BTree::NodeTypeContainer); // depth 8
-  assert(tree.GetType(0x100) == BTree::NodeTypeFree);
-  assert(tree.GetType(0x1ff) == BTree::NodeTypeData); // depth 8
-  assert(tree.GetType(0x200) == BTree::NodeTypeFree);
-  
-  std::cout << "passed!" << std::endl;
-  
+  ANAlloc::BTree tree(10, memory);
+  ANAlloc::Allocator<ANAlloc::BTree> alloc(&tree);
+  TestBaseAlloc(alloc, tree, "BTree");
+  TestFragAlloc(alloc, tree, "BTree");
   delete memory;
-  return 0;
+}
+
+void TestWithBBTree() {
+  size_t size = ANAlloc::BBTree::MemorySize(10);
+  uint8_t * memory = new uint8_t[size];
+  ANAlloc::BBTree tree(10, memory);
+  ANAlloc::Allocator<ANAlloc::BBTree> alloc(&tree);
+  TestBaseAlloc(alloc, tree, "BBTree");
+  TestFragAlloc(alloc, tree, "BBTree");
+  delete memory;
 }

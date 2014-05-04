@@ -13,7 +13,7 @@ build/bbtree: build
 	g++ -Wall ../src/bitmap.cc ../src/tree.cc ../src/bbtree.cc test_bbtree.cc -o build/bbtree
 
 build/allocator: build
-	g++ -Wall ../src/bitmap.cc ../src/tree.cc ../src/btree.cc test_allocator.cc -o build/allocator
+	g++ -Wall ../src/bitmap.cc ../src/tree.cc ../src/btree.cc ../src/bbtree.cc test_allocator.cc -o build/allocator
 
 build:
 	mkdir build

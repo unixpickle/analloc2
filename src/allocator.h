@@ -2,6 +2,7 @@
 #define __ANALLOC2_ALLOC_H__
 
 #include "tree.h"
+#include <cassert>
 
 namespace ANAlloc {
 
