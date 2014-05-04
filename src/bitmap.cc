@@ -2,6 +2,21 @@
 
 namespace ANAlloc {
 
+Bitmap::Bitmap() {
+  ptr = NULL;
+  bitCount = 0;
+}
+
+Bitmap::Bitmap(const Bitmap & bm) {
+  *this = bm;
+}
+
+Bitmap & Bitmap::operator=(const Bitmap & bm) {
+  ptr = bm.ptr;
+  bitCount = bm.bitCount;
+  return *this;
+}
+
 Bitmap::Bitmap(uint8_t * _ptr, uintptr_t count) {
   ptr = _ptr;
   bitCount = count;

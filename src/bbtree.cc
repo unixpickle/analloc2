@@ -42,6 +42,20 @@ BBTree::BBTree(int _depth, uint8_t * bmMemory)
   WriteNode(0, depth);
 }
 
+BBTree::BBTree() : bitmap() {
+  depth = 0;
+}
+
+BBTree::BBTree(const BBTree & tree) {
+  *this = tree;
+}
+
+BBTree & BBTree::operator=(const BBTree & tree) {
+  depth = tree.depth;
+  bitmap = tree.bitmap;
+  return *this;
+}
+
 int BBTree::Depth() {
   return depth;
 }

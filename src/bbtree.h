@@ -16,7 +16,7 @@ namespace ANAlloc {
  * longer because their parent nodes have to have their bitmaps modified.
  */
 class BBTree : public Tree {
-private:
+protected:
   Bitmap bitmap;
   int depth;
 
@@ -38,6 +38,9 @@ public:
   static size_t MemorySize(int depth);
   
   BBTree(int depth, uint8_t * bmMemory);
+  BBTree();
+  BBTree(const BBTree & tree);
+  BBTree & operator=(const BBTree & tree);
   
   int Depth();
   void SetType(Path path, NodeType type);

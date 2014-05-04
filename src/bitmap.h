@@ -11,11 +11,17 @@ namespace ANAlloc {
  * This stores an optimal representation of a bitmap.
  */
 class Bitmap {
-private:
+protected:
   uint8_t * ptr;
   uintptr_t bitCount;
 
 public:
+  Bitmap();
+  
+  Bitmap(const Bitmap & bm);
+  
+  Bitmap & operator=(const Bitmap & bm);
+  
   /**
    * Create a new bitmap at a given memory location.
    */

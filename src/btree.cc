@@ -13,6 +13,19 @@ BTree::BTree(int _depth, uint8_t * bmMemory)
   depth = _depth;
 }
 
+BTree::BTree()
+  : bitmap() {
+}
+
+BTree::BTree(const BTree & t) {
+  *this = t;
+}
+
+BTree & BTree::operator=(const BTree & aTree) {
+  bitmap = aTree.bitmap;
+  return *this;
+}
+
 int BTree::Depth() {
   return depth;
 }

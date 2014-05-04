@@ -12,12 +12,25 @@ namespace ANAlloc {
  */
 template <class T>
 class Allocator {
-private:
+protected:
   T * tree;
 
 public:
+  Allocator() {
+    tree = NULL;
+  }
+  
+  Allocator(const Allocator<T> & a) {
+    tree = a.tree;
+  }
+  
   Allocator(T * aTree) {
     tree = aTree;
+  }
+  
+  Allocator & operator=(const Allocator & alloc) {
+    tree = alloc.tree;
+    return *this;
   }
   
   /**

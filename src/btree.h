@@ -12,7 +12,7 @@ namespace ANAlloc {
  * consumed is 2*n.
  */
 class BTree : public Tree {
-private:
+protected:
   Bitmap bitmap;
   int depth;
 
@@ -23,12 +23,16 @@ public:
   
   static size_t MemorySize(int depth);
   
+  BTree();
+  BTree(const BTree & t);
   BTree(int depth, uint8_t * bmMemory);
   
   int Depth();
   void SetType(Path path, NodeType type);
   NodeType GetType(Path path);
   bool FindFree(int depth, Path & path);
+  
+  BTree & operator=(const BTree & aTree);
 };
 
 }
