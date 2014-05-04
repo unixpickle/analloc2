@@ -15,6 +15,7 @@ int main() {
   ANAlloc::BBTree tree(3, memory);
   
   TestTreeSetGet(tree, "BBTree");
+  TestTreeStrictTypes(tree, "BTree");
   TestTreeFindFree(tree, "BBTree");
   
   delete memory;

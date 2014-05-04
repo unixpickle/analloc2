@@ -64,7 +64,15 @@ void BBTree::SetType(Path path, NodeType type) {
 
 BBTree::NodeType BBTree::GetType(Path path) {
   int value = ReadNode(path);
-  if (!value) return NodeTypeData;
+  if (!value) {
+    if (PathDepth(path) + 1 == Depth()) return NodeTypeData;
+    Path left = PathLeft(path);
+    if (GetType(left) == NodeTypeFree
+        && GetType(left + 1) == NodeTypeFree) {
+      return NodeTypeData;
+    }
+    return NodeTypeContainer;
+  }
   if (value == Depth() - PathDepth(path)) return NodeTypeFree;
   return NodeTypeContainer;
 }
@@ -102,11 +110,19 @@ void BBTree::FreePath(Path path) {
   }
 }
 
-void BBTree::AllocPathData(Path path) {
-  Path p = path;
-  
+void BBTree::AllocPathData(Path p) {  
   // the path is now closed for business
   WriteNode(p, 0);
+  
+  // make our children look free so that we can be distinguished from a
+  // container whose children are filled.
+  int pathDepth = PathDepth(p);
+  if (pathDepth + 1 != Depth()) {
+    int biggestLow = Depth() - (pathDepth + 1);
+    Path left = PathLeft(p);
+    WriteNode(left, biggestLow);
+    WriteNode(left + 1, biggestLow);
+  }
   
   // update parents' sizes
   UpdateParents(p);
