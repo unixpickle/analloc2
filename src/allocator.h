@@ -1,6 +1,8 @@
 #ifndef __ANALLOC2_ALLOC_H__
 #define __ANALLOC2_ALLOC_H__
 
+#include "tree.h"
+
 namespace ANAlloc {
 
 /**
@@ -46,7 +48,7 @@ public:
     assert(tree->GetType(path) == T::NodeTypeData);
     tree->SetType(path, T::NodeTypeFree);
     
-    int depth = Depth(path);
+    int depth = PathDepth(path);
     for (int i = 0; i < depth; i++) {
       if (tree->GetType(PathSibling(path)) != T::NodeTypeFree) break;
       path = PathParent(path);
@@ -86,7 +88,7 @@ public:
     Path p = 0;
     uintptr_t theIdx = 0;
     for (int d = 0; d < tree->Depth(); d++) {
-      T::NodeType t = tree->GetType(p);
+      typename T::NodeType t = tree->GetType(p);
       if (t == T::NodeTypeFree) {
         return false;
       } else if (t == T::NodeTypeData) {

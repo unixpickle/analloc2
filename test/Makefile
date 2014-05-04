@@ -1,4 +1,4 @@
-all: build/bitmap build/tree build/btree build/bbtree
+all: build/bitmap build/tree build/btree build/bbtree build/allocator
 
 build/bitmap: build
 	g++ -Wall ../src/bitmap.cc test_bitmap.cc -o build/bitmap
@@ -11,6 +11,9 @@ build/btree: build
 
 build/bbtree: build
 	g++ -Wall ../src/bitmap.cc ../src/tree.cc ../src/bbtree.cc test_bbtree.cc -o build/bbtree
+
+build/allocator: build
+	g++ -Wall ../src/bitmap.cc ../src/tree.cc ../src/btree.cc test_allocator.cc -o build/allocator
 
 build:
 	mkdir build
