@@ -88,6 +88,8 @@ public:
    * Find a free node of at *least* a depth `depth`.
    */
   bool FindFree(int depth, Path & path) {
+    (void)depth;
+    (void)path;
     return 0;
   }
   
