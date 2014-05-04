@@ -21,6 +21,7 @@ void TestWithBTree() {
   TestBaseAlloc(alloc, tree, "BTree");
   TestFragAlloc(alloc, tree, "BTree");
   TestSplit(alloc, tree, "BTree");
+  TestAllocatorFind(alloc, tree, "BTree");
   delete memory;
 }
 
@@ -32,5 +33,6 @@ void TestWithBBTree() {
   TestBaseAlloc(alloc, tree, "BBTree");
   TestFragAlloc(alloc, tree, "BBTree");
   TestSplit(alloc, tree, "BBTree");
+  TestAllocatorFind(alloc, tree, "BBTree");
   delete memory;
 }

@@ -147,3 +147,46 @@ void TestSplit(ANAlloc::Allocator<T> & alloc, T & tree,
   alloc.Free(p);
   assert(tree.GetType(0) == T::NodeTypeFree);
 }
+
+template <class T>
+void TestAllocatorFind(ANAlloc::Allocator<T> & alloc, T & tree,
+                      std::string typeName) {
+  ScopedPass scope;
+  std::cout << "testing Allocator<" 
+    << typeName << ">::Find() ... ";
+  
+  FreeAll(tree);
+  
+  ANAlloc::Path p;
+  bool res = alloc.Alloc(1, p);
+  assert(res);
+  assert(p == 1);
+  
+  uintptr_t secondLast = (1L << (tree.Depth() - 2));
+  
+  ANAlloc::Path result = 0;
+  res = alloc.Find(0, result);
+  assert(res);
+  assert(result == 1);
+  
+  res = alloc.Find(secondLast, result);
+  assert(!res);
+  
+  res = alloc.Find(secondLast - 1, result);
+  assert(res);
+  assert(result == 1);
+  
+  alloc.Free(1);
+  
+  // allocate a base level element
+  res = alloc.Alloc(tree.Depth() - 1, p);
+  assert(res);
+  assert(p == (1 << (tree.Depth() - 1)) - 1);
+  res = alloc.Find(0, result);
+  assert(res);
+  assert(result == p);
+  res = alloc.Find(1, result);
+  assert(!res);
+  res = alloc.Find(2, result);
+  assert(!res);
+}
