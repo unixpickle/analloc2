@@ -37,7 +37,8 @@ public:
       path = right - 1;
       foundDepth++;
     }
-    tree->SetType(path, T::NodeTypeFree);
+    tree->SetType(path, T::NodeTypeData);
+    return true;
   }
   
   /**
