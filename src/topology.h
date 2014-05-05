@@ -271,7 +271,7 @@ public:
     }
   }
   
-  Description * const GetDescriptions() {
+  const Description * GetDescriptions() {
     return static_cast<Description * const>(descriptions);
   }
   
@@ -279,11 +279,11 @@ public:
     return descriptionCount;
   }
   
-  TreeType * const GetTrees() {
+  TreeType * GetTrees() {
     return trees;
   }
   
-  Allocator<TreeType> * const GetAllocators() {
+  Allocator<TreeType> * GetAllocators() {
     return allocators;
   }
   
