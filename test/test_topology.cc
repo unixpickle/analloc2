@@ -1,7 +1,7 @@
+#include <iostream>
 #include "../src/topology.h"
 #include "../src/btree.h"
 #include "../src/bbtree.h"
-#include <iostream>
 
 using namespace std;
 

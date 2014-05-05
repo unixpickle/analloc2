@@ -217,5 +217,54 @@ void AllocTest<T>::TestReserve() {
   assert(p == 0);
   
   uintptr_t baseCount = 1 << (tree.Depth() - 1);
-  alloc.Reserve(p, (baseCount << 1) - 1, 2);
+  alloc.Reserve(p, (baseCount >> 1) - 1, 2);
+  
+  // make sure that the two middle base nodes were grabbed properly
+  ANAlloc::Path leftPath = 1;
+  ANAlloc::Path rightPath = 2;
+  assert(tree.Depth() >= 2);
+  assert(tree.GetType(0) == T::NodeTypeContainer);
+  assert(tree.GetType(1) == T::NodeTypeContainer);
+  assert(tree.GetType(2) == T::NodeTypeContainer);
+  
+  for (int i = 1; i < tree.Depth() - 1; i++) {
+    typename T::NodeType type;
+    if (i + 2 == tree.Depth()) {
+      type = T::NodeTypeData;
+    } else {
+      type = T::NodeTypeContainer;
+    }
+        
+    ANAlloc::Path left = ANAlloc::PathLeft(rightPath);
+    assert(tree.GetType(left) == type);
+    assert(tree.GetType(left + 1) == T::NodeTypeFree);
+    
+    ANAlloc::Path right = ANAlloc::PathRight(leftPath);
+    assert(tree.GetType(right) == type);
+    assert(tree.GetType(right - 1) == T::NodeTypeFree);
+    
+    leftPath = right;
+    rightPath = left;
+  }
+  
+  FreeAll(tree);
+  
+  // try and grab every base node but the far left one
+  res = alloc.Alloc(0, p);
+  assert(res);
+  assert(p == 0);
+  
+  alloc.Reserve(p, 1, baseCount - 1);
+
+  for (int i = 0; i < tree.Depth() - 1; i++) {
+    ANAlloc::Path right = ANAlloc::PathRight(p);
+    assert(tree.GetType(p) == T::NodeTypeContainer);
+    assert(tree.GetType(right) == T::NodeTypeData);
+    if (i == tree.Depth() - 2) {
+      assert(tree.GetType(right - 1) == T::NodeTypeFree);
+    } else {
+      assert(tree.GetType(right - 1) == T::NodeTypeContainer);
+    }
+    p = right - 1;
+  }
 }

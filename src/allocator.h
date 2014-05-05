@@ -135,7 +135,7 @@ public:
     uintptr_t baseCount = 1L << (tree->Depth() - depth - 1);
     
     // check if we are completely contained by the base range
-    if (index * baseCount >= idx && baseCount <= count) {
+    if (index * baseCount >= idx && (index + 1) * baseCount <= idx + count) {
       return;
     }
     

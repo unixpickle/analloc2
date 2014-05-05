@@ -1,7 +1,7 @@
+#include <iostream>
 #include "../src/allocator.h"
 #include "../src/btree.h"
 #include "../src/bbtree.h"
-#include <iostream>
 #include "allocator_test.h"
 
 template <class T>
