@@ -225,6 +225,29 @@ public:
   }
   
   void ReserveRegion(const Region & reg) {
+    for (int i = 0; i < descriptionCount; i++) {
+      Description & desc = descriptions[i];
+      uintptr_t descEnd = desc.start + DepthSize(desc.depth);
+      if (reg.GetStart() > descEnd) {
+        continue;
+      } else if (reg.GetEnd() <= desc.start) {
+        continue;
+      }
+      
+      uintptr_t chunkStart, chunkEnd;
+      if (reg.GetStart() > desc.start) {
+        chunkStart = reg.GetStart();
+      } else {
+        chunkStart = desc.start;
+      }
+      if (reg.GetEnd() < descEnd) {
+        chunkEnd = reg.GetEnd();
+      } else {
+        chunkEnd = descEnd;
+      }
+      
+      // use Allocator::Reserve for this; first, gotta test it
+    }
     // use more Vodo here and hack the planet
     (void)reg;
   }

@@ -1,9 +1,24 @@
 #include "tree_test.h"
 
 template <class T>
-void TestBaseAlloc(ANAlloc::Allocator<T> & alloc,
-                   T & tree,
-                   std::string typeName) {
+class AllocTest {
+private:
+  ANAlloc::Allocator<T> alloc;
+  T tree;
+  std::string typeName;
+public:
+  AllocTest(ANAlloc::Allocator<T> & a, T & t, std::string n)
+    : alloc(a), tree(t), typeName(n) {}
+  
+  void TestBaseAlloc();
+  void TestFragAlloc();
+  void TestSplit();
+  void TestFind();
+  void TestReserve();
+};
+
+template <class T>
+void AllocTest<T>::TestBaseAlloc() {
   ScopedPass scope;
   std::cout << "testing Allocator<" 
     << typeName << ">::[Alloc/Free]() [base] ... ";
@@ -30,8 +45,7 @@ void TestBaseAlloc(ANAlloc::Allocator<T> & alloc,
 }
 
 template <class T>
-void TestFragAlloc(ANAlloc::Allocator<T> & alloc, T & tree,
-                   std::string typeName) {
+void AllocTest<T>::TestFragAlloc() {
   ScopedPass scope;
   std::cout << "testing Allocator<" << typeName
     << ">::[Alloc/Free]() ... ";
@@ -111,8 +125,7 @@ void TestFragAlloc(ANAlloc::Allocator<T> & alloc, T & tree,
 }
 
 template <class T>
-void TestSplit(ANAlloc::Allocator<T> & alloc, T & tree,
-               std::string typeName) {
+void AllocTest<T>::TestSplit() {
   ScopedPass scope;
   std::cout << "testing Allocator<" 
     << typeName << ">::Split() ... ";
@@ -149,8 +162,7 @@ void TestSplit(ANAlloc::Allocator<T> & alloc, T & tree,
 }
 
 template <class T>
-void TestAllocatorFind(ANAlloc::Allocator<T> & alloc, T & tree,
-                      std::string typeName) {
+void AllocTest<T>::TestFind() {
   ScopedPass scope;
   std::cout << "testing Allocator<" 
     << typeName << ">::Find() ... ";
@@ -189,4 +201,21 @@ void TestAllocatorFind(ANAlloc::Allocator<T> & alloc, T & tree,
   assert(!res);
   res = alloc.Find(2, result);
   assert(!res);
+}
+
+template <class T>
+void AllocTest<T>::TestReserve() {
+  ScopedPass scope;
+  std::cout << "testing Allocator<" 
+    << typeName << ">::Reserve() ... ";
+  
+  FreeAll(tree);
+  
+  ANAlloc::Path p;
+  bool res = alloc.Alloc(0, p);
+  assert(res);
+  assert(p == 0);
+  
+  uintptr_t baseCount = 1 << (tree.Depth() - 1);
+  alloc.Reserve(p, (baseCount << 1) - 1, 2);
 }

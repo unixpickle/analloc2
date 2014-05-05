@@ -23,6 +23,7 @@ BTree::BTree(const BTree & t) {
 
 BTree & BTree::operator=(const BTree & aTree) {
   bitmap = aTree.bitmap;
+  depth = aTree.depth;
   return *this;
 }
 

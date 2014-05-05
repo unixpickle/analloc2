@@ -124,6 +124,36 @@ public:
     }
     return false;
   }
+  
+  /**
+   * For a node allocated at a certain path, keep splitting and freeing it so
+   * that we may keep the base nodes starting at `idx` going for `count` nodes.
+   */
+  void Reserve(Path path, uintptr_t idx, uintptr_t count) {
+    int depth = PathDepth(path);
+    uintptr_t index = PathIndex(path);
+    uintptr_t baseCount = 1L << (tree->Depth() - depth - 1);
+    
+    // check if we are completely contained by the base range
+    if (index * baseCount >= idx && baseCount <= count) {
+      return;
+    }
+    
+    // check if we are completely outside the base range
+    if ((index + 1) * baseCount <= idx) {
+      Free(path);
+      return;
+    } else if (index * baseCount >= count + idx) {
+      Free(path);
+      return;
+    }
+    
+    // split and recurse
+    assert(depth != tree->Depth() - 1);
+    Split(path);
+    Reserve(PathLeft(path), idx, count);
+    Reserve(PathRight(path), idx, count);
+  }
 };
 
 }
