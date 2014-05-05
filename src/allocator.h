@@ -37,7 +37,7 @@ public:
    * Allocate a path at a certain `depth`. If the allocation can be completed,
    * true is returned and `path` is set.
    */
-  bool Alloc(int depth, Path & path) {
+  bool Alloc(int depth, Path & path) {    
     int foundDepth = 0;
     if (!tree->FindFree(depth, path)) {
       return false;

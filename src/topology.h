@@ -179,6 +179,18 @@ protected:
     
     return 0;
   }
+  
+  Path FloorBasePath(Description & desc, uintptr_t byteIndex) {
+    uintptr_t diff = byteIndex - desc.start;
+    return (Path)(diff / pageSize);
+  }
+  
+  size_t CountBaseNodes(Description & desc, uintptr_t start, uintptr_t end) {
+    Path pathStart = FloorBasePath(desc, start);
+    uintptr_t realStart = desc.start + (pathStart * pageSize);
+    uintptr_t diff = end - realStart;
+    return (size_t)(diff / pageSize) + (diff % pageSize ? 1L : 0L);
+  }
 
 public:
   
@@ -219,12 +231,12 @@ public:
       buffStart += TreeType::MemorySize(descriptions[i].depth);
       trees[i] = tree;
       
-      Allocator<TreeType> al(&tree);
+      Allocator<TreeType> al(&trees[i]);
       allocators[i] = al;
     }
   }
   
-  void ReserveRegion(const Region & reg) {
+  void Reserve(const Region & reg) {
     for (int i = 0; i < descriptionCount; i++) {
       Description & desc = descriptions[i];
       uintptr_t descEnd = desc.start + DepthSize(desc.depth);
@@ -246,18 +258,33 @@ public:
         chunkEnd = descEnd;
       }
       
-      // use Allocator::Reserve for this; first, gotta test it
+      Path startPath = FloorBasePath(desc, chunkStart);
+      size_t pathCount = CountBaseNodes(desc, chunkStart, chunkEnd);
+      
+      if (!pathCount) continue;
+      
+      Path p;
+      bool result = allocators[i].Alloc(0, p);
+      assert(result);
+      
+      allocators[i].Reserve(p, startPath, (uintptr_t)pathCount);
     }
-    // use more Vodo here and hack the planet
-    (void)reg;
   }
   
-  const Description * GetDescriptions() {
-    return static_cast<const Description *>(descriptions);
+  Description * const GetDescriptions() {
+    return static_cast<Description * const>(descriptions);
   }
   
   int GetDescriptionCount() {
     return descriptionCount;
+  }
+  
+  TreeType * const GetTrees() {
+    return trees;
+  }
+  
+  Allocator<TreeType> * const GetAllocators() {
+    return allocators;
   }
   
   // TODO: here, add more methods for allocating regions of memory, aligning

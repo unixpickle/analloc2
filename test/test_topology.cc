@@ -8,9 +8,19 @@ using namespace std;
 void TestBasicLayout();
 void TestMinAlignmentLayout();
 
+template <class T>
+void TestBasicReserve(string name);
+
+template <class T>
+void TestOverlappingReserve(string name);
+
 int main() {
   TestBasicLayout();
   TestMinAlignmentLayout();
+  TestBasicReserve<ANAlloc::BTree>("BTree");
+  TestBasicReserve<ANAlloc::BBTree>("BBTree");
+  TestOverlappingReserve<ANAlloc::BTree>("BTree");
+  TestOverlappingReserve<ANAlloc::BBTree>("BBTree");
   
   return 0;
 }
@@ -83,5 +93,98 @@ void TestMinAlignmentLayout() {
   assert(list2.GetDescriptions()[3].start == 0x3800);
   assert(list2.GetDescriptions()[3].depth == 4);
   
+  cout << "passed!" << endl;
+}
+
+template <class T>
+void TestBasicReserve(string name) {
+  cout << "testing AllocatorList<" << name << ">::Reserve() [basic] ... ";
+  
+  ANAlloc::Region reg1(0, 0x1000);
+  ANAlloc::Region reg2(0x1000, 0x3000);
+  
+  ANAlloc::Region memoryRegions[2];
+  memoryRegions[0] = reg1;
+  memoryRegions[1] = reg2;
+  
+  ANAlloc::AllocatorList<3, T> list(0x1000, 0x1000, 0x10,
+                                    memoryRegions, 2);
+  list.GenerateDescriptions();
+  size_t size = list.BitmapByteCount();
+  uint8_t * buffer = new uint8_t[size];
+  list.GenerateAllocators(buffer);
+  
+  list.Reserve(reg1);
+  
+  assert(list.GetTrees()[0].GetType(0) == T::NodeTypeFree);
+  assert(list.GetTrees()[1].GetType(0) == T::NodeTypeData);
+  assert(list.GetTrees()[2].GetType(0) == T::NodeTypeFree);
+  
+  list.Reserve(reg2);
+  assert(list.GetTrees()[0].GetType(0) == T::NodeTypeData);
+  assert(list.GetTrees()[1].GetType(0) == T::NodeTypeData);
+  assert(list.GetTrees()[2].GetType(0) == T::NodeTypeData);
+  
+  delete buffer;
+  cout << "passed!" << endl;
+}
+
+template <class T>
+void TestOverlappingReserve(string name) {
+  cout << "testing AllocatorList<" << name
+    << ">::Reserve() [overlapping] ... ";
+  
+  ANAlloc::Region reg1(0, 0x1000);
+  ANAlloc::Region reg2(0x1000, 0x1000);
+  ANAlloc::Region reg3(0x2000, 0x1000);
+  
+  ANAlloc::Region memoryRegions[3];
+  memoryRegions[0] = reg1;
+  memoryRegions[1] = reg2;
+  memoryRegions[2] = reg3;
+  
+  ANAlloc::AllocatorList<3, T> list(0x1000, 0x1000, 0x10,
+                                    memoryRegions, 3);
+  list.GenerateDescriptions();
+  size_t size = list.BitmapByteCount();
+  uint8_t * buffer = new uint8_t[size];
+  list.GenerateAllocators(buffer);
+  
+  ANAlloc::Region reg(0x10, 0x2000);
+  list.Reserve(reg);
+  
+  // verify structure of tree 0
+  ANAlloc::Path p = 0;
+  T & tree0 = list.GetTrees()[0];
+  for (int i = 0; i < tree0.Depth() - 1; i++) {
+    ANAlloc::Path left = ANAlloc::PathLeft(p);
+    ANAlloc::Path right = left + 1;
+    assert(tree0.GetType(p) == T::NodeTypeContainer);
+    assert(tree0.GetType(right) == T::NodeTypeData);
+    if (i + 2 == tree0.Depth()) {
+      assert(tree0.GetType(left) == T::NodeTypeFree);
+    }
+    p = left;
+  }
+  
+  // verify structure of tree 1
+  assert(list.GetTrees()[1].GetType(0) == T::NodeTypeData);
+  
+  // verify structure of tree 2
+  p = 0;
+  T & tree2 = list.GetTrees()[2];
+  for (int i = 0; i < tree2.Depth() - 1; i++) {
+    ANAlloc::Path left = ANAlloc::PathLeft(p);
+    ANAlloc::Path right = left + 1;
+        
+    assert(tree2.GetType(p) == T::NodeTypeContainer);
+    assert(tree2.GetType(right) == T::NodeTypeFree);
+    if (i + 2 == tree2.Depth()) {
+      assert(tree2.GetType(left) == T::NodeTypeData);
+    }
+    p = left;
+  }
+  
+  delete buffer;
   cout << "passed!" << endl;
 }
