@@ -119,7 +119,7 @@ public:
         p = PathLeft(p);
       } else {
         p = PathRight(p);
-        theIdx += idx;
+        theIdx += nodeSize;
       }
     }
     return false;

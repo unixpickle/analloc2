@@ -14,6 +14,9 @@ void TestBasicReserve(string name);
 template <class T>
 void TestOverlappingReserve(string name);
 
+template <class T>
+void TestPointerConversion(string name);
+
 int main() {
   TestBasicLayout();
   TestMinAlignmentLayout();
@@ -21,6 +24,8 @@ int main() {
   TestBasicReserve<ANAlloc::BBTree>("BBTree");
   TestOverlappingReserve<ANAlloc::BTree>("BTree");
   TestOverlappingReserve<ANAlloc::BBTree>("BBTree");
+  TestPointerConversion<ANAlloc::BTree>("BTree");
+  TestPointerConversion<ANAlloc::BBTree>("BBTree");
   
   return 0;
 }
@@ -185,6 +190,64 @@ void TestOverlappingReserve(string name) {
     p = left;
   }
   
+  delete buffer;
+  cout << "passed!" << endl;
+}
+
+template <class T>
+void TestPointerConversion(string name) {
+  cout << "testing AllocatorList<" << name
+    << ">::[Pointer/Path]for[Path/Pointer]() ... ";
+  
+  ANAlloc::Region reg1(0, 0x1000);
+  // throw in a gap, just for fun
+  ANAlloc::Region reg2(0x1800, 0x1000);
+  
+  ANAlloc::Region memoryRegions[2];
+  memoryRegions[0] = reg1;
+  memoryRegions[1] = reg2;
+  
+  ANAlloc::AllocatorList<2, T> list(0x800, 0x800, 0x10,
+                                    memoryRegions, 2);
+  list.GenerateDescriptions();
+  size_t size = list.BitmapByteCount();
+  uint8_t * buffer = new uint8_t[size];
+  list.GenerateAllocators(buffer);
+  
+  // test translation for allocator 0
+  ANAlloc::Path p = 0;
+  ANAlloc::Allocator<T> & alloc = list.GetAllocators()[0];
+  alloc.Alloc(1, p);
+  assert(p == 1);
+  alloc.Alloc(2, p);
+  assert(p == 5);
+  assert(list.PointerForPath(0, 1) == 0);
+  assert(list.PointerForPath(0, 5) == 0x800);
+  int i;
+  assert(list.PathForPointer(0, p, i));
+  assert(i == 0);
+  assert(p == 1);
+  assert(list.PathForPointer(0x800, p, i));
+  assert(i == 0);
+  assert(p == 5);
+  assert(!list.PathForPointer(0xc00, p, i));
+  
+  // test translation for allocator 1
+  alloc = list.GetAllocators()[1];
+  alloc.Alloc(1, p);
+  assert(p == 1);
+  alloc.Alloc(2, p);
+  assert(p == 5);
+  assert(list.PointerForPath(1, 1) == 0x1800);
+  assert(list.PointerForPath(1, 5) == 0x2000);
+  assert(list.PathForPointer(0x1800, p, i));
+  assert(i == 1);
+  assert(p == 1);
+  assert(list.PathForPointer(0x2000, p, i));
+  assert(i == 1);
+  assert(p == 5);
+  assert(!list.PathForPointer(0x2400, p, i));
+
   delete buffer;
   cout << "passed!" << endl;
 }

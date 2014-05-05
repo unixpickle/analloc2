@@ -287,8 +287,30 @@ public:
     return allocators;
   }
   
-  // TODO: here, add more methods for allocating regions of memory, aligning
-  // them, freeing them, etc.
+  uintptr_t PointerForPath(int allocIndex, Path p) {
+    Description & desc = descriptions[allocIndex];
+    int depth = PathDepth(p);
+    
+    size_t eachSize = (pageSize << (desc.depth - depth - 1));
+    return desc.start + eachSize * PathIndex(p);
+  }
+  
+  bool PathForPointer(uintptr_t ptr, Path & path, int & i) {
+    for (i = 0; i < descriptionCount; i++) {
+      Description & desc = descriptions[i];
+      uintptr_t descEnd = desc.start + DepthSize(desc.depth);
+      if (ptr < desc.start) continue;
+      if (ptr >= descEnd) continue;
+      
+      // we found our descriptor
+      uintptr_t baseIndex = (ptr - desc.start) / pageSize;
+      if (!allocators[i].Find(baseIndex, path)) {
+        return false;
+      }
+      return true;
+    }
+    return false;
+  }
   
 };
 
