@@ -69,7 +69,7 @@ struct Description {
  * This template class allows you to map out the topology of a memory space and
  * create a fitting amount of allocators.
  */
-template <size_t maxCount, class TreeType>
+template <int maxCount, class TreeType>
 class AllocatorList {
 protected:
   Allocator<TreeType> allocators[maxCount];

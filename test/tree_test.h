@@ -28,12 +28,12 @@ ANAlloc::Path AllocAll(T & tree) {
   FreeAll(tree);
   ANAlloc::Path p = 0;
   for (int i = 0; i < tree.Depth() - 1; i++) {
-    for (int j = 0; j < ANAlloc::PathsForDepth(i); j++) {
+    for (uintptr_t j = 0; j < ANAlloc::PathsForDepth(i); j++) {
       tree.SetType(p, T::NodeTypeContainer);
       p++;
     }
   }
-  for (int j = 0; j < ANAlloc::PathsForDepth(tree.Depth() - 1); j++) {
+  for (uintptr_t j = 0; j < ANAlloc::PathsForDepth(tree.Depth() - 1); j++) {
     tree.SetType(p, T::NodeTypeData);
     p++;
   }
@@ -52,12 +52,12 @@ void TestTreeStrictTypes(T & tree, std::string className) {
   // verify that the tree is the way we set it up to be
   ANAlloc::Path p = 0;
   for (int i = 0; i < tree.Depth() - 1; i++) {
-    for (int j = 0; j < ANAlloc::PathsForDepth(i); j++) {
+    for (uintptr_t j = 0; j < ANAlloc::PathsForDepth(i); j++) {
       assert(tree.GetType(p) == T::NodeTypeContainer);
       p++;
     }
   }
-  for (int j = 0; j < ANAlloc::PathsForDepth(tree.Depth() - 1); j++) {
+  for (uintptr_t j = 0; j < ANAlloc::PathsForDepth(tree.Depth() - 1); j++) {
     assert(tree.GetType(p) == T::NodeTypeData);
     p++;
   }
