@@ -205,6 +205,15 @@ public:
     descriptionCount = 0;
   }
   
+  AllocatorList() {
+    alignment = 0;
+    minAlignment = 0;
+    pageSize = 0;
+    regions = NULL;
+    regionCount = 0;
+    descriptionCount = 0;
+  }
+  
   void GenerateDescriptions() {
     while (descriptionCount < maxCount) {
       Description desc;
