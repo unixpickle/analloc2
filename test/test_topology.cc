@@ -20,6 +20,9 @@ void TestPointerConversion(string name);
 template <class T>
 void TestAllocFree(string name);
 
+template <class T>
+void TestAllocFreeBad(string name);
+
 int main() {
   TestBasicLayout();
   TestMinAlignmentLayout();
@@ -31,6 +34,8 @@ int main() {
   TestPointerConversion<ANAlloc::BBTree>("BBTree");
   TestAllocFree<ANAlloc::BTree>("BTree");
   TestAllocFree<ANAlloc::BBTree>("BBTree");
+  TestAllocFreeBad<ANAlloc::BTree>("BTree");
+  TestAllocFreeBad<ANAlloc::BBTree>("BBTree");
   
   return 0;
 }
@@ -260,7 +265,9 @@ void TestPointerConversion(string name) {
 template <class T>
 void TestAllocFree(string name) {
   cout << "testing AllocatorList<" << name
-    << ">::[Alloc/Free]Pointer() ... ";
+    << ">::[Alloc/Free]Pointer() [basic] ... ";
+  
+  size_t sizeOut = 0;
   
   ANAlloc::Region reg1(0, 0x1000);
   ANAlloc::Region reg2(0x1000, 0x1000);
@@ -290,21 +297,25 @@ void TestAllocFree(string name) {
   
   // first, go for the easy case of allocating everything
   uintptr_t outPtr;
-  assert(list.AllocPointer(0x1000, 0x1000, outPtr));
+  assert(list.AllocPointer(0x1000, 0x1000, outPtr, &sizeOut));
   assert(0 == outPtr);
+  assert(0x1000 == sizeOut);
   assert(list.GetTrees()[0].GetType(0) == T::NodeTypeData);
   
-  assert(list.AllocPointer(0x1000, 0x1000, outPtr));
+  assert(list.AllocPointer(0x1000, 0x1000, outPtr, &sizeOut));
   assert(0x1000 == outPtr);
+  assert(0x1000 == sizeOut);
   assert(list.GetTrees()[1].GetType(0) == T::NodeTypeData);
   
-  assert(!list.AllocPointer(0x1000, 0x800, outPtr));
-  assert(list.AllocPointer(0x800, 0x800, outPtr));
+  assert(!list.AllocPointer(0x1000, 0x800, outPtr, NULL));
+  assert(list.AllocPointer(0x800, 0x800, outPtr, &sizeOut));
   assert(0x3000 == outPtr);
+  assert(0x800 == sizeOut);
   assert(list.GetTrees()[2].GetType(0) == T::NodeTypeData);
   
-  assert(list.AllocPointer(0x800, 0x800, outPtr));
+  assert(list.AllocPointer(0x800, 0x800, outPtr, &sizeOut));
   assert(0x2800 == outPtr);
+  assert(0x800 == sizeOut);
   assert(list.GetTrees()[3].GetType(0) == T::NodeTypeData);
   
   // make sure freeing these addresses works
@@ -312,16 +323,17 @@ void TestAllocFree(string name) {
   assert(list.GetTrees()[3].GetType(0) == T::NodeTypeFree);
   
   // attempt to allocate a smaller aligned region
-  assert(list.AllocPointer(0x400, 0x400, outPtr));
-  assert(outPtr == 0x2800);
+  assert(list.AllocPointer(0x400, 0x400, outPtr, &sizeOut));
+  assert(0x2800 == outPtr);
+  assert(0x400 == sizeOut);
   
   assert(list.GetTrees()[3].GetType(0) == T::NodeTypeContainer);
   assert(list.GetTrees()[3].GetType(1) == T::NodeTypeData);
   assert(list.GetTrees()[3].GetType(2) == T::NodeTypeFree);
   
-  assert(!list.AllocPointer(0x400, 0x800, outPtr));
-  assert(list.AllocPointer(0x400, 0x400, outPtr));
-  assert(outPtr == 0x2c00);
+  assert(!list.AllocPointer(0x400, 0x800, outPtr, NULL));
+  assert(list.AllocPointer(0x400, 0x400, outPtr, NULL));
+  assert(0x2c00 == outPtr);
   assert(list.GetTrees()[3].GetType(2) == T::NodeTypeData);
   
   list.FreePointer(0x2800);
@@ -338,38 +350,61 @@ void TestAllocFree(string name) {
   assert(list.GetTrees()[0].GetType(0) == T::NodeTypeFree);
   
   // try nesting this (fun chiasmus)
-  assert(list.AllocPointer(0x10, 0x10, outPtr));
+  assert(list.AllocPointer(0x10, 0x10, outPtr, &sizeOut));
   assert(0 == outPtr);
-  assert(list.AllocPointer(0x20, 0x20, outPtr));
+  assert(0x10 == sizeOut);
+  assert(list.AllocPointer(0x20, 0x20, outPtr, &sizeOut));
   assert(0x20 == outPtr);
-  assert(list.AllocPointer(0x10, 0x10, outPtr));
+  assert(0x20 == sizeOut);
+  assert(list.AllocPointer(0x10, 0x10, outPtr, &sizeOut));
   assert(0x10 == outPtr);
+  assert(0x10 == sizeOut);
   
-  assert(list.AllocPointer(0x1000, 0x1000, outPtr));
-  assert(0x1000 == outPtr);
-  assert(list.AllocPointer(0x800, 0x800, outPtr));
-  assert(0x800 == outPtr);
-  assert(list.AllocPointer(0x400, 0x400, outPtr));
-  assert(0x400 == outPtr);
-  assert(list.AllocPointer(0x200, 0x200, outPtr));
-  assert(0x200 == outPtr);
-  assert(list.AllocPointer(0x100, 0x100, outPtr));
-  assert(0x100 == outPtr);
-  assert(list.AllocPointer(0x80, 0x80, outPtr));
-  assert(0x80 == outPtr);
-  assert(list.AllocPointer(0x40, 0x40, outPtr));
-  assert(0x40 == outPtr);
+  for (int i = 8; i > 1; i--) {
+    size_t size = (0x10L << i);
+    assert(list.AllocPointer(size, size, outPtr, &sizeOut));
+    assert(size == sizeOut);
+    assert(size == outPtr);
+  }
+  for (int i = 8; i > 1; i--) {
+    list.FreePointer((0x10L << i));
+  }
   
   list.FreePointer(0x0);
   list.FreePointer(0x10);
   list.FreePointer(0x20);
-  list.FreePointer(0x40);
-  list.FreePointer(0x80);
-  list.FreePointer(0x100);
-  list.FreePointer(0x200);
-  list.FreePointer(0x400);
-  list.FreePointer(0x800);
-  list.FreePointer(0x1000);
+  
+  cout << "passed!" << endl;
+  delete buffer;
+}
+
+template <class T>
+void TestAllocFreeBad(string name) {
+  cout << "testing AllocatorList<" << name
+    << ">::[Alloc/Free]Pointer() [bad] ... ";
+  
+  size_t sizeOut = 0;
+  
+  ANAlloc::Region reg1(1, 0x1000);
+  
+  ANAlloc::AllocatorList<2, T> list(1, 1, 0x10,
+                                    &reg1, 1);
+  list.GenerateDescriptions();
+  size_t size = list.BitmapByteCount();
+  uint8_t * buffer = new uint8_t[size];
+  list.GenerateAllocators(buffer);
+  
+  assert(list.GetDescriptionCount() == 1);
+  assert(list.GetDescriptions()[0].start == 1);
+  assert(list.GetDescriptions()[0].depth == 9);
+  
+  uintptr_t outPtr;
+  assert(list.AllocPointer(0x10, 0x10, outPtr, &sizeOut));
+  assert(0x10 == outPtr);
+  assert(0x11 == sizeOut);
+  
+  list.FreePointer(0x10);
+  assert(list.GetTrees()[0].GetType(0) == T::NodeTypeFree);
   
   cout << "passed!" << endl;
   delete buffer;

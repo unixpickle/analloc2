@@ -377,7 +377,10 @@ public:
     return AllocPath(grabSize * 2, 0, p, i);
   }
 
-  bool AllocPointer(size_t size, size_t align, uintptr_t & out) {
+  bool AllocPointer(size_t size,
+                    size_t align,
+                    uintptr_t & out,
+                    size_t * sizeOut) {
     int alignLog = Log2Floor(align);
     assert((1L << alignLog) == align);
 
@@ -388,7 +391,18 @@ public:
     }
     
     out = PointerForPath(i, p);
-    if (out % align) out += align - (out % align);
+    if (sizeOut) {
+      int power = descriptions[i].depth - PathDepth(p) - 1;
+      *sizeOut = pageSize << power;
+    }
+    
+    // make sure the actual returned address is aligned (it might not be if)
+    // our call got forwarded to BadAlloc().
+    if (out % align) {
+      if (sizeOut) *sizeOut -= align - (out % align);
+      out += align - (out % align);
+    }
+    
     return true;
   }
 
