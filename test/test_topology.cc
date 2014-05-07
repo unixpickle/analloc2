@@ -17,6 +17,9 @@ void TestOverlappingReserve(string name);
 template <class T>
 void TestPointerConversion(string name);
 
+template <class T>
+void TestAllocFree(string name);
+
 int main() {
   TestBasicLayout();
   TestMinAlignmentLayout();
@@ -26,6 +29,8 @@ int main() {
   TestOverlappingReserve<ANAlloc::BBTree>("BBTree");
   TestPointerConversion<ANAlloc::BTree>("BTree");
   TestPointerConversion<ANAlloc::BBTree>("BBTree");
+  TestAllocFree<ANAlloc::BTree>("BTree");
+  TestAllocFree<ANAlloc::BBTree>("BBTree");
   
   return 0;
 }
@@ -250,4 +255,67 @@ void TestPointerConversion(string name) {
 
   delete buffer;
   cout << "passed!" << endl;
+}
+
+template <class T>
+void TestAllocFree(string name) {
+  cout << "testing AllocatorList<" << name
+    << ">::[Alloc/Free]Pointer() ... ";
+  
+  ANAlloc::Region reg1(0, 0x1000);
+  ANAlloc::Region reg2(0x1000, 0x1000);
+  ANAlloc::Region reg3(0x2800, 0x1000); // smaller alignment
+  
+  ANAlloc::Region memoryRegions[3];
+  memoryRegions[0] = reg1;
+  memoryRegions[1] = reg2;
+  memoryRegions[2] = reg3;
+  
+  ANAlloc::AllocatorList<4, T> list(0x1000, 0x800, 0x10,
+                                    memoryRegions, 3);
+  list.GenerateDescriptions();
+  size_t size = list.BitmapByteCount();
+  uint8_t * buffer = new uint8_t[size];
+  list.GenerateAllocators(buffer);
+  
+  assert(list.GetDescriptionCount() == 4);
+  assert(list.GetDescriptions()[0].start == 0);
+  assert(list.GetDescriptions()[0].depth == 9);
+  assert(list.GetDescriptions()[1].start == 0x1000);
+  assert(list.GetDescriptions()[1].depth == 9);
+  assert(list.GetDescriptions()[2].start == 0x3000);
+  assert(list.GetDescriptions()[2].depth == 8);
+  assert(list.GetDescriptions()[3].start == 0x2800);
+  assert(list.GetDescriptions()[3].depth == 8);
+  
+  // first, go for the easy case of allocating everything
+  uintptr_t outPtr;
+  assert(list.AllocPointer(0x1000, 0x1000, outPtr));
+  assert(0 == outPtr);
+  assert(list.GetTrees()[0].GetType(0) == T::NodeTypeData);
+  
+  assert(list.AllocPointer(0x1000, 0x1000, outPtr));
+  assert(0x1000 == outPtr);
+  assert(list.GetTrees()[1].GetType(0) == T::NodeTypeData);
+  
+  assert(!list.AllocPointer(0x1000, 0x800, outPtr));
+  assert(list.AllocPointer(0x800, 0x800, outPtr));
+  assert(0x3000 == outPtr);
+  assert(list.GetTrees()[2].GetType(0) == T::NodeTypeData);
+  
+  assert(list.AllocPointer(0x800, 0x800, outPtr));
+  assert(0x2800 == outPtr);
+  assert(list.GetTrees()[3].GetType(0) == T::NodeTypeData);
+  
+  list.FreePointer(0x2800);
+  assert(list.GetTrees()[3].GetType(0) == T::NodeTypeFree);
+  list.FreePointer(0x3000);
+  assert(list.GetTrees()[2].GetType(0) == T::NodeTypeFree);
+  list.FreePointer(0x1000);
+  assert(list.GetTrees()[1].GetType(0) == T::NodeTypeFree);
+  list.FreePointer(0);
+  assert(list.GetTrees()[0].GetType(0) == T::NodeTypeFree);
+  
+  cout << "passed!" << endl;
+  delete buffer;
 }

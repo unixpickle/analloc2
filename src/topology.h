@@ -347,7 +347,7 @@ public:
   bool AllocPath(size_t size, unsigned int alignLog, Path & p, int & i) {
     size_t alignSize = (1L << alignLog);
     size_t grabSize = size > alignSize ? size : alignSize;
-    int grabPower = alignLog - (int)Log2Ceil(pageSize);
+    int grabPower = Log2Ceil(grabSize) - Log2Ceil(pageSize);
     if (grabPower < 0) grabPower = 0;
 
     for (i = 0; i < descriptionCount; i++) {
@@ -374,7 +374,7 @@ public:
   bool BadAlloc(size_t size, size_t alignLog, Path & p, int & i) {
     size_t alignSize = (1L << alignLog);
     size_t grabSize = size > alignSize ? size : alignSize;
-    return AllocPath(grabSize * 2, 1, p, i);
+    return AllocPath(grabSize * 2, 0, p, i);
   }
 
   bool AllocPointer(size_t size, size_t align, uintptr_t & out) {
@@ -386,7 +386,7 @@ public:
     if (!AllocPath(size, alignLog, p, i)) {
       return false;
     }
-
+    
     out = PointerForPath(i, p);
     if (out % align) out += align - (out % align);
     return true;
