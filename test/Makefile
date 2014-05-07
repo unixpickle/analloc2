@@ -1,4 +1,4 @@
-CPPFLAGS = -Wextra
+CPPFLAGS = -Wextra -std=c++11
 
 all: build/bitmap build/tree build/btree build/bbtree build/allocator build/topology
 

@@ -5,6 +5,27 @@
 
 namespace ANAlloc {
 
+inline int Log2Floor(uintptr_t num) {
+  assert(num != 0);
+  if (1 == num) return 0;
+  for (int i = 0; i < 64; i++) {
+    uintptr_t val = (1L << i);
+    if (val > num) return i - 1;
+    if (val == num) return i;
+  }
+  return 63;
+}
+
+inline int Log2Ceil(uintptr_t num) {
+  assert(num != 0);
+  if (1 == num) return 0;
+  for (int i = 0; i < 64; i++) {
+    uintptr_t val = (1L << i);
+    if (val >= num) return i;
+  }
+  return 64;
+}
+
 /**
  * Represents an abstract region of memory.
  */
@@ -197,6 +218,8 @@ public:
   AllocatorList(size_t _alignment, size_t _minAlignment,
                 size_t _pageSize, Region * _regions,
                 int _regionCount) {
+    assert((1L << Log2Floor(_alignment)) == _alignment);
+    assert((1L << Log2Floor(_pageSize)) == _pageSize);
     alignment = _alignment;
     minAlignment = _minAlignment;
     pageSize = _pageSize;
@@ -320,7 +343,62 @@ public:
     }
     return false;
   }
-  
+
+  bool AllocPath(size_t size, unsigned int alignLog, Path & p, int & i) {
+    size_t alignSize = (1L << alignLog);
+    size_t grabSize = size > alignSize ? size : alignSize;
+    int grabPower = alignLog - (int)Log2Ceil(pageSize);
+    if (grabPower < 0) grabPower = 0;
+
+    for (i = 0; i < descriptionCount; i++) {
+      Description & desc = descriptions[i];
+      uintptr_t start = desc.start;
+      // make sure `start` is aligned to `align`
+      if (start & (alignSize - 1)) continue;
+      // make sure its big enough
+      if (desc.depth <= grabPower) continue;
+      // calculate the depth of the node we need
+      int reqDepth = desc.depth - grabPower - 1;
+      if (allocators[i].Alloc(reqDepth, p)) {
+        return true;
+      }
+    }
+    if (alignLog > 0) return BadAlloc(size, alignLog, p, i);
+    return false;
+  }
+
+  /**
+   * Allocate in the "bad" way, grabbing twice the needed size in order to get
+   * an aligned address back.
+   */
+  bool BadAlloc(size_t size, size_t alignLog, Path & p, int & i) {
+    size_t alignSize = (1L << alignLog);
+    size_t grabSize = size > alignSize ? size : alignSize;
+    return AllocPath(grabSize * 2, 1, p, i);
+  }
+
+  bool AllocPointer(size_t size, size_t align, uintptr_t & out) {
+    int alignLog = Log2Floor(align);
+    assert((1L << alignLog) == align);
+
+    Path p;
+    int i;
+    if (!AllocPath(size, alignLog, p, i)) {
+      return false;
+    }
+
+    out = PointerForPath(i, p);
+    if (out % align) out += align - (out % align);
+    return true;
+  }
+
+  void FreePointer(uintptr_t ptr) {
+    Path p;
+    int i;
+    if (!PathForPointer(ptr, p, i)) return;
+    allocators[i].Free(p);
+  }
+ 
 };
 
 }
