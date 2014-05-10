@@ -141,11 +141,9 @@ public:
     
     // check if we are completely outside the base range
     if ((index + 1) * baseCount <= idx) {
-      Free(path);
-      return;
+      return Free(path);
     } else if (index * baseCount >= count + idx) {
-      Free(path);
-      return;
+      return Free(path);
     }
     
     // split and recurse
