@@ -397,6 +397,7 @@ bool AllocatorList<mc, T>::BadAlloc(size_t size, size_t alignLog,
                                     Path & p, int & i) {
   size_t alignSize = (1L << alignLog);
   size_t grabSize = size > alignSize ? size : alignSize;
+  
   return AllocPath(grabSize * 2, 0, p, i);
 }
 
@@ -419,15 +420,15 @@ bool AllocatorList<mc, T>::AllocPointer(size_t size,
   size_t usedSize = 0;
   int power = descriptions[i].depth - PathDepth(p) - 1;
   usedSize = pageSize << power;
+  if (sizeOut) *sizeOut = usedSize;
   
   // make sure the actual returned address is aligned (it might not be if)
   // our call got forwarded to BadAlloc().
   if (out % align) {
-    usedSize -= align - (out % align);
+    if (sizeOut) *sizeOut -= align - (out % align);
     out += align - (out % align);
   }
   
-  if (sizeOut) *sizeOut = usedSize;
   availableSpace -= usedSize;
   
   return true;

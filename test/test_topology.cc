@@ -23,6 +23,9 @@ void TestAllocFree(string name);
 template <class T>
 void TestAllocFreeBad(string name);
 
+template <class T>
+void TestAvailableSize(string name);
+
 int main() {
   TestBasicLayout();
   TestMinAlignmentLayout();
@@ -36,6 +39,8 @@ int main() {
   TestAllocFree<ANAlloc::BBTree>("BBTree");
   TestAllocFreeBad<ANAlloc::BTree>("BTree");
   TestAllocFreeBad<ANAlloc::BBTree>("BBTree");
+  TestAvailableSize<ANAlloc::BTree>("BTree");
+  TestAvailableSize<ANAlloc::BBTree>("BBTree");
   
   return 0;
 }
@@ -165,7 +170,7 @@ void TestOverlappingReserve(string name) {
   uint8_t * buffer = new uint8_t[size];
   list.GenerateAllocators(buffer);
   
-  ANAlloc::Region reg(0x10, 0x2000);
+  ANAlloc::Region reg(0x11, 0x1fff); // offset stuff for more rigor
   list.Reserve(reg);
   
   // verify structure of tree 0
@@ -405,6 +410,44 @@ void TestAllocFreeBad(string name) {
   
   list.FreePointer(0x10);
   assert(list.GetTrees()[0].GetType(0) == T::NodeTypeFree);
+  
+  cout << "passed!" << endl;
+  delete buffer;
+}
+
+template <class T>
+void TestAvailableSize(string name) {
+  cout << "testing AllocatorList<" << name
+    << ">::[Alloc/Free]Pointer() [bad] ... ";
+  
+  size_t sizeOut = 0;
+  
+  ANAlloc::Region reg1(1, 0x10000);
+  
+  ANAlloc::AllocatorList<2, T> list(1, 1, 0x10,
+                                    &reg1, 1);
+  list.GenerateDescriptions();
+  size_t size = list.BitmapByteCount();
+  uint8_t * buffer = new uint8_t[size];
+  list.GenerateAllocators(buffer);
+  
+  ANAlloc::Region res(0, 0x200);
+  list.Reserve(res);
+  
+  assert(list.AvailableSpace() == 0xfe00);
+  
+  uintptr_t outPtr;
+  list.AllocPointer(1, 1, outPtr, NULL);
+  assert(list.AvailableSpace() == 0xfdf0);
+  
+  list.FreePointer(outPtr);
+  assert(list.AvailableSpace() == 0xfe00);
+  
+  list.AllocPointer(1, 0x10, outPtr, NULL);
+  assert(list.AvailableSpace() == 0xfde0);
+  
+  list.FreePointer(outPtr);
+  assert(list.AvailableSpace() == 0xfe00);
   
   cout << "passed!" << endl;
   delete buffer;
