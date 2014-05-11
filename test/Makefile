@@ -1,6 +1,6 @@
 CPPFLAGS = -Wextra -std=c++11
 
-all: build/bitmap build/tree build/btree build/bbtree build/allocator build/topology
+all: build/bitmap build/tree build/btree build/bbtree build/allocator build/topology build/malloc
 
 build/bitmap: build
 	g++ $(CPPFLAGS) ../src/bitmap.cc test_bitmap.cc -o build/bitmap
@@ -19,6 +19,9 @@ build/allocator: build
 
 build/topology: build
 	g++ $(CPPFLAGS) ../src/bitmap.cc ../src/tree.cc ../src/btree.cc ../src/bbtree.cc test_topology.cc -o build/topology
+
+build/malloc: build
+	g++ $(CPPFLAGS) ../src/bitmap.cc ../src/tree.cc ../src/btree.cc ../src/bbtree.cc test_malloc.cc -o build/malloc
 
 build:
 	mkdir build
