@@ -52,7 +52,7 @@ public:
 
 template <class T>
 Malloc<T>::Malloc(void * base, size_t page, size_t used, size_t total)
-  : treeObject(Log2Floor(total / page), (uint8_t *)base + used) {
+  : treeObject(Log2Floor(total / page) + 1, (uint8_t *)base + used) {
   this->tree = &treeObject;
   start = base;
   length = total;
@@ -82,7 +82,7 @@ void * Malloc<T>::AllocBuf(size_t size) {
   Path p = 0;
   bool res = this->Alloc(depth, p);
   if (!res) return NULL;
-  return (void *)(PathIndex(p) * (pageSize << power));
+  return (void *)((PathIndex(p) * (pageSize << power)) + (uintptr_t)start);
 }
 
 template <class T>

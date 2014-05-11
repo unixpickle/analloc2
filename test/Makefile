@@ -21,7 +21,7 @@ build/topology: build
 	g++ $(CPPFLAGS) ../src/bitmap.cc ../src/tree.cc ../src/btree.cc ../src/bbtree.cc test_topology.cc -o build/topology
 
 build/malloc: build
-	g++ $(CPPFLAGS) ../src/bitmap.cc ../src/tree.cc ../src/btree.cc ../src/bbtree.cc test_malloc.cc -o build/malloc
+	g++ $(CPPFLAGS) ../src/bitmap.cc ../src/tree.cc ../src/bbtree.cc test_malloc.cc -o build/malloc
 
 build:
 	mkdir build
