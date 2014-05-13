@@ -103,6 +103,10 @@ public:
                 int _regionCount);
   AllocatorList();
   
+  void SetInformation(size_t _alignment, size_t _minAlignment,
+                      size_t _pageSize, Region * _regions,
+                      int _regionCount);
+  
   /**
    * Setup structures for the next call, BitmapByteCount().
    */
@@ -216,6 +220,23 @@ AllocatorList<mc, T>::AllocatorList() {
   pageSize = 0;
   regions = NULL;
   regionCount = 0;
+  descriptionCount = 0;
+  availableSpace = 0;
+}
+
+template <int mc, class T>
+void AllocatorList<mc, T>::SetInformation(size_t _alignment,
+                                          size_t _minAlignment,
+                                          size_t _pageSize,
+                                          Region * _regions,
+                                          int _regionCount) {
+  assert((1L << Log2Floor(_alignment)) == _alignment);
+  assert((1L << Log2Floor(_pageSize)) == _pageSize);
+  alignment = _alignment;
+  minAlignment = _minAlignment;
+  pageSize = _pageSize;
+  regions = _regions;
+  regionCount = _regionCount;
   descriptionCount = 0;
   availableSpace = 0;
 }
