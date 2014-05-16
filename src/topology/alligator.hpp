@@ -40,6 +40,9 @@ protected:
   void InsertDescription(const Descirption & desc, bool sorted);
 };
 
+#include "alligator-protected.hpp"
+#include "alligator-public.hpp"
+
 }
 
 #endif
