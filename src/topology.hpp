@@ -52,8 +52,11 @@ public:
 struct Description {
   uintptr_t start;
   int depth;
+  size_t pageSize;
   
-  Description() : start(0), depth(0) {}
+  Description() : start(0), depth(0), pageSize(0) {}
+
+  Description(size_t pageSize) : start(0), depth(0), pageSize(pageSize) {}
   
   Description(const Description & desc) {
     *this = desc;
@@ -62,7 +65,14 @@ struct Description {
   Description & operator=(const Description & desc) {
     start = desc.start;
     depth = desc.depth;
+    pageSize = desc.pageSize;
+    assert(pageSize);
     return *this;
+  }
+
+  size_t GetSize() {
+    if (!depth) return 0;
+    return pageSize << (depth - 1);
   }
 };
 
@@ -91,7 +101,6 @@ protected:
   bool RegionLargestFree(Region & reg, Description & desc);
   uintptr_t NextFreeAligned(Region & reg, uintptr_t loc);
   uintptr_t NextBreak(Region & reg, uintptr_t loc, uintptr_t * nextFree);
-  size_t DepthSize(int depth);
   int SizeDepth(size_t size);
   Path FloorBasePath(Description & desc, uintptr_t byteIndex);
   size_t CountBaseNodes(Description & desc, uintptr_t start, uintptr_t end);

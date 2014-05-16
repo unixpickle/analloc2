@@ -46,7 +46,7 @@ void AllocatorList<mc, T>::SetInformation(size_t _alignment,
 template <int mc, class T>
 void AllocatorList<mc, T>::GenerateDescriptions(bool sorted) {
   while (descriptionCount < mc) {
-    Description desc;
+    Description desc(pageSize);
     if (!FindLargestDescription(desc)) {
       alignment >>= 1;
       if (alignment < minAlignment) break;
@@ -85,7 +85,7 @@ void AllocatorList<mc, T>::Reserve(const Region & reg) {
   
   for (int i = 0; i < descriptionCount; i++) {
     Description & desc = descriptions[i];
-    uintptr_t descEnd = desc.start + DepthSize(desc.depth);
+    uintptr_t descEnd = desc.start + desc.GetSize();
     if (reg.GetStart() > descEnd) {
       continue;
     } else if (reg.GetEnd() <= desc.start) {
@@ -156,7 +156,7 @@ bool AllocatorList<mc, T>::PathForPointer(uintptr_t ptr, Path & path,
                                           int & i) {
   for (i = 0; i < descriptionCount; i++) {
     Description & desc = descriptions[i];
-    uintptr_t descEnd = desc.start + DepthSize(desc.depth);
+    uintptr_t descEnd = desc.start + desc.GetSize();
     if (ptr < desc.start) continue;
     if (ptr >= descEnd) continue;
     

@@ -5,7 +5,7 @@ bool AllocatorList<mc, T>::FindLargestDescription(Description & desc) {
   desc.depth = 0;
   for (int i = 0; i < regionCount; i++) {
     Region & reg = regions[i];
-    Description result;
+    Description result(pageSize);
     if (!RegionLargestFree(reg, result)) continue;
     
     if (result.depth > desc.depth) {
@@ -51,9 +51,9 @@ uintptr_t AllocatorList<mc, T>::NextFreeAligned(Region & reg, uintptr_t loc) {
     for (int i = 0; i < descriptionCount; i++) {
       Description & desc = descriptions[i];
       if (desc.start > loc) continue;
-      if (desc.start + DepthSize(desc.depth) > loc) {
+      if (desc.start + desc.GetSize() > loc) {
         isContained = true;
-        loc = desc.start + DepthSize(desc.depth);
+        loc = desc.start + desc.GetSize();
         break;
       }
     }
@@ -75,16 +75,10 @@ uintptr_t AllocatorList<mc, T>::NextBreak(Region & reg, uintptr_t loc,
     if (desc.start >= nextBreak) continue;
     nextBreak = descriptions[i].start;
     if (nextFree) {
-      *nextFree = nextBreak + DepthSize(desc.depth);
+      *nextFree = nextBreak + desc.GetSize();
     }
   }
   return nextBreak;
-}
-
-template <int mc, class T>
-size_t AllocatorList<mc, T>::DepthSize(int depth) {
-  if (!depth) return 0;
-  return (pageSize << (depth - 1));
 }
 
 template <int mc, class T>
