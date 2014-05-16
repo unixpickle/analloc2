@@ -1,7 +1,7 @@
 #ifndef __ANALLOC2_ALLOC_H__
 #define __ANALLOC2_ALLOC_H__
 
-#include "tree.h"
+#include "tree.hpp"
 #include <cassert>
 
 namespace ANAlloc {

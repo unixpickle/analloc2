@@ -1,6 +1,6 @@
 #include <iostream>
-#include "../src/malloc.h"
-#include "../src/bbtree.h"
+#include "../src/malloc.hpp"
+#include "../src/bbtree.hpp"
 
 using namespace std;
 

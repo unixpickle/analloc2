@@ -1,5 +1,5 @@
-#include "../src/btree.h"
-#include "tree_test.h"
+#include "../src/btree.hpp"
+#include "tree_test.hpp"
 
 int main() {
   assert(ANAlloc::BTree::MemorySize(1) == 1);

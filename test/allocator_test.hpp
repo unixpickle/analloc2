@@ -1,4 +1,4 @@
-#include "tree_test.h"
+#include "tree_test.hpp"
 
 template <class T>
 class AllocTest {

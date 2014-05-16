@@ -1,7 +1,7 @@
 #include <iostream>
-#include "../src/topology.h"
-#include "../src/btree.h"
-#include "../src/bbtree.h"
+#include "../src/topology.hpp"
+#include "../src/btree.hpp"
+#include "../src/bbtree.hpp"
 
 using namespace std;
 
@@ -452,3 +452,4 @@ void TestAvailableSize(string name) {
   cout << "passed!" << endl;
   delete buffer;
 }
+

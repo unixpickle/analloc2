@@ -1,8 +1,8 @@
 #ifndef __ANALLOC2_MALLOC_H__
 #define __ANALLOC2_MALLOC_H__
 
-#include "allocator.h"
-#include "utility.h"
+#include "allocator.hpp"
+#include "utility.hpp"
 
 namespace ANAlloc {
 

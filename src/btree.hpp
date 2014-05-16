@@ -1,8 +1,8 @@
 #ifndef __ANALLOC2_BTREE_H__
 #define __ANALLOC2_BTREE_H__
 
-#include "tree.h"
-#include "bitmap.h"
+#include "tree.hpp"
+#include "bitmap.hpp"
 
 namespace ANAlloc {
 

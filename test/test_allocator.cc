@@ -1,8 +1,8 @@
 #include <iostream>
-#include "../src/allocator.h"
-#include "../src/btree.h"
-#include "../src/bbtree.h"
-#include "allocator_test.h"
+#include "../src/allocator.hpp"
+#include "../src/btree.hpp"
+#include "../src/bbtree.hpp"
+#include "allocator_test.hpp"
 
 template <class T>
 void TestWithClass(std::string name);
