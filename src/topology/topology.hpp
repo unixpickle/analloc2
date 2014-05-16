@@ -1,80 +1,11 @@
 #ifndef __ANALLOC2_TOPOLOGY_H__
 #define __ANALLOC2_TOPOLOGY_H__
 
-#include "allocator.hpp"
-#include "utility.hpp"
+#include "../allocator.hpp"
+#include "../utility.hpp"
+#include "region.hpp"
 
 namespace ANAlloc {
-
-/**
- * Represents an abstract region of memory.
- */
-class Region {
-private:
-  uintptr_t start;
-  size_t size;
-  
-public:
-  Region(uintptr_t _start, size_t _size) {
-    start = _start;
-    size = _size;
-  }
-  
-  Region() : start(0), size(0) {}
-  
-  Region(const Region & reg) {
-    *this = reg;
-  }
-  
-  Region & operator=(const Region & reg) {
-    start = reg.start;
-    size = reg.size;
-    return *this;
-  }
-  
-  uintptr_t GetStart() const {
-    return start;
-  }
-  
-  uintptr_t GetEnd() const {
-    return start + size;
-  }
-  
-  size_t GetSize() const {
-    return size;
-  }
-   
-};
-
-/**
- * Represents the space to be used by an allocator.
- */
-struct Description {
-  uintptr_t start;
-  int depth;
-  size_t pageSize;
-  
-  Description() : start(0), depth(0), pageSize(0) {}
-
-  Description(size_t pageSize) : start(0), depth(0), pageSize(pageSize) {}
-  
-  Description(const Description & desc) {
-    *this = desc;
-  }
-  
-  Description & operator=(const Description & desc) {
-    start = desc.start;
-    depth = desc.depth;
-    pageSize = desc.pageSize;
-    assert(pageSize);
-    return *this;
-  }
-
-  size_t GetSize() {
-    if (!depth) return 0;
-    return pageSize << (depth - 1);
-  }
-};
 
 /**
  * This template class allows you to map out the topology of a memory space and
