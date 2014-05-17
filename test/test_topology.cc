@@ -7,6 +7,7 @@ using namespace std;
 
 void TestBasicLayout();
 void TestMinAlignmentLayout();
+void TestSortedLayout();
 
 template <class T>
 void TestBasicReserve(string name);
@@ -26,9 +27,16 @@ void TestAllocFreeBad(string name);
 template <class T>
 void TestAvailableSize(string name);
 
+template <class T>
+void TestAllocHigh(string name);
+
+template <class T>
+void TestAllocLow(string name);
+
 int main() {
   TestBasicLayout();
   TestMinAlignmentLayout();
+  TestSortedLayout();
   TestBasicReserve<ANAlloc::BTree>("BTree");
   TestBasicReserve<ANAlloc::BBTree>("BBTree");
   TestOverlappingReserve<ANAlloc::BTree>("BTree");
@@ -41,6 +49,10 @@ int main() {
   TestAllocFreeBad<ANAlloc::BBTree>("BBTree");
   TestAvailableSize<ANAlloc::BTree>("BTree");
   TestAvailableSize<ANAlloc::BBTree>("BBTree");
+  TestAllocHigh<ANAlloc::BTree>("BTree");
+  TestAllocHigh<ANAlloc::BBTree>("BBTree");
+  TestAllocLow<ANAlloc::BTree>("BTree");
+  TestAllocLow<ANAlloc::BBTree>("BBTree");
   
   return 0;
 }
@@ -112,6 +124,42 @@ void TestMinAlignmentLayout() {
   assert(list2.GetDescriptions()[2].GetDepth() == 1);
   assert(list2.GetDescriptions()[3].GetStart() == 0x3800);
   assert(list2.GetDescriptions()[3].GetDepth() == 4);
+  
+  cout << "passed!" << endl;
+}
+
+void TestSortedLayout() {
+  cout << "testing AllocatorList::GenerateDescriptions(true) ... ";
+  
+  // when we go down in alignment, the order will get scrambled like eggs
+  ANAlloc::Region reg1(0, 0x1000);
+  ANAlloc::Region reg2(0x1800, 0x1800);
+  
+  ANAlloc::Region regions[2];
+  regions[0] = reg1;
+  regions[1] = reg2;
+  
+  ANAlloc::AllocatorList<4, ANAlloc::BBTree> unsorted(0x1000, 0x800, 0x100,
+                                                      regions, 2);
+  unsorted.GenerateDescriptions();
+  assert(unsorted.GetDescriptionCount() == 3);
+  assert(unsorted.GetDescriptions()[0].GetStart() == 0x0);
+  assert(unsorted.GetDescriptions()[0].GetDepth() == 5);
+  assert(unsorted.GetDescriptions()[1].GetStart() == 0x2000);
+  assert(unsorted.GetDescriptions()[1].GetDepth() == 5);
+  assert(unsorted.GetDescriptions()[2].GetStart() == 0x1800);
+  assert(unsorted.GetDescriptions()[2].GetDepth() == 4);
+  
+  ANAlloc::AllocatorList<4, ANAlloc::BBTree> sorted(0x1000, 0x800, 0x100,
+                                                    regions, 2);
+  sorted.GenerateDescriptions(true);
+  assert(sorted.GetDescriptionCount() == 3);
+  assert(sorted.GetDescriptions()[0].GetStart() == 0x0);
+  assert(sorted.GetDescriptions()[0].GetDepth() == 5);
+  assert(sorted.GetDescriptions()[1].GetStart() == 0x1800);
+  assert(sorted.GetDescriptions()[1].GetDepth() == 4);
+  assert(sorted.GetDescriptions()[2].GetStart() == 0x2000);
+  assert(sorted.GetDescriptions()[2].GetDepth() == 5);
   
   cout << "passed!" << endl;
 }
@@ -435,3 +483,82 @@ void TestAvailableSize(string name) {
   delete buffer;
 }
 
+template <class T>
+void TestAllocHigh(string name) {
+  cout << "testing AllocatorList<" << name << ">::AllocDescending() ... ";
+  
+  ANAlloc::Region reg1(0, 0x1000);
+  ANAlloc::Region reg2(0x1000, 0x1000);
+  ANAlloc::Region regions[2];
+  regions[0] = reg1;
+  regions[1] = reg2;
+  
+  ANAlloc::AllocatorList<3, T> list(0x1000, 0x1000, 0x10,
+                                    regions, 2);
+  list.GenerateDescriptions(true);
+  assert(list.GetDescriptionCount() == 2);
+  
+  uint8_t * buffer = new uint8_t[list.BitmapByteCount()];
+  list.GenerateAllocators(buffer);
+  
+  uintptr_t ptr;
+  size_t size;
+  assert(list.AllocDescending(0x10, 1, ptr, &size));
+  assert(size == 0x10);
+  assert(ptr == 0x1000);
+  list.FreePointer(ptr);
+  assert(list.GetTrees()[0].GetType(0) == T::NodeTypeFree);
+  assert(list.GetTrees()[1].GetType(0) == T::NodeTypeFree);
+  assert(!list.AllocDescending(1, 1, ptr, &size, 0x1001));
+  assert(list.AllocDescending(1, 1, ptr, &size, 0x1000));
+  assert(size == 0x10);
+  assert(ptr == 0x1000);
+  
+  assert(!list.AllocDescending(0x1000, 1, ptr, &size, 1));
+  assert(list.AllocDescending(0x1000, 1, ptr, &size, 0));
+  assert(!ptr);
+  assert(size == 0x1000);
+  
+  cout << "passed!" << endl;
+  delete buffer;
+}
+
+template <class T>
+void TestAllocLow(string name) {
+  cout << "testing AllocatorList<" << name << ">::AllocAscending() ... ";
+  
+  ANAlloc::Region reg1(0, 0x1000);
+  ANAlloc::Region reg2(0x1000, 0x1000);
+  ANAlloc::Region regions[2];
+  regions[0] = reg1;
+  regions[1] = reg2;
+  
+  ANAlloc::AllocatorList<3, T> list(0x1000, 0x1000, 0x10,
+                                    regions, 2);
+  list.GenerateDescriptions(true);
+  assert(list.GetDescriptionCount() == 2);
+  
+  uint8_t * buffer = new uint8_t[list.BitmapByteCount()];
+  list.GenerateAllocators(buffer);
+  
+  uintptr_t ptr;
+  size_t size;
+  assert(list.AllocAscending(0x10, 1, ptr, &size));
+  assert(size == 0x10);
+  assert(ptr == 0);
+  list.FreePointer(ptr);
+  assert(list.GetTrees()[0].GetType(0) == T::NodeTypeFree);
+  assert(list.GetTrees()[1].GetType(0) == T::NodeTypeFree);
+  assert(!list.AllocAscending(1, 1, ptr, &size, 0xffe));
+  assert(list.AllocAscending(1, 1, ptr, &size, 0xfff));
+  assert(size == 0x10);
+  assert(ptr == 0);
+  
+  assert(!list.AllocAscending(0x1000, 1, ptr, &size, 0x1ffe));
+  assert(list.AllocAscending(0x1000, 1, ptr, &size, 0x1fff));
+  assert(ptr = 0x1000);
+  assert(size == 0x1000);
+  
+  cout << "passed!" << endl;
+  delete buffer;
+}
