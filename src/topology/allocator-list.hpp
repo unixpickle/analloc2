@@ -73,8 +73,8 @@ protected:
 
 }
 
-#include "topology-public.hpp"
-#include "topology-protected.hpp"
+#include "allocator-list-public.hpp"
+#include "allocator-list-protected.hpp"
 
 #endif // __ANALLOC2_TOPOLOGY_H__
 
