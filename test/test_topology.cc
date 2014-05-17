@@ -168,24 +168,13 @@ void TestOverlappingReserve(string name) {
   list.Reserve(0x200f); // offset by 1 to make sure it rounds up right
   
   // verify structure of tree 0
-  ANAlloc::Path p = 0;
-  T & tree0 = list.GetTrees()[0];
-  for (int i = 0; i < tree0.Depth() - 1; i++) {
-    ANAlloc::Path left = ANAlloc::PathLeft(p);
-    ANAlloc::Path right = left + 1;
-    assert(tree0.GetType(p) == T::NodeTypeContainer);
-    assert(tree0.GetType(right) == T::NodeTypeData);
-    if (i + 2 == tree0.Depth()) {
-      assert(tree0.GetType(left) == T::NodeTypeData);
-    }
-    p = left;
-  }
+  assert(list.GetTrees()[0].GetType(0) == T::NodeTypeData);
   
   // verify structure of tree 1
   assert(list.GetTrees()[1].GetType(0) == T::NodeTypeData);
   
   // verify structure of tree 2
-  p = 0;
+  ANAlloc::Path p = 0;
   T & tree2 = list.GetTrees()[2];
   for (int i = 0; i < tree2.Depth() - 1; i++) {
     ANAlloc::Path left = ANAlloc::PathLeft(p);

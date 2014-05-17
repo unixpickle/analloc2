@@ -14,7 +14,7 @@ bool ALLOCLIST_T::AllocPath(size_t size, size_t align, Path & p, int & i,
   for (; i >= 0 && i < GetDescriptionCount(); i += direction) {
     Description & desc = GetDescriptions()[i];
     if (direction > 0) {
-      if (desc.GetEnd() > boundary + 1) {
+      if (desc.GetEnd() - 1 > boundary && desc.GetEnd() > 0) {
         break;
       }
     } else {

@@ -33,7 +33,7 @@ bool ALLIGATOR_T::FindLargestFree(Region & region, Description & output) {
     }
     
     if (freeSpace >= info.pageSize) {
-      int descDepth = Log2Floor(freeSpace) - Log2Floor(info.pageSize);
+      int descDepth = Log2Floor(freeSpace) - Log2Floor(info.pageSize) + 1;
       if (descDepth > output.GetDepth()) {
         output.SetDepth(descDepth);
         output.SetStart(location);
