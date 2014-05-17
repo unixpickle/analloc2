@@ -2,6 +2,7 @@
 #define __ANALLOC2_ALLIGATOR_H__
 
 #include "description.hpp"
+#include "region.hpp"
 
 namespace ANAlloc {
 
@@ -16,6 +17,8 @@ public:
     Region * regions;
     int regionCount;
     
+    InitInfo();
+    InitInfo(size_t, size_t, size_t, Region *, int);
     InitInfo(const InitInfo & info);
     InitInfo & operator=(const InitInfo & info);
   };
@@ -28,7 +31,7 @@ public:
 protected:
   InitInfo info;
   
-  static const int MaxAllocatorCount = maxCount;
+  static const int MaxDescriptionCount = maxCount;
   
   Description descriptions[maxCount];
   int descriptionCount;
@@ -37,12 +40,12 @@ protected:
   bool FindLargestFree(Region & region, Description & output);
   uintptr_t FindNextFreeAligned(Region & region, uintptr_t loc);
   int FindNextDescription(Region & region, uintptr_t loc);
-  void InsertDescription(const Descirption & desc, bool sorted);
+  void InsertDescription(const Description & desc, bool sorted);
 };
+
+}
 
 #include "alligator-protected.hpp"
 #include "alligator-public.hpp"
-
-}
 
 #endif

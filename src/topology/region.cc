@@ -31,7 +31,7 @@ size_t Region::GetSize() const {
   return size;
 }
 
-bool Contains(uintptr_t ptr) const {
+bool Region::Contains(uintptr_t ptr) const {
   return ptr >= GetStart() && ptr < GetEnd();
 }
 

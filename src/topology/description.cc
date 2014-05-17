@@ -18,6 +18,7 @@ Description & Description::operator=(const Description & desc) {
   pageSize = desc.pageSize;
   depth = desc.depth;
   start = desc.start;
+  return *this;
 }
 
 int Description::GetDepth() const {

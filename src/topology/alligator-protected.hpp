@@ -23,11 +23,11 @@ bool ALLIGATOR_T::FindLargestFree(Region & region, Description & output) {
   output.SetDepth(0);
   
   uintptr_t location = FindNextFreeAligned(region, region.GetStart());
-  while (location < reg.GetEnd()) {
+  while (location < region.GetEnd()) {
     int nextDesc = FindNextDescription(region, location);
     size_t freeSpace = 0;
     if (nextDesc < 0) {
-      freeSpace = (size_t)(reg.GetEnd() - location);
+      freeSpace = (size_t)(region.GetEnd() - location);
     } else {
       freeSpace = (size_t)(descriptions[nextDesc].GetStart() - location);
     }
@@ -51,8 +51,8 @@ uintptr_t ALLIGATOR_T::FindNextFreeAligned(Region & region, uintptr_t loc) {
   assert(loc >= region.GetStart());
   assert(loc <= region.GetEnd());
   while (loc < region.GetEnd()) {
-    if (loc % alignment) {
-      loc += alignment - (loc % alignment);
+    if (loc % info.alignment) {
+      loc += info.alignment - (loc % info.alignment);
     }
     if (loc >= region.GetEnd()) break;
     
@@ -87,8 +87,8 @@ int ALLIGATOR_T::FindNextDescription(Region & region, uintptr_t loc) {
 }
 
 ALLIGATOR_TEMP
-void ALLIGATOR_T::InsertDescription(const Descirption & desc, bool sorted) {
-  assert(descriptionCount < MaxAllocatorCount);
+void ALLIGATOR_T::InsertDescription(const Description & desc, bool sorted) {
+  assert(descriptionCount < MaxDescriptionCount);
 
   if (!sorted) {
     descriptions[descriptionCount++] = desc;

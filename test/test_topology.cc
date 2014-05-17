@@ -1,5 +1,5 @@
 #include <iostream>
-#include "../src/topology.hpp"
+#include "../src/topology/topology.hpp"
 #include "../src/btree.hpp"
 #include "../src/bbtree.hpp"
 
@@ -60,12 +60,12 @@ void TestBasicLayout() {
   list.GenerateDescriptions();
   
   assert(list.GetDescriptionCount() == 3);
-  assert(list.GetDescriptions()[0].start == 0x1000);
-  assert(list.GetDescriptions()[0].depth == 10);
-  assert(list.GetDescriptions()[1].start == 0);
-  assert(list.GetDescriptions()[1].depth == 9);
-  assert(list.GetDescriptions()[2].start == 0x3000);
-  assert(list.GetDescriptions()[2].depth == 9);
+  assert(list.GetDescriptions()[0].GetStart() == 0x1000);
+  assert(list.GetDescriptions()[0].GetDepth() == 10);
+  assert(list.GetDescriptions()[1].GetStart() == 0);
+  assert(list.GetDescriptions()[1].GetDepth() == 9);
+  assert(list.GetDescriptions()[2].GetStart() == 0x3000);
+  assert(list.GetDescriptions()[2].GetDepth() == 9);
   
   cout << "passed!" << endl;
 }
@@ -88,30 +88,30 @@ void TestMinAlignmentLayout() {
                                                   regions, 4);
   list.GenerateDescriptions();
   assert(list.GetDescriptionCount() == 5);
-  assert(list.GetDescriptions()[0].start == 0x1000);
-  assert(list.GetDescriptions()[0].depth == 6);
-  assert(list.GetDescriptions()[1].start == 0);
-  assert(list.GetDescriptions()[1].depth == 5);
-  assert(list.GetDescriptions()[2].start == 0x4000);
-  assert(list.GetDescriptions()[2].depth == 1);
-  assert(list.GetDescriptions()[3].start == 0x3800);
-  assert(list.GetDescriptions()[3].depth == 4);
-  assert(list.GetDescriptions()[4].start == 0x3400);
-  assert(list.GetDescriptions()[4].depth == 3);
+  assert(list.GetDescriptions()[0].GetStart() == 0x1000);
+  assert(list.GetDescriptions()[0].GetDepth() == 6);
+  assert(list.GetDescriptions()[1].GetStart() == 0);
+  assert(list.GetDescriptions()[1].GetDepth() == 5);
+  assert(list.GetDescriptions()[2].GetStart() == 0x4000);
+  assert(list.GetDescriptions()[2].GetDepth() == 1);
+  assert(list.GetDescriptions()[3].GetStart() == 0x3800);
+  assert(list.GetDescriptions()[3].GetDepth() == 4);
+  assert(list.GetDescriptions()[4].GetStart() == 0x3400);
+  assert(list.GetDescriptions()[4].GetDepth() == 3);
   
   // now, raise the minimum alignment to 0x800
   ANAlloc::AllocatorList<5, ANAlloc::BBTree> list2(0x1000, 0x800, 0x100,
                                                    regions, 4);
   list2.GenerateDescriptions();
   assert(list2.GetDescriptionCount() == 4);
-  assert(list2.GetDescriptions()[0].start == 0x1000);
-  assert(list2.GetDescriptions()[0].depth == 6);
-  assert(list2.GetDescriptions()[1].start == 0);
-  assert(list2.GetDescriptions()[1].depth == 5);
-  assert(list2.GetDescriptions()[2].start == 0x4000);
-  assert(list2.GetDescriptions()[2].depth == 1);
-  assert(list2.GetDescriptions()[3].start == 0x3800);
-  assert(list2.GetDescriptions()[3].depth == 4);
+  assert(list2.GetDescriptions()[0].GetStart() == 0x1000);
+  assert(list2.GetDescriptions()[0].GetDepth() == 6);
+  assert(list2.GetDescriptions()[1].GetStart() == 0);
+  assert(list2.GetDescriptions()[1].GetDepth() == 5);
+  assert(list2.GetDescriptions()[2].GetStart() == 0x4000);
+  assert(list2.GetDescriptions()[2].GetDepth() == 1);
+  assert(list2.GetDescriptions()[3].GetStart() == 0x3800);
+  assert(list2.GetDescriptions()[3].GetDepth() == 4);
   
   cout << "passed!" << endl;
 }
@@ -134,16 +134,11 @@ void TestBasicReserve(string name) {
   uint8_t * buffer = new uint8_t[size];
   list.GenerateAllocators(buffer);
   
-  list.Reserve(reg1);
+  list.Reserve(0x1000);
   
   assert(list.GetTrees()[0].GetType(0) == T::NodeTypeFree);
   assert(list.GetTrees()[1].GetType(0) == T::NodeTypeData);
   assert(list.GetTrees()[2].GetType(0) == T::NodeTypeFree);
-  
-  list.Reserve(reg2);
-  assert(list.GetTrees()[0].GetType(0) == T::NodeTypeData);
-  assert(list.GetTrees()[1].GetType(0) == T::NodeTypeData);
-  assert(list.GetTrees()[2].GetType(0) == T::NodeTypeData);
   
   delete buffer;
   cout << "passed!" << endl;
@@ -170,8 +165,7 @@ void TestOverlappingReserve(string name) {
   uint8_t * buffer = new uint8_t[size];
   list.GenerateAllocators(buffer);
   
-  ANAlloc::Region reg(0x11, 0x1fff); // offset stuff for more rigor
-  list.Reserve(reg);
+  list.Reserve(0x200f); // offset by 1 to make sure it rounds up right
   
   // verify structure of tree 0
   ANAlloc::Path p = 0;
@@ -182,7 +176,7 @@ void TestOverlappingReserve(string name) {
     assert(tree0.GetType(p) == T::NodeTypeContainer);
     assert(tree0.GetType(right) == T::NodeTypeData);
     if (i + 2 == tree0.Depth()) {
-      assert(tree0.GetType(left) == T::NodeTypeFree);
+      assert(tree0.GetType(left) == T::NodeTypeData);
     }
     p = left;
   }
@@ -291,14 +285,14 @@ void TestAllocFree(string name) {
   list.GenerateAllocators(buffer);
   
   assert(list.GetDescriptionCount() == 4);
-  assert(list.GetDescriptions()[0].start == 0);
-  assert(list.GetDescriptions()[0].depth == 9);
-  assert(list.GetDescriptions()[1].start == 0x1000);
-  assert(list.GetDescriptions()[1].depth == 9);
-  assert(list.GetDescriptions()[2].start == 0x3000);
-  assert(list.GetDescriptions()[2].depth == 8);
-  assert(list.GetDescriptions()[3].start == 0x2800);
-  assert(list.GetDescriptions()[3].depth == 8);
+  assert(list.GetDescriptions()[0].GetStart() == 0);
+  assert(list.GetDescriptions()[0].GetDepth() == 9);
+  assert(list.GetDescriptions()[1].GetStart() == 0x1000);
+  assert(list.GetDescriptions()[1].GetDepth() == 9);
+  assert(list.GetDescriptions()[2].GetStart() == 0x3000);
+  assert(list.GetDescriptions()[2].GetDepth() == 8);
+  assert(list.GetDescriptions()[3].GetStart() == 0x2800);
+  assert(list.GetDescriptions()[3].GetDepth() == 8);
   
   // first, go for the easy case of allocating everything
   uintptr_t outPtr;
@@ -400,8 +394,8 @@ void TestAllocFreeBad(string name) {
   list.GenerateAllocators(buffer);
   
   assert(list.GetDescriptionCount() == 1);
-  assert(list.GetDescriptions()[0].start == 1);
-  assert(list.GetDescriptions()[0].depth == 9);
+  assert(list.GetDescriptions()[0].GetStart() == 1);
+  assert(list.GetDescriptions()[0].GetDepth() == 9);
   
   uintptr_t outPtr;
   assert(list.AllocPointer(0x10, 0x10, outPtr, &sizeOut));
@@ -431,23 +425,22 @@ void TestAvailableSize(string name) {
   uint8_t * buffer = new uint8_t[size];
   list.GenerateAllocators(buffer);
   
-  ANAlloc::Region res(0, 0x200);
-  list.Reserve(res);
+  list.Reserve(0x200);
   
-  assert(list.AvailableSpace() == 0xfe00);
+  assert(list.GetAvailableSpace() == 0xfe00);
   
   uintptr_t outPtr;
   list.AllocPointer(1, 1, outPtr, NULL);
-  assert(list.AvailableSpace() == 0xfdf0);
+  assert(list.GetAvailableSpace() == 0xfdf0);
   
   list.FreePointer(outPtr);
-  assert(list.AvailableSpace() == 0xfe00);
+  assert(list.GetAvailableSpace() == 0xfe00);
   
   list.AllocPointer(1, 0x10, outPtr, NULL);
-  assert(list.AvailableSpace() == 0xfde0);
+  assert(list.GetAvailableSpace() == 0xfde0);
   
   list.FreePointer(outPtr);
-  assert(list.AvailableSpace() == 0xfe00);
+  assert(list.GetAvailableSpace() == 0xfe00);
   
   cout << "passed!" << endl;
   delete buffer;
