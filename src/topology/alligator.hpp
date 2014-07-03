@@ -11,11 +11,11 @@ class Alligator {
 public:
   class InitInfo {
   public:
-    size_t alignment;
-    size_t minAlignment;
-    size_t pageSize;
-    Region * regions;
-    int regionCount;
+    size_t alignment = 0;
+    size_t minAlignment = 0;
+    size_t pageSize = 0;
+    Region * regions = 0;
+    int regionCount = 0;
     
     InitInfo();
     InitInfo(size_t, size_t, size_t, Region *, int);
@@ -34,7 +34,7 @@ protected:
   static const int MaxDescriptionCount = maxCount;
   
   Description descriptions[maxCount];
-  int descriptionCount;
+  int descriptionCount = 0;
   
   bool FindLargestFree(Description & output);
   bool FindLargestFree(Region & region, Description & output);

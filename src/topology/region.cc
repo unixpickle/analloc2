@@ -7,7 +7,7 @@ Region::Region(uintptr_t _start, size_t _size) {
   size = _size;
 }
   
-Region::Region() : start(0), size(0) {}
+Region::Region() {}
   
 Region::Region(const Region & reg) {
   *this = reg;

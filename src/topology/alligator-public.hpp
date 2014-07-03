@@ -4,9 +4,7 @@ namespace ANAlloc {
 #define ALLIGATOR_T Alligator<N>
 
 ALLIGATOR_TEMP
-ALLIGATOR_T::InitInfo::InitInfo()
-  : alignment(0), minAlignment(0), pageSize(0), regions(NULL),
-    regionCount(0) { }
+ALLIGATOR_T::InitInfo::InitInfo() { }
 
 ALLIGATOR_TEMP
 ALLIGATOR_T::InitInfo::InitInfo(size_t a1, size_t a2, size_t a3, Region * a4,
@@ -31,11 +29,11 @@ ALLIGATOR_T::InitInfo::operator=(const ALLIGATOR_T::InitInfo & info) {
 }
 
 ALLIGATOR_TEMP
-ALLIGATOR_T::Alligator() : descriptionCount(0), info() { }
+ALLIGATOR_T::Alligator() { }
 
 ALLIGATOR_TEMP
 ALLIGATOR_T::Alligator(const InitInfo & _info)
-  : info(_info), descriptionCount(0) { }
+  : info(_info) { }
 
 ALLIGATOR_TEMP
 void ALLIGATOR_T::SetInfo(const InitInfo & _info) {

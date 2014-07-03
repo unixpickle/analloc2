@@ -2,13 +2,13 @@
 
 namespace ANAlloc {
 
-Description::Description() : pageSize(0), start(0), depth(0) { }
+Description::Description() { }
 
 Description::Description(size_t _pageSize)
-  : pageSize(_pageSize), start(0), depth(0) { }
+  : pageSize(_pageSize) { }
 
 Description::Description(size_t _pageSize, uintptr_t _start, int _depth)
-  : pageSize(_pageSize), start(_start), depth(_depth) { }
+  : start(_start), depth(_depth), pageSize(_pageSize) { }
 
 Description::Description(const Description & desc) {
   *this = desc;

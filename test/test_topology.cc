@@ -451,8 +451,6 @@ void TestAvailableSize(string name) {
   cout << "testing AllocatorList<" << name
     << ">::[Alloc/Free]Pointer() [bad] ... ";
   
-  size_t sizeOut = 0;
-  
   ANAlloc::Region reg1(1, 0x10000);
   
   ANAlloc::AllocatorList<2, T> list(1, 1, 0x10,

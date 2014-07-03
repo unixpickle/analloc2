@@ -11,8 +11,8 @@ namespace ANAlloc {
  */
 class Region {
 private:
-  uintptr_t start;
-  size_t size;
+  uintptr_t start = 0;
+  size_t size = 0;
   
 public:
   Region(uintptr_t _start, size_t _size);

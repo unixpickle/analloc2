@@ -12,9 +12,9 @@ namespace ANAlloc {
 */
 class Description {
 protected:
-  uintptr_t start;
-  int depth;
-  size_t pageSize;
+  uintptr_t start = 0;
+  int depth = 0;
+  size_t pageSize = 0;
 
 public:
   Description();
