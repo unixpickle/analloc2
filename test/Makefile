@@ -24,10 +24,10 @@ build/malloc: build
 	g++ $(CPPFLAGS) ../src/bitmap.cc ../src/tree.cc ../src/bbtree.cc ../src/topology/*.cc test_malloc.cc -o build/malloc
 
 build/profile_bbtree_o0: build
-	g++ -O0 $(CPPFLAGS) ../src/bitmap.cc ../src/tree.cc ../src/bbtree.cc profile_bbtree.cc -o build/profile_bbtree_o0
+	g++ -O0 $(CPPFLAGS) ../src/bitmap.cc ../src/tree.cc ../src/bbtree.cc ../src/btree.cc profile_tree.cc -o build/profile_bbtree_o0
 
 build/profile_bbtree_o2: build
-	g++ -O2 $(CPPFLAGS) ../src/bitmap.cc ../src/tree.cc ../src/bbtree.cc profile_bbtree.cc -o build/profile_bbtree_o2
+	g++ -O2 $(CPPFLAGS) ../src/bitmap.cc ../src/tree.cc ../src/bbtree.cc ../src/btree.cc profile_tree.cc -o build/profile_bbtree_o2
 
 build:
 	mkdir build
