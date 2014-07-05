@@ -32,10 +32,16 @@ public:
 protected:
   Bitmap bitmap;
   int depth;
+#ifndef ANALLOC_BBTREE_DONT_CACHE_PREFIXES
+  uint64_t prefixSizes[0x40];
+#endif
   
   static uint64_t TreeSizeAtDepth(int depth);
-  uint64_t FieldSizeAtDepth(int depth);
+  int FieldSizeAtDepth(int depth);
+  uint64_t CalculatePrefixSize(int depth);
+  uint64_t GetPrefixSize(int depth);
   
+  uint64_t NodeOffset(Path p);
   int ReadNode(Path p);
   void WriteNode(Path p, int value);
 };

@@ -1,4 +1,5 @@
 #include "bbtree.hpp"
+#include <cassert>
 
 namespace ANAlloc {
 
@@ -14,6 +15,11 @@ BBTree::BBTree() {
 BBTree::BBTree(int _depth, uint8_t * bmMemory)
   : bitmap(bmMemory, TreeSizeAtDepth(_depth)), depth(_depth) {
   WriteNode(Path::RootPath(), _depth);
+#ifndef ANALLOC_BBTREE_DONT_CACHE_PREFIXES
+  for (int i = 0; i < depth; i++) {
+    prefixSizes[i] = CalculatePrefixSize(i);
+  }
+#endif
 }
 
 BBTree::BBTree(const BBTree & tree) : bitmap(tree.bitmap), depth(tree.depth) {
@@ -34,14 +40,55 @@ void BBTree::SetType(Path path, NodeType type) {
 }
 
 NodeType BBTree::GetType(Path path) {
-  // TODO: this
+  int value = ReadNode(path);
+  if (!value) return NodeTypeData;
+  if (value == depth - path.GetDepth()) {
+    return NodeTypeFree;
+  }
+  return NodeTypeContainer;
 }
 
-bool BBTree::FindFree(int depth, Path & path) {
-  // TODO: this
+bool BBTree::FindFree(int _depth, Path & path) {
+  int minimumNode = _depth - depth;
+  assert(minimumNode > 0);
+  
+  path = Path::RootPath();
+  int pathValue = ReadNode(path);
+  
+  // this is the part that's O(log(N))
+  int nodeMaximum = _depth;
+  while (1) {
+    if (pathValue < minimumNode) return false;
+    if (pathValue == nodeMaximum) return true;
+    
+    --nodeMaximum;
+    assert(nodeMaximum != 0);
+    
+    Path left = path.Left();
+    pathValue = ReadNode(left);
+    if (pathValue >= minimumNode) {
+      path = left;
+      continue;
+    } else {
+      path = path.Right();
+      pathValue = ReadNode(path);
+    }
+  }
 }
 
 // protected //
+
+int BBTree::ReadNode(Path p) {
+  uint64_t fieldSize = FieldSizeAtDepth(p.GetDepth());
+  uint64_t offset = GetPrefixSize(p.GetDepth()) + fieldSize * p.GetIndex();
+  return bitmap.GetMultibit(offset, fieldSize);
+}
+
+void BBTree::WriteNode(Path p, int value) {
+  uint64_t fieldSize = FieldSizeAtDepth(p.GetDepth());
+  uint64_t offset = GetPrefixSize(p.GetDepth()) + fieldSize * p.GetIndex();
+  bitmap.SetMultibit(offset, fieldSize, (uint64_t)value);
+}
 
 uint64_t BBTree::TreeSizeAtDepth(int depth) {
   // size table is the best we're going to get
@@ -64,9 +111,9 @@ uint64_t BBTree::TreeSizeAtDepth(int depth) {
   return treeSizes[depth];
 }
 
-uint64_t BBTree::FieldSizeAtDepth(int _depth) {
+int BBTree::FieldSizeAtDepth(int _depth) {
   // log table probably not the best, but it's fast
-  uint64_t numberLogs[] = {
+  int numberLogs[] = {
     0, 0,
     1,
     2, 2,
@@ -77,6 +124,22 @@ uint64_t BBTree::FieldSizeAtDepth(int _depth) {
     6, 6, 6, 6, 6, 6, 6
   };
   return numberLogs[depth - _depth + 1];
+}
+
+uint64_t BBTree::CalculatePrefixSize(int _depth) {
+  uint64_t result = 0;
+  for (int i = 0; i < _depth; i++) {
+    result += FieldSizeAtDepth(i) * (1UL << i);
+  }
+  return result;
+}
+
+uint64_t BBTree::GetPrefixSize(int _depth) {
+#ifndef ANALLOC_BBTREE_DONT_CACHE_PREFIXES
+  return prefixSizes[_depth];
+#else
+  return CalculatePrefixSize(_depth);
+#endif
 }
 
 }
