@@ -7,14 +7,12 @@ size_t BTree::MemorySize(int depth) {
   return (1 << (depth - 3));
 }
 
-BTree::BTree(int _depth, uint8_t * bmMemory)
-  : bitmap(bmMemory, (1 << _depth) - 1) {
-  assert(_depth > 0);
-  depth = _depth;
+BTree::BTree() {
 }
 
-BTree::BTree()
-  : bitmap() {
+BTree::BTree(int _depth, uint8_t * bmMemory)
+  : bitmap(bmMemory, (1 << _depth) - 1), depth(_depth) {
+  assert(depth > 0);
 }
 
 BTree::BTree(const BTree & t) {
@@ -27,18 +25,19 @@ BTree & BTree::operator=(const BTree & aTree) {
   return *this;
 }
 
-int BTree::Depth() {
+int BTree::GetDepth() {
   return depth;
 }
 
 void BTree::SetType(Path path, NodeType type) {
   switch ((int)type) {
     case NodeTypeFree:
-      bitmap.SetBit(path, false);
+      bitmap.SetBit(path.TreeIndex(), false);
       break;
     case NodeTypeData:
-      if (PathDepth(path) != Depth() - 1) {
+      if (path.GetDepth() != depth - 1) {
         Path right = PathRight(path);
+        uint64_t right = path.Right().TreeIndex();
         bitmap.SetBit(right, false);
         bitmap.SetBit(right - 1, false);
       }
@@ -50,25 +49,26 @@ void BTree::SetType(Path path, NodeType type) {
   }
 }
 
-BTree::NodeType BTree::GetType(Path path) {
-  bool bit = bitmap.GetBit(path);
+NodeType BTree::GetType(Path path) {
+  bool bit = bitmap.GetBit(path.TreeIndex());
   if (!bit) return NodeTypeFree;
-  if (PathDepth(path) == depth - 1) {
+  if (path.GetDepth() == depth - 1) {
     // base nodes *cannot* be containers
     return NodeTypeData;
   }
   
   // if neither child is set, this is a data node; otherwise, it's a container.
-  if (bitmap.GetBit(PathLeft(path))) return NodeTypeContainer;
-  if (!bitmap.GetBit(PathRight(path))) return NodeTypeData;
-  return NodeTypeContainer;
+  uint64_t leftIdx = path.Left().TreeIndex();
+  if (bitmap.GetBit(leftIdx)) return NodeTypeContainer;
+  if (bitmap.GetBit(leftIdx + 1)) return NodeTypeContainer;
+  return NodeTypeData;
 }
 
 bool BTree::FindFree(int depth, Path & path) {
-  return FindFreeRecursive(depth, 0, 0, path);
+  return FindFreeRecursive(depth, Path::RootPath(), path);
 }
 
-bool BTree::FindFreeRecursive(int depth, int pathDepth, Path p, Path & path) {
+bool BTree::FindFreeRecursive(int depth, Path p, Path & path) {
   NodeType type = GetType(p);
   if (type == NodeTypeFree) {
     path = p;
@@ -78,10 +78,10 @@ bool BTree::FindFreeRecursive(int depth, int pathDepth, Path p, Path & path) {
   }
   if (pathDepth == depth) return false;
   
-  if (FindFreeRecursive(depth, pathDepth + 1, PathLeft(p), path)) {
+  if (FindFreeRecursive(depth, p.Left(), path)) {
     return true;
   }
-  return FindFreeRecursive(depth, pathDepth + 1, PathRight(p), path);
+  return FindFreeRecursive(depth, p.Right(), path);
 }
 
 }

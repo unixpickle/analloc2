@@ -1,98 +1,50 @@
 #ifndef __ANALLOC2_TREE_H__
 #define __ANALLOC2_TREE_H__
 
-#include <cstddef>
-#include <cstdint>
+#include "path.hpp"
 
 namespace ANAlloc {
 
-/**
- * This type represents the path to a node in a binary tree.
- */
-typedef uintptr_t Path;
+typedef enum {
+  NodeTypeFree,
+  NodeTypeData,
+  NodeTypeContainer
+} NodeType;
 
 /**
- * Returns the parent path for a path. The root path has no siblings, so this
- * will return the root path.
- */
-Path PathParent(Path p);
-
-/**
- * Returns the sibling path for a path. The root path has no siblings, so
- * this will return the root path.
- */
-Path PathSibling(Path p);
-
-/**
- * Returns the right sub-path for a path.
- */
-Path PathRight(Path p);
-
-/**
- * Returns the left sub-path for a path.
- */
-Path PathLeft(Path p);
-
-/**
- * Returns the depth of a path. The depth 0 is the root node, and then it goes
- * up from there.
- */
-int PathDepth(Path p);
-
-/**
- * If the depth of the path is n, this is a number from 0 to 2^n-1 inclusive.
- * This is the index of the node at its corresponding depth. The indexes start
- * at 0 from the left.
- */
-uintptr_t PathIndex(Path p);
-
-/**
- * Returns the number of paths belonging to a certain depth.
- */
-uintptr_t PathsForDepth(int d);
-
-/**
- * This is essentially an interface for a "Tree"
+ * This is an interface for a binary tree. My goal with this class is to
+ * provide a simple API for a binary tree that still allows for algorithmic
+ * optimization.
  */
 class Tree {
 public:
-  typedef enum {
-    NodeTypeFree,
-    NodeTypeData,
-    NodeTypeContainer
-  } NodeType;
-  
-  int Depth() {
-    return 0;
-  }
+  /**
+   * Return the depth of this binary tree. A tree of depth 0 is invalid, so
+   * this will probably range from 1 to 63.
+   */
+  virtual int GetDepth() = 0;
   
   /**
-   * Set the type of a node at a certain path. Here's what the types do:
-   * - NodeTypeFree: frees the node
-   * - NodeTypeData: the node is completely reserved for data
-   * - NodeTypeContainer: the node may contain one or two child nodes. Right
-   *   after you set this type, you must set the type of the node's two
-   *   children.
+   * Set the node-type at a path. The path's parent must be a container before
+   * you call this method (unless, of course, the path is the root node).
+   *
+   * If you set a node to be a container, the node's type is incomplete until
+   * at least one of its children are not free.
    */
-  void SetType(Path path, NodeType type) {
-    (void)path;
-    (void)type;
-  }
-  
-  NodeType GetType(Path path) {
-    (void)path;
-    return NodeTypeFree;
-  }
+  virtual void SetType(Path p, NodeType type) = 0;
   
   /**
-   * Find a free node of at *least* a depth `depth`.
+   * Get the type of a node at a path. The path's parent must be a container
+   * just like with SetType().
    */
-  bool FindFree(int depth, Path & path) {
-    (void)depth;
-    (void)path;
-    return 0;
-  }
+  virtual NodeType GetType(Path p) = 0;
   
+  /**
+   * Find a free node which is at most a certain depth. This method may provide
+   * optimizations that any given tree algorithm has to offer.
+   * @return false if no desired nodes are available, true otherwise.
+   */
+  virtual bool FindFree(int depth, Path & pathOut) = 0;
 };
 
 }

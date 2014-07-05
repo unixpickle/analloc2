@@ -2,197 +2,81 @@
 
 namespace ANAlloc {
 
-static int _Log2Ceil(int n) {
-  assert(n > 0);
-  for (int i = 0; i < n; i++) {
-    if ((1 << i) >= n) {
-      return i;
-    }
-  }
-  return -1;
-}
-
-static uintptr_t _PathBitOff(Path p, int depthCount, int * _numBits) {
-  int depth = PathDepth(p);
-  uintptr_t result = 0;
-  for (int i = 0; i < depth; i++) {
-    int numBits = _Log2Ceil(depthCount - i + 1);
-    result += (uintptr_t)numBits << i;
-  }
-  
-  uintptr_t index = PathIndex(p);
-  int perNode = _Log2Ceil(depthCount - depth + 1);
-  if (_numBits) *_numBits = perNode;
-  return result + (uintptr_t)perNode * index;
-}
-
-uintptr_t BBTree::BitCount(int depth) {
-  return _PathBitOff((1L << depth) - 1L, depth, NULL);
-}
-
 size_t BBTree::MemorySize(int depth) {
-  uintptr_t bitCount = BitCount(depth);
-  return (bitCount >> 3) + (bitCount & 7 ? 1 : 0);
+  uint64_t bitCount = TreeSizeAtDepth(depth);
+  if (bitCount & 7) return (1UL << bitCount) / 8 + 1;
+  return (1UL << bitCount) / 8;
+}
+
+BBTree::BBTree() {
 }
 
 BBTree::BBTree(int _depth, uint8_t * bmMemory)
-  : bitmap(bmMemory, BitCount(_depth)) {
-  assert(_depth > 0);
-  depth = _depth;
-  WriteNode(0, depth);
+  : bitmap(bmMemory, TreeSizeAtDepth(_depth)), depth(_depth) {
+  WriteNode(Path::RootPath(), _depth);
 }
 
-BBTree::BBTree() : bitmap() {
-  depth = 0;
-}
-
-BBTree::BBTree(const BBTree & tree) {
-  *this = tree;
+BBTree::BBTree(const BBTree & tree) : bitmap(tree.bitmap), depth(tree.depth) {
 }
 
 BBTree & BBTree::operator=(const BBTree & tree) {
-  depth = tree.depth;
   bitmap = tree.bitmap;
+  depth = tree.depth;
   return *this;
 }
 
-int BBTree::Depth() {
+int BBTree::GetDepth() {
   return depth;
 }
 
 void BBTree::SetType(Path path, NodeType type) {
-  switch ((int)type) {
-    case NodeTypeFree:
-      FreePath(path);
-      break;
-    case NodeTypeData:
-      AllocPathData(path);
-      break;
-    case NodeTypeContainer:
-      AllocPathContainer(path);
-      break;
-    default:
-      break;
-  }
+  // TODO: this
 }
 
-BBTree::NodeType BBTree::GetType(Path path) {
-  int value = ReadNode(path);
-  if (!value) {
-    if (PathDepth(path) + 1 == Depth()) return NodeTypeData;
-    Path left = PathLeft(path);
-    if (GetType(left) == NodeTypeFree
-        && GetType(left + 1) == NodeTypeFree) {
-      return NodeTypeData;
-    }
-    return NodeTypeContainer;
-  }
-  if (value == Depth() - PathDepth(path)) return NodeTypeFree;
-  return NodeTypeContainer;
+NodeType BBTree::GetType(Path path) {
+  // TODO: this
 }
 
 bool BBTree::FindFree(int depth, Path & path) {
-  return FindFreeRecursive(depth, 0, 0, path);
+  // TODO: this
 }
 
-/** PRIVATE **/
+// protected //
 
-int BBTree::ReadNode(Path p) {
-  int numBits;
-  uintptr_t bitIndex = _PathBitOff(p, Depth(), &numBits);
-  return bitmap.GetMultibit(bitIndex, numBits);
+uint64_t BBTree::TreeSizeAtDepth(int depth) {
+  // size table is the best we're going to get
+  uint64_t treeSizes[] = {
+    0UL, 1UL, 4UL, 10UL, 23UL, 49UL, 101UL, 205UL, 414UL, 832UL, 1668UL,
+    3340UL, 6684UL, 13372UL, 26748UL, 53500UL, 107005UL, 214015UL, 428035UL,
+    856075UL, 1712155UL, 3424315UL, 6848635UL, 13697275UL, 27394555UL,
+    54789115UL, 109578235UL, 219156475UL, 438312955UL, 876625915UL,
+    1753251835UL, 3506503675UL, 7013007356UL, 14026014718UL, 28052029442UL,
+    56104058890UL, 112208117786UL, 224416235578UL, 448832471162UL,
+    897664942330UL, 1795329884666UL, 3590659769338UL, 7181319538682UL,
+    14362639077370UL, 28725278154746UL, 57450556309498UL, 114901112619002UL,
+    229802225238010UL, 459604450476026UL, 919208900952058UL,
+    1838417801904122UL, 3676835603808250UL, 7353671207616506UL,
+    14707342415233018UL, 29414684830466042UL, 58829369660932090UL,
+    117658739321864186UL, 235317478643728378UL, 470634957287456762UL,
+    941269914574913530UL, 1882539829149827066UL, 3765079658299654138UL,
+    7530159316599308282UL, 15060318633198616570UL
+  };
+  return treeSizes[depth];
 }
 
-void BBTree::WriteNode(Path p, int i) {
-  int numBits;
-  uintptr_t bitIndex = _PathBitOff(p, Depth(), &numBits);
-  bitmap.SetMultibit(bitIndex, numBits, i);
-}
-
-void BBTree::FreePath(Path path) {
-  int pathDepth = PathDepth(path);
-  int biggestValue = Depth() - pathDepth;
-  WriteNode(path, biggestValue);
-  
-  // iterate up and make sure the sizes are at least this
-  Path p = path;
-  for (int i = 0; i < pathDepth; i++) {
-    p = PathParent(p);
-    if (ReadNode(p) < biggestValue) {
-      WriteNode(p, biggestValue);
-    }
-  }
-}
-
-void BBTree::AllocPathData(Path p) {  
-  // the path is now closed for business
-  WriteNode(p, 0);
-  
-  // make our children look free so that we can be distinguished from a
-  // container whose children are filled.
-  int pathDepth = PathDepth(p);
-  if (pathDepth + 1 != Depth()) {
-    int biggestLow = Depth() - (pathDepth + 1);
-    Path left = PathLeft(p);
-    WriteNode(left, biggestLow);
-    WriteNode(left + 1, biggestLow);
-  }
-  
-  // update parents' sizes
-  UpdateParents(p);
-}
-
-void BBTree::AllocPathContainer(Path path) {
-  Path p = path;
-  
-  int aDepth = PathDepth(p);
-  assert(aDepth + 1 != Depth());
-  
-  int curSize = Depth() - (aDepth + 1);
-  WriteNode(p, curSize);
-  
-  // update parents' sizes
-  UpdateParents(p);
-}
-
-void BBTree::UpdateParents(Path p) {
-  // update parents' sizes
-  int depth = PathDepth(p);
-  for (int i = 0; i < depth; i++) {
-    int val1 = ReadNode(PathSibling(p));
-    int val2 = ReadNode(p);
-    p = PathParent(p);
-    WriteNode(p, val1 > val2 ? val1 : val2);
-  }
-}
-
-bool BBTree::FindFreeRecursive(int depth,
-                               int curDepth,
-                               Path p,
-                               Path & path) {
-  if (curDepth == depth) {
-    if (GetType(p) != NodeTypeFree) return false;
-    path = p;
-    return true;
-  }
-  
-  int available = ReadNode(p);
-  int minSize = Depth() - depth;
-  if (available < minSize) return false;
-  
-  int nodeSize = Depth() - curDepth;
-  if (nodeSize == available) {
-    // we found a free node
-    path = p;
-    return true;
-  }
-  
-  // find a subnode that is suitable
-  Path left = PathLeft(p);
-  if (FindFreeRecursive(depth, curDepth + 1, left, path)) {
-    return true;
-  }
-  return FindFreeRecursive(depth, curDepth + 1, left + 1, path);
+uint64_t BBTree::FieldSizeAtDepth(int _depth) {
+  // log table probably not the best, but it's fast
+  uint64_t numberLogs[] = {
+    0, 0,
+    1,
+    2, 2,
+    3, 3, 3, 3,
+    4, 4, 4, 4, 4, 4, 4, 4,
+    5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5,
+    6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6,
+    6, 6, 6, 6, 6, 6, 6
+  };
+  return numberLogs[depth - _depth + 1];
 }
 
 }

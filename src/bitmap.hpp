@@ -2,8 +2,6 @@
 #define __ANALLOC2_BITMAP_H__
 
 #include <cstdint>
-#include <cstddef>
-#include <cassert>
 
 namespace ANAlloc {
 
@@ -13,44 +11,23 @@ namespace ANAlloc {
 class Bitmap {
 protected:
   uint8_t * ptr;
-  uintptr_t bitCount;
+  uint64_t bitCount;
 
 public:
-  Bitmap();
-  
+  Bitmap(); // for placement-new placeholder only
+  Bitmap(uint8_t * ptr, uint64_t count);
   Bitmap(const Bitmap & bm);
-  
   Bitmap & operator=(const Bitmap & bm);
   
-  /**
-   * Create a new bitmap at a given memory location.
-   */
-  Bitmap(uint8_t * ptr, uintptr_t count);
-  
-  /**
-   * Set a bit at a given index.
-   */
-  void SetBit(uintptr_t idx, bool value);
-  
-  /**
-   * Set a glob of bits.
-   */
-  void SetMultibit(uintptr_t idx, int len, uintptr_t value);
-  
-  /**
-   * Return the bit at a given index.
-   */
-  bool GetBit(uintptr_t idx) const;
-  
-  /**
-   * Get a glob of bits.
-   */
-  uintptr_t GetMultibit(uintptr_t idx, int len) const;
+  void SetBit(uint64_t idx, bool value);
+  void SetMultibit(uint64_t idx, int len, uint64_t value);
+  bool GetBit(uint64_t idx) const;
+  uint64_t GetMultibit(uint64_t idx, int len) const;
   
   /**
    * Returns the number of bits in the bitmap
    */
-  uintptr_t GetBitCount() const;
+  uint64_t GetBitCount() const;
 };
 
 }

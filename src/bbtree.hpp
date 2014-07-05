@@ -16,36 +16,28 @@ namespace ANAlloc {
  * longer because their parent nodes have to have their bitmaps modified.
  */
 class BBTree : public Tree {
-protected:
-  Bitmap bitmap;
-  int depth;
-
-  static uintptr_t BitCount(int depth);
-
-  int ReadNode(Path p);
-  void WriteNode(Path p, int i);
-  
-  void FreePath(Path p);
-  void AllocPathData(Path p);
-  void AllocPathContainer(Path p);
-  void UpdateParents(Path p);
-  
-  bool FindFreeRecursive(int depth, int curDepth, Path p, Path & path);
-
 public:
-  typedef Tree::NodeType NodeType;
-  
   static size_t MemorySize(int depth);
   
+  BBTree(); // for placement-new placeholder only
   BBTree(int depth, uint8_t * bmMemory);
-  BBTree();
   BBTree(const BBTree & tree);
   BBTree & operator=(const BBTree & tree);
   
-  int Depth();
-  void SetType(Path path, NodeType type);
-  NodeType GetType(Path path);
-  bool FindFree(int depth, Path & path);
+  virtual int GetDepth();
+  virtual void SetType(Path path, NodeType type);
+  virtual NodeType GetType(Path path);
+  virtual bool FindFree(int depth, Path & path);
+  
+protected:
+  Bitmap bitmap;
+  int depth;
+  
+  static uint64_t TreeSizeAtDepth(int depth);
+  uint64_t FieldSizeAtDepth(int depth);
+  
+  int ReadNode(Path p);
+  void WriteNode(Path p, int value);
 };
 
 }
