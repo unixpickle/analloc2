@@ -12,7 +12,7 @@ BTree::BTree() {
 
 BTree::BTree(int _depth, uint8_t * bmMemory)
   : bitmap(bmMemory, (1 << _depth) - 1), depth(_depth) {
-  assert(depth > 0);
+  bitmap.SetBit(0, false);
 }
 
 BTree::BTree(const BTree & t) {

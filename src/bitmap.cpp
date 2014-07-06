@@ -22,9 +22,6 @@ Bitmap & Bitmap::operator=(const Bitmap & bm) {
 Bitmap::Bitmap(uint8_t * _ptr, uint64_t count) {
   ptr = _ptr;
   bitCount = count;
-  for (uint64_t i = 0; i < count / 8 + (count & 7 ? 1 : 0); i++) {
-    ptr[i] = 0;
-  }
 }
 
 void Bitmap::SetBit(uint64_t idx, bool value) {
@@ -40,7 +37,6 @@ void Bitmap::SetBit(uint64_t idx, bool value) {
 }
 
 void Bitmap::SetMultibit(uint64_t idx, int len, uint64_t value) {
-  // TODO: optimize this
   assert(idx + len <= bitCount);
   for (int i = 0; i < len; i++) {
     bool flag = value & (1L << i) ? 1 : 0;
@@ -58,7 +54,6 @@ bool Bitmap::GetBit(uint64_t idx) const {
 
 uint64_t Bitmap::GetMultibit(uint64_t idx, int len) const {
   // there are len bits, and the one at idx is the most significant
-  // TODO: figure out if this can be optimized
   assert(idx + len <= bitCount);
   uint64_t result = 0;
   for (int i = 0; i < len; i++) {

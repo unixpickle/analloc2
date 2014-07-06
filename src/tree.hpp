@@ -25,17 +25,21 @@ public:
   virtual int GetDepth() = 0;
   
   /**
-   * Set the node-type at a path. The path's parent must be a container before
-   * you call this method (unless, of course, the path is the root node).
+   * Set the node-type at a path. The node's parent must be a container before
+   * you call this method (unless, of course, the node is the root node).
    *
    * If you set a node to be a container, the node's type is incomplete until
-   * at least one of its children are not free.
+   * at least one of its children are not free. If you set one child's type but
+   * not the other's, the other node will be assigned the free type.
+   *
+   * If you want to change a container node's type, you must first free both of
+   * its children or use the Free() method.
    */
   virtual void SetType(Path p, NodeType type) = 0;
   
   /**
-   * Get the type of a node at a path. The path's parent must be a container
-   * just like with SetType().
+   * Get the type of a node at a path. The node's parent must be a container
+   * or the node just like with SetType().
    */
   virtual NodeType GetType(Path p) = 0;
   
@@ -47,7 +51,9 @@ public:
   virtual bool FindFree(int depth, Path & pathOut) = 0;
   
   /**
-   * Recursively free every path in the tree starting at a given path.
+   * Recursively free every path in the tree starting at a given path. This may
+   * run slower than it needs to for certain tree representations, so I suggest
+   * overriding it in your subclass.
    */
   virtual void Free(Path p);
   
