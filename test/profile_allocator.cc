@@ -13,16 +13,24 @@ uint64_t TimeLeafAllocation();
 template <class T>
 uint64_t TimeSplit();
 
+template <class T>
+uint64_t TimeFind();
+
 int main() {
-  std::cout << "Allocator<BBTree>::[Alloc/Free]() ... " << std::flush
-    << TimeLeafAllocation<BBTree>() << std::endl;
-  std::cout << "Allocator<BTree>::[Alloc/Free]() ... " << std::flush
-    << TimeLeafAllocation<BTree>() << std::endl;
-  
   std::cout << "Allocator<BBTree>::Split() ... " << std::flush
     << TimeSplit<BBTree>() << std::endl;
   std::cout << "Allocator<BTree>::Split() ... " << std::flush
     << TimeSplit<BTree>() << std::endl;
+  
+  std::cout << "Allocator<BBTree>::Find() ... " << std::flush
+    << TimeFind<BBTree>() << std::endl;
+  std::cout << "Allocator<BTree>::Find() ... " << std::flush
+    << TimeFind<BTree>() << std::endl;
+  
+  std::cout << "Allocator<BBTree>::[Alloc/Free]() ... " << std::flush
+    << TimeLeafAllocation<BBTree>() << std::endl;
+  std::cout << "Allocator<BTree>::[Alloc/Free]() ... " << std::flush
+    << TimeLeafAllocation<BTree>() << std::endl;
   return 0;
 }
 
@@ -78,4 +86,37 @@ uint64_t TimeSplit() {
   uint64_t result = Microtime() - start;
   delete buf;
   return result;
+}
+
+template <class T>
+uint64_t TimeFind() {
+  static const int depth = 17; // must be more than 12
+  uint8_t * buf = new uint8_t[T::MemorySize(depth)];
+  T tree(depth, buf);
+  Allocator<T> alloc(&tree);
+  
+  // allocate the first node and time it
+  uint64_t sum = 0;
+  Path p;
+  bool res = alloc.Alloc(0, p);
+  assert(res);
+  assert(p == 0);
+  
+  uint64_t start = Microtime();
+  for (int i = 0; i < 0x10000; i++) {
+    bool res = alloc.Find(i, p);
+    assert(res);
+    assert(p == 0);
+  }
+  sum += Microtime() - start;
+  
+  // allocate the leftmost node
+  alloc.Reserve(0, 0, 1);
+  
+  for (int i = 0; i < 0x10000; i++) {
+    alloc.Find(0, p);
+  }
+  
+  delete buf;
+  return sum;
 }
