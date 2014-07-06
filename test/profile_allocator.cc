@@ -10,11 +10,19 @@ using namespace ANAlloc;
 template <class T>
 uint64_t TimeLeafAllocation();
 
+template <class T>
+uint64_t TimeSplit();
+
 int main() {
   std::cout << "Allocator<BBTree>::[Alloc/Free]() ... " << std::flush
     << TimeLeafAllocation<BBTree>() << std::endl;
   std::cout << "Allocator<BTree>::[Alloc/Free]() ... " << std::flush
     << TimeLeafAllocation<BTree>() << std::endl;
+  
+  std::cout << "Allocator<BBTree>::Split() ... " << std::flush
+    << TimeSplit<BBTree>() << std::endl;
+  std::cout << "Allocator<BTree>::Split() ... " << std::flush
+    << TimeSplit<BTree>() << std::endl;
   return 0;
 }
 
@@ -41,6 +49,31 @@ uint64_t TimeLeafAllocation() {
   }
   
   assert(tree.GetType(0) == T::NodeTypeFree);
+  
+  uint64_t result = Microtime() - start;
+  delete buf;
+  return result;
+}
+
+template <class T>
+uint64_t TimeSplit() {
+  static const int depth = 17;
+  uint8_t * buf = new uint8_t[T::MemorySize(depth)];
+  T tree(depth, buf);
+  Allocator<T> alloc(&tree);
+  uint64_t start = Microtime();
+  
+  Path p;
+  bool res = alloc.Alloc(0, p);
+  assert(res);
+  assert(p == 0);
+  
+  for (int i = 0; i < depth - 1; i++) {
+    for (uint64_t j = 0; j < (1UL << i); j++) {
+      Path path = (1UL << i) - 1 + j;
+      alloc.Split(path);
+    }
+  }
   
   uint64_t result = Microtime() - start;
   delete buf;
