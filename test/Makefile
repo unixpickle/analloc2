@@ -1,6 +1,6 @@
 CPPFLAGS = -Wextra -Wall -std=c++11
 
-#all: build/bitmap build/tree build/btree build/bbtree build/allocator build/topology build/malloc build/profile_bbtree_o0 build/profile_bbtree_o2
+all: build/bitmap build/tree build/btree build/bbtree build/allocator build/topology build/malloc build/profile_bbtree_o0 build/profile_bbtree_o2 build/profile_allocator_o0 build/profile_allocator_o2
 
 build/bitmap: build
 	g++ $(CPPFLAGS) ../src/bitmap.cpp test-bitmap.cpp -o build/bitmap
@@ -28,6 +28,12 @@ build/prof-tree-o0: build
 
 build/prof-tree-o2: build
 	g++ -O2 $(CPPFLAGS) ../src/tree.cpp ../src/bitmap.cpp ../src/bbtree.cpp ../src/btree.cpp profile-tree.cpp -o build/prof-tree-o2
+
+build/profile_allocator_o0: build
+	g++ -O0 $(CPPFLAGS) ../src/bitmap.cc ../src/tree.cc ../src/bbtree.cc ../src/btree.cc profile_allocator.cc -o build/profile_allocator_o0
+
+build/profile_allocator_o2: build
+	g++ -O2 $(CPPFLAGS) ../src/bitmap.cc ../src/tree.cc ../src/bbtree.cc ../src/btree.cc profile_allocator.cc -o build/profile_allocator_o2
 
 build:
 	mkdir build
