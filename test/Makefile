@@ -12,7 +12,7 @@ build/btree: build
 	g++ $(CPPFLAGS) ../src/bitmap.cpp ../src/btree.cpp tree-tester.cpp test-btree.cpp -o build/btree
 
 build/bbtree: build
-	g++ $(CPPFLAGS) ../src/bitmap.cpp ../src/tree.cpp ../src/bbtree.cpp test_bbtree.cpp -o build/bbtree
+	g++ $(CPPFLAGS) ../src/bitmap.cpp ../src/bbtree.cpp tree-tester.cpp test-bbtree.cpp -o build/bbtree
 
 build/allocator: build
 	g++ $(CPPFLAGS) ../src/bitmap.cpp ../src/tree.cpp ../src/btree.cpp ../src/bbtree.cpp test_allocator.cpp -o build/allocator

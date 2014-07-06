@@ -29,6 +29,8 @@ public:
   virtual NodeType GetType(Path path);
   virtual bool FindFree(int depth, Path & path);
   
+  bool IsFree(Path path);
+  
 protected:
   Bitmap bitmap;
   int depth;
