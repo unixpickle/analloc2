@@ -1,12 +1,10 @@
 #include "../src/bbtree.hpp"
 #include "../src/btree.hpp"
-#include <sys/time.h>
+#include "microtime.hpp"
 #include <cstdint>
 #include <iostream>
 
 using namespace ANAlloc;
-
-uint64_t Microtime();
 
 template <class T>
 uint64_t TimeBranchAllocation();
@@ -37,12 +35,6 @@ int main() {
   std::cout << "BTree::FindFree() [single-page]... " << std::flush
     << TimeBaseAllocation<BTree>() << std::endl;
   return 0;
-}
-
-uint64_t Microtime() {
-  timeval time;
-  gettimeofday(&time, NULL);
-  return (uint64_t)time.tv_sec * 1000000L + (uint64_t)time.tv_usec;
 }
 
 template <class T>
