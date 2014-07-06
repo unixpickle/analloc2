@@ -1,6 +1,7 @@
 #include <iostream>
 #include <cassert>
 #include "../src/tree.hpp"
+#include "scoped-pass.hpp"
 
 using namespace ANAlloc;
 
@@ -18,17 +19,16 @@ int main() {
 }
 
 void TestComparison() {
-  std::cout << "testing Path::operator==() ... " << std::flush;
+  ScopedPass pass("Path::operator==()");
   
   assert(Path(0, 0) == Path(0, 0));
   assert(Path(1, 0) != Path(0, 0));
   assert(Path(0, 1) != Path(0, 0));
-  
-  std::cout << "passed!" << std::endl;
 }
 
 void TestPathParent() {
-  std::cout << "testing Path::Parent() ... " << std::flush;
+  ScopedPass pass("Path::Parent()");
+  
   assert(Path(1, 0).Parent() == Path(0, 0));
   assert(Path(1, 1).Parent() == Path(0, 0));
   
@@ -36,12 +36,10 @@ void TestPathParent() {
   assert(Path(2, 1).Parent() == Path(1, 0));
   assert(Path(2, 2).Parent() == Path(1, 1));
   assert(Path(2, 3).Parent() == Path(1, 1));
-  
-  std::cout << "passed!" << std::endl;
 }
 
 void TestSiblings() {
-  std::cout << "testing Path::[Left/Right/Sibling]() ... " << std::flush;
+  ScopedPass pass("Path::[Left/Right/Sibling]()");
   
   assert(Path(0, 0).Left() == Path(1, 0));
   assert(Path(0, 0).Right() == Path(1, 1));
@@ -50,12 +48,10 @@ void TestSiblings() {
   assert(Path(1, 0).Right() == Path(2, 1));
   assert(Path(1, 1).Left() == Path(2, 2));
   assert(Path(1, 1).Right() == Path(2, 3));
-  
-  std::cout << "passed!" << std::endl;
 }
 
 void TestTreeIndex() {
-  std::cout << "testing Path::TreeIndex() ... " << std::flush;
+  ScopedPass pass("Path::TreeIndex()");
   
   assert(Path(0, 0).TreeIndex() == 0);
   
@@ -75,6 +71,4 @@ void TestTreeIndex() {
   assert(Path(3, 5).TreeIndex() == 12);
   assert(Path(3, 6).TreeIndex() == 13);
   assert(Path(3, 7).TreeIndex() == 14);
-  
-  std::cout << "passed!" << std::endl;
 }

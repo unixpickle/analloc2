@@ -8,12 +8,24 @@ namespace ANAlloc {
 
 class Path {
 public:
-  static Path RootPath() {
+  inline static Path RootPath() {
     return Path(0, 0);
+  }
+  
+  inline static Path FromTreeIndex(uint64_t idx) {
+    int depth;
+    for (depth = 63; depth >= 0; depth--) {
+      if ((idx + 1) & (1L << depth)) break;
+    }
+    if (!depth) return Path(0, 0);
+    return Path(depth, idx - (DepthCount(depth) - 1));
   }
   
   inline static uint64_t DepthCount(int depth) {
     return 1UL << depth;
+  }
+  
+  inline Path() : depth(0), index(0) {
   }
   
   inline Path(int _depth, uint64_t _index) : depth(_depth), index(_index) {

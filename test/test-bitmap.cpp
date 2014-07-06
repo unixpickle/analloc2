@@ -1,6 +1,7 @@
 #include <new>
 #include <cassert>
 #include <iostream>
+#include "scoped-pass.hpp"
 #include "../src/bitmap.hpp"
 
 #define RAND_BIT(i) (bool)((i % 2) ^ (i % 3 != 2) ^ (i % 7 == 0))
@@ -8,6 +9,8 @@
 using namespace std;
 
 int main() {
+  ScopedPass pass("Bitmap");
+  
   uint8_t * buffer = new uint8_t[0x1000];
   ANAlloc::Bitmap bm(buffer, 0x8000);
   
@@ -50,8 +53,6 @@ int main() {
   assert(bm.GetBit(7) == false);
   assert(bm.GetBit(8) == true);
   assert(bm.GetBit(9) == false);
-  
-  cout << "test passed!" << endl;
   
   return 0;
 }
