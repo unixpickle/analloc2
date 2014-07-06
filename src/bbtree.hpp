@@ -28,6 +28,7 @@ public:
   virtual void SetType(Path path, NodeType type);
   virtual NodeType GetType(Path path);
   virtual bool FindFree(int depth, Path & path);
+  virtual void Free(Path path);
   
   bool IsFree(Path path);
   

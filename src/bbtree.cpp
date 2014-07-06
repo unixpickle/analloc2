@@ -1,8 +1,6 @@
 #include "bbtree.hpp"
 #include <cassert>
 
-#include <iostream> // TODO: delete this
-
 namespace ANAlloc {
 
 size_t BBTree::MemorySize(int depth) {
@@ -16,11 +14,15 @@ BBTree::BBTree() {
 
 BBTree::BBTree(int _depth, uint8_t * bmMemory)
   : bitmap(bmMemory, TreeSizeAtDepth(_depth)), depth(_depth) {
-  WriteNode(Path::RootPath(), depth);
-  if (depth > 1) {
-    WriteNode(Path(1, 0), depth - 1);
-    WriteNode(Path(1, 0), depth - 1);
+#ifndef ANALLOC_BBTREE_DONT_CACHE_PREFIXES
+  for (int i = 0; i < depth; i++) {
+    prefixSizes[i] = CalculatePrefixSize(i);
   }
+#endif
+  WriteNode(Path::RootPath(), depth);
+}
+
+BBTree::BBTree(const BBTree & tree) : bitmap(tree.bitmap), depth(tree.depth) {
 #ifndef ANALLOC_BBTREE_DONT_CACHE_PREFIXES
   for (int i = 0; i < depth; i++) {
     prefixSizes[i] = CalculatePrefixSize(i);
@@ -28,12 +30,14 @@ BBTree::BBTree(int _depth, uint8_t * bmMemory)
 #endif
 }
 
-BBTree::BBTree(const BBTree & tree) : bitmap(tree.bitmap), depth(tree.depth) {
-}
-
 BBTree & BBTree::operator=(const BBTree & tree) {
   bitmap = tree.bitmap;
   depth = tree.depth;
+#ifndef ANALLOC_BBTREE_DONT_CACHE_PREFIXES
+  for (int i = 0; i < depth; i++) {
+    prefixSizes[i] = CalculatePrefixSize(i);
+  }
+#endif
   return *this;
 }
 
@@ -52,9 +56,9 @@ void BBTree::SetType(Path path, NodeType type) {
   } else {
     newValue = 0;
     
-    // subnodes should automatically be zero'd
-    assert(IsFree(path.Left()));
-    assert(IsFree(path.Right()));
+    // subnodes should automatically be free'd
+    WriteNode(path.Left(), depth - path.GetDepth() - 1);
+    WriteNode(path.Right(), depth - path.GetDepth() - 1);
   }
   if (newValue != oldValue) {
     WriteNode(path, newValue);
@@ -107,6 +111,14 @@ bool BBTree::FindFree(int _depth, Path & path) {
   }
 }
 
+void BBTree::Free(Path path) {
+  if (IsFree(path)) return;
+  
+  // this is technically not allowed by the specification, but in our tree
+  // implementation it is fine.
+  SetType(path, NodeTypeFree);
+}
+
 bool BBTree::IsFree(Path path) {
   return ReadNode(path) == depth - path.GetDepth();
 }
@@ -152,7 +164,7 @@ int BBTree::FieldSizeAtDepth(int _depth) {
 uint64_t BBTree::CalculatePrefixSize(int _depth) {
   uint64_t result = 0;
   for (int i = 0; i < _depth; i++) {
-    result += FieldSizeAtDepth(i) * (1UL << i);
+    result += (uint64_t)FieldSizeAtDepth(i) * (1UL << i);
   }
   return result;
 }

@@ -45,6 +45,16 @@ public:
    * @return false if no desired nodes are available, true otherwise.
    */
   virtual bool FindFree(int depth, Path & pathOut) = 0;
+  
+  /**
+   * Recursively free every path in the tree starting at a given path.
+   */
+  virtual void Free(Path p);
+  
+  /**
+   * Recursively free every path in the tree starting at the root.
+   */
+  virtual void FreeAll();
 };
 
 }

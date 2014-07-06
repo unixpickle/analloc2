@@ -6,24 +6,9 @@ namespace ANAlloc {
 TreeTester::TreeTester(Tree & _tree, const char * _name)
   : name(_name), tree(_tree) {
 }
-  
-void TreeTester::FreeAll() {
-  FreeAll(Path::RootPath());
-}
-
-void TreeTester::FreeAll(Path p) {
-  NodeType type = tree.GetType(p);
-  if (type != NodeTypeFree) {
-    if (type == NodeTypeContainer) {
-      FreeAll(p.Left());
-      FreeAll(p.Right());
-    }
-    tree.SetType(p, NodeTypeFree);
-  }
-}
 
 void TreeTester::AllocAll() {
-  FreeAll();
+  tree.FreeAll();
   for (int i = 0; i < tree.GetDepth() - 1; i++) {
     for (uint64_t j = 0; j < Path::DepthCount(i); j++) {
       Path p(i, j);
@@ -83,7 +68,7 @@ void TreeTester::TestSetGet() {
 void TreeTester::TestFindFree() {
   ScopedPass pass(name, "::FindFree()");
   
-  FreeAll();
+  tree.FreeAll();
 
   // make sure the first chunk is the biggest chunk
   Path p;
