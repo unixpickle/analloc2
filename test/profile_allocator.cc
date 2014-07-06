@@ -113,9 +113,11 @@ uint64_t TimeFind() {
   // allocate the leftmost node
   alloc.Reserve(0, 0, 1);
   
+  start = Microtime();
   for (int i = 0; i < 0x10000; i++) {
     alloc.Find(0, p);
   }
+  sum += Microtime() - start;
   
   delete buf;
   return sum;
