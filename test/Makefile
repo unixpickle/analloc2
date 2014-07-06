@@ -5,8 +5,8 @@ all: build/bitmap build/tree build/btree build/bbtree build/allocator build/topo
 build/bitmap: build
 	g++ $(CPPFLAGS) ../src/bitmap.cc test_bitmap.cc -o build/bitmap
 
-build/tree: build
-	g++ $(CPPFLAGS) ../src/tree.cc test_tree.cc -o build/tree
+build/path: build
+	g++ $(CPPFLAGS) test_path.cc -o build/path
 
 build/btree: build
 	g++ $(CPPFLAGS) ../src/bitmap.cc ../src/tree.cc ../src/btree.cc test_btree.cc -o build/btree

@@ -1,7 +1,7 @@
-#include "../src/bitmap.hpp"
-#include <stdio.h>
 #include <new>
+#include <cassert>
 #include <iostream>
+#include "../src/bitmap.hpp"
 
 #define RAND_BIT(i) (bool)((i % 2) ^ (i % 3 != 2) ^ (i % 7 == 0))
 
