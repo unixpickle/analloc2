@@ -41,9 +41,9 @@ protected:
   uint64_t CalculatePrefixSize(int depth);
   uint64_t GetPrefixSize(int depth);
   
-  uint64_t NodeOffset(Path p);
   int ReadNode(Path p);
   void WriteNode(Path p, int value);
+  void UpdateParents(Path p, int pValue);
 };
 
 }

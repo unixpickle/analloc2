@@ -36,7 +36,23 @@ int BBTree::GetDepth() {
 }
 
 void BBTree::SetType(Path path, NodeType type) {
-  // TODO: this
+  int oldValue = ReadNode(path);
+  int newValue = 0;
+  
+  if (type == NodeTypeFree) {
+    newValue = depth - path.GetDepth();
+  } else if (type == NodeTypeData) {
+    newValue = 0;
+  } else {
+    newValue = 0;
+    // subnodes should automatically be zero'd
+    assert(!ReadNode(path.Left()));
+    assert(!ReadNode(path.Right()));
+  }
+  if (newValue != oldValue) {
+    WriteNode(path, newValue);
+    UpdateParents(path, newValue);
+  }
 }
 
 NodeType BBTree::GetType(Path path) {
@@ -77,18 +93,6 @@ bool BBTree::FindFree(int _depth, Path & path) {
 }
 
 // protected //
-
-int BBTree::ReadNode(Path p) {
-  uint64_t fieldSize = FieldSizeAtDepth(p.GetDepth());
-  uint64_t offset = GetPrefixSize(p.GetDepth()) + fieldSize * p.GetIndex();
-  return bitmap.GetMultibit(offset, fieldSize);
-}
-
-void BBTree::WriteNode(Path p, int value) {
-  uint64_t fieldSize = FieldSizeAtDepth(p.GetDepth());
-  uint64_t offset = GetPrefixSize(p.GetDepth()) + fieldSize * p.GetIndex();
-  bitmap.SetMultibit(offset, fieldSize, (uint64_t)value);
-}
 
 uint64_t BBTree::TreeSizeAtDepth(int depth) {
   // size table is the best we're going to get
@@ -140,6 +144,39 @@ uint64_t BBTree::GetPrefixSize(int _depth) {
 #else
   return CalculatePrefixSize(_depth);
 #endif
+}
+
+
+int BBTree::ReadNode(Path p) {
+  uint64_t fieldSize = FieldSizeAtDepth(p.GetDepth());
+  uint64_t offset = GetPrefixSize(p.GetDepth()) + fieldSize * p.GetIndex();
+  return bitmap.GetMultibit(offset, fieldSize);
+}
+
+void BBTree::WriteNode(Path p, int value) {
+  uint64_t fieldSize = FieldSizeAtDepth(p.GetDepth());
+  uint64_t offset = GetPrefixSize(p.GetDepth()) + fieldSize * p.GetIndex();
+  bitmap.SetMultibit(offset, fieldSize, (uint64_t)value);
+}
+
+void BBTree::UpdateParents(Path p, int pValue) {
+  Path currentPath = p;
+  int currentValue = pValue;
+  
+  while (currentPath.GetDepth()) {
+    int siblingValue = ReadNode(currentPath.Sibling());
+    int newParentValue = siblingValue > currentValue
+      ? siblingValue : currentValue;
+    
+    currentPath = currentPath.Parent();
+    currentValue = ReadNode(currentPath);
+    if (newParentValue == currentValue) {
+      break;
+    } else {
+      currentValue = newParentValue;
+      WriteNode(currentPath, currentValue);
+    }
+  }
 }
 
 }
