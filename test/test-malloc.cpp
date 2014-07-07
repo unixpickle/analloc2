@@ -2,15 +2,21 @@
 #include "../src/tree/bbtree.hpp"
 #include "../src/tree/btree.hpp"
 #include "scoped-pass.hpp"
+#include <cstdlib>
 
 using namespace ANAlloc;
 
 template <class T>
 void TestWrapRegion(const char * name);
 
+template <class T>
+void TestAlign(const char * name);
+
 int main() {
   TestWrapRegion<BBTree>("BBTree");
   TestWrapRegion<BTree>("BTree");
+  TestAlign<BBTree>("BBTree");
+  TestAlign<BTree>("BTree");
   return 0;
 }
 
@@ -48,4 +54,28 @@ void TestWrapRegion(const char * name) {
   assert(!m->Alloc(0x100001));
   
   delete buf;
+}
+
+template <class T>
+void TestAlign(const char * name) {
+  ScopedPass pass("Malloc::Align() [with ", name, "]");
+  uint8_t * treeBuffer = new uint8_t[T::MemorySize(21)];
+  
+  T tree(21, treeBuffer);
+  uint8_t * buffer = NULL;
+  assert(!posix_memalign((void **)&buffer, 0x200000, 0x200000));
+  Malloc theMalloc(buffer, tree, 1);
+  
+  uint8_t * bigBuf = (uint8_t *)theMalloc.Align(0x100000, 0x200000);
+  assert(bigBuf != NULL);
+  assert(bigBuf == buffer);
+  assert(!theMalloc.Align(0x100000, 0x200000));
+  
+  // use a size smaller than 0x80000 just to shake things up
+  uint8_t * smallerBuf = (uint8_t *)theMalloc.Align(0x1, 0x100000);
+  assert(smallerBuf == buffer + 0x100000);
+  assert(!theMalloc.Align(1, 0x100000));
+  
+  delete treeBuffer;
+  free(buffer);
 }
