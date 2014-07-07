@@ -1,9 +1,11 @@
 #include "malloc.hpp"
 
+#include <iostream> // TODO: delete this
+
 namespace ANAlloc {
 
 Malloc::Malloc(uint8_t * _start, Tree & _tree, int _psLog)
-  : start(_start), length(1UL << (_tree.GetDepth() - 1 + psLog)),
+  : start(_start), length(1UL << (_tree.GetDepth() - 1 + _psLog)),
     tree(_tree), psLog(_psLog) {
 }
 

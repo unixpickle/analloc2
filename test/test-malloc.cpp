@@ -12,11 +12,16 @@ void TestWrapRegion(const char * name);
 template <class T>
 void TestAlign(const char * name);
 
+template <class T>
+void TestFree(const char * name);
+
 int main() {
   TestWrapRegion<BBTree>("BBTree");
   TestWrapRegion<BTree>("BTree");
   TestAlign<BBTree>("BBTree");
   TestAlign<BTree>("BTree");
+  TestFree<BBTree>("BBTree");
+  TestFree<BTree>("BTree");
   return 0;
 }
 
@@ -42,6 +47,11 @@ void TestWrapRegion(const char * name) {
     bool res = m->GetTree().FindByShadow(i, p);
     assert(res == (i < baseCount));
   }
+  
+  assert(m->OwnsPointer(buf));
+  assert(m->OwnsPointer(buf + 0x1fffff));
+  assert(!m->OwnsPointer(buf - 1));
+  assert(!m->OwnsPointer(buf + 0x200000));
   
   // test a simple allocation
   uint8_t * buffer = (uint8_t *)m->Alloc(0x100000);
@@ -75,6 +85,33 @@ void TestAlign(const char * name) {
   uint8_t * smallerBuf = (uint8_t *)theMalloc.Align(0x1, 0x100000);
   assert(smallerBuf == buffer + 0x100000);
   assert(!theMalloc.Align(1, 0x100000));
+  
+  delete treeBuffer;
+  free(buffer);
+}
+
+template <class T>
+void TestFree(const char * name) {
+  ScopedPass pass("Malloc::Free() [with ", name, "]");
+  
+  uint8_t * treeBuffer = new uint8_t[T::MemorySize(21)];
+  
+  T tree(21, treeBuffer);
+  uint8_t * buffer = NULL;
+  assert(!posix_memalign((void **)&buffer, 0x200000, 0x200000));
+  Malloc theMalloc(buffer, tree, 1);
+  
+  uint8_t * buffer1 = (uint8_t *)theMalloc.Alloc(0x100000);
+  uint8_t * buffer2 = (uint8_t *)theMalloc.Alloc(0x80000);
+  uint8_t * buffer3 = (uint8_t *)theMalloc.Alloc(0x80000);
+  assert(buffer1 != NULL);
+  assert(buffer2 != NULL);
+  assert(buffer3 != NULL);
+  
+  assert(!theMalloc.Alloc(1));
+  theMalloc.Free(buffer3);
+  assert(buffer3 == theMalloc.Alloc(0x80000));
+  assert(!theMalloc.Alloc(1));
   
   delete treeBuffer;
   free(buffer);
