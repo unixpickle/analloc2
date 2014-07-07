@@ -20,6 +20,9 @@ uint64_t TimeBaseAllocation();
 template <class T>
 uint64_t TimeLeafAllocation();
 
+template <class T>
+uint64_t TimeFindByShadow();
+
 void AllocAllButMiddle(Tree & tree, Path p);
 
 int main() {
@@ -42,6 +45,11 @@ int main() {
     << TimeLeafAllocation<BBTree>() << std::endl;
   std::cout << "BTree::[Alloc/Dealloc]() [leaf]... " << std::flush
     << TimeLeafAllocation<BTree>() << std::endl;
+  
+  std::cout << "BBTree::FindByShadow()... " << std::flush
+    << TimeFindByShadow<BBTree>() << std::endl;
+  std::cout << "BTree::FindByShadow()... " << std::flush
+    << TimeFindByShadow<BTree>() << std::endl;
   
   return 0;
 }
@@ -164,6 +172,43 @@ uint64_t TimeLeafAllocation() {
   uint64_t result = Microtime() - start;
   delete buf;
   return result;
+}
+
+template <class T>
+uint64_t TimeFindByShadow() {
+  static const int depth = 17; // must be more than 12
+  uint8_t * buf = new uint8_t[T::MemorySize(depth)];
+  T tree(depth, buf);
+  
+  uint64_t sum = 0;
+  
+  // allocate the root node
+  Path p;
+  bool res = tree.Alloc(0, p);
+  assert(res);
+  assert(p == Path::Root());
+  
+  // attempt to find root node (many times)
+  uint64_t start = Microtime();
+  for (int i = 0; i < 0x10000; i++) {
+    bool res = tree.FindByShadow(i, p);
+    assert(res);
+    assert(p == Path::Root());
+  }
+  sum += Microtime() - start;
+  
+  // allocate the leftmost node
+  tree.Carve(Path::Root(), 0, 1);
+  
+  // attempt to find first shadow node (many times)
+  start = Microtime();
+  for (int i = 0; i < 0x10000; i++) {
+    tree.FindByShadow(0, p);
+  }
+  sum += Microtime() - start;
+  
+  delete buf;
+  return sum;
 }
 
 void AllocAllButMiddle(Tree & tree, Path p) {
