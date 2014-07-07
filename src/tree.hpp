@@ -61,6 +61,24 @@ public:
    * Recursively free every path in the tree starting at the root.
    */
   virtual void FreeAll();
+  
+  /**
+   * Allocate a node at a ceratin depth. This will recursively set the type of
+   * the node's parents if needed to create a node of exactly the right size.
+   */
+  virtual bool Alloc(int depth, Path & pathOut);
+  
+  /**
+   * Find a data node given its shadow on the base row. If no data node exists,
+   * false will be returned.
+   */
+  virtual bool FindByShadow(uint64_t baseIndex, Path & path);
+  
+  /**
+   * Reserve a shadow on the base row by recursively splitting a data node and
+   * freeing unneeded residual.
+   */
+  virtual void Reserve(Path p, uint64_t baseStart, uint64_t baseCount);
 };
 
 }
