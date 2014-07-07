@@ -15,6 +15,15 @@ public:
   void TestSetGet();
   void TestFindFree();
   
+  void TestBaseAlloc();
+  void TestFragAlloc();
+  void TestFindByShadow();
+  void TestCarveCenter();
+  void TestCarveSide();
+  void TestCarveFull();
+  
+  void TestAll();
+  
 private:
   const char * name;
   Tree & tree;

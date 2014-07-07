@@ -18,9 +18,7 @@ int main() {
   BTree tree(10, memory);
   
   TreeTester tester(tree, "BTree");
-  tester.TestAllocAll();
-  tester.TestSetGet();
-  tester.TestFindFree();
+  tester.TestAll();
   
   delete memory;
   return 0;

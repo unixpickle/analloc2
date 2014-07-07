@@ -75,7 +75,7 @@ void TreeTester::TestFindFree() {
   for (int i = 0; i < tree.GetDepth(); i++) {
     bool result = tree.FindFree(i, p);
     assert(result);
-    assert(p == Path::RootPath());
+    assert(p == Path::Root());
   }
 
   if (tree.GetDepth() < 2) return;
@@ -112,6 +112,196 @@ void TreeTester::TestFindFree() {
 
   // verify nothing is left
   assert(!tree.FindFree(tree.GetDepth() - 1, p));
+}
+
+void TreeTester::TestBaseAlloc() {
+  ScopedPass pass(name, "::Alloc() [base node]");
+  tree.FreeAll();
+  
+  Path p;
+  bool res = tree.Alloc(tree.GetDepth() - 1, p);
+  assert(res);
+  assert(p.GetDepth() == tree.GetDepth() - 1);
+  assert(tree.GetType(p) == NodeTypeData);
+  assert(tree.GetType(p.Sibling()) == NodeTypeFree);
+  
+  p = p.Parent();
+  while (p.GetDepth()) {
+    assert(tree.GetType(p) == NodeTypeContainer);
+    assert(tree.GetType(p.Sibling()) == NodeTypeFree);
+    p = p.Parent();
+  }
+  assert(tree.GetType(p) == NodeTypeContainer);
+}
+
+void TreeTester::TestFragAlloc() {
+  ScopedPass pass(name, "::Alloc()");
+  tree.FreeAll();
+  
+  Path d1Path, d2Path, d3Path1, d3Path2;
+  bool res = tree.Alloc(1, d1Path);
+  assert(res);
+  assert(tree.GetType(Path::Root()) == NodeTypeContainer);
+  assert(tree.GetType(d1Path) == NodeTypeData);
+  assert(tree.GetType(d1Path.Sibling()) == NodeTypeFree);
+  
+  res = tree.Alloc(2, d2Path);
+  assert(res);
+  assert(d2Path.Parent() == d1Path.Sibling());
+  assert(tree.GetType(d1Path.Sibling()) == NodeTypeContainer);
+  assert(tree.GetType(d2Path) == NodeTypeData);
+  assert(tree.GetType(d2Path.Sibling()) == NodeTypeFree);
+  
+  res = tree.Alloc(3, d3Path1);
+  assert(res);
+  assert(d3Path1.Parent() == d2Path.Sibling());
+  assert(tree.GetType(d2Path.Sibling()) == NodeTypeContainer);
+  assert(tree.GetType(d3Path1) == NodeTypeData);
+  assert(tree.GetType(d3Path1.Sibling()) == NodeTypeFree);
+  
+  res = tree.Alloc(3, d3Path2);
+  assert(res);
+  assert(d3Path2.Sibling() == d3Path1);
+  
+  // verify the tree structure as a whole
+  assert(tree.GetType(Path::Root()) == NodeTypeContainer);
+  assert(tree.GetType(d1Path) == NodeTypeData);
+  assert(tree.GetType(d1Path.Sibling()) == NodeTypeContainer);
+  assert(tree.GetType(d2Path) == NodeTypeData);
+  assert(tree.GetType(d2Path.Sibling()) == NodeTypeContainer);
+  assert(tree.GetType(d3Path1) == NodeTypeData);
+  assert(tree.GetType(d3Path2) == NodeTypeData);
+  
+  // attempt reverse-order allocation of d3Path
+  tree.Dealloc(d3Path1);
+  assert(tree.GetType(d3Path2) == NodeTypeData);
+  assert(tree.GetType(d3Path1) == NodeTypeFree);
+  res = tree.Alloc(3, d3Path1);
+  assert(res);
+  assert(d3Path1 == d3Path2.Sibling());
+  
+  // re-verify the tree structure as a whole
+  assert(tree.GetType(Path::Root()) == NodeTypeContainer);
+  assert(tree.GetType(d1Path) == NodeTypeData);
+  assert(tree.GetType(d1Path.Sibling()) == NodeTypeContainer);
+  assert(tree.GetType(d2Path) == NodeTypeData);
+  assert(tree.GetType(d2Path.Sibling()) == NodeTypeContainer);
+  assert(tree.GetType(d3Path1) == NodeTypeData);
+  assert(tree.GetType(d3Path2) == NodeTypeData);
+}
+
+void TreeTester::TestFindByShadow() {
+  ScopedPass pass(name, "::FindByShadow()");
+  tree.FreeAll();
+  
+  bool res;
+  Path p;
+  uint64_t baseCount = Path::DepthCount(tree.GetDepth() - 1);
+  
+  tree.SetType(Path::Root(), NodeTypeData);
+  for (uint64_t i = 0; i < baseCount; i++) {
+    res = tree.FindByShadow(i, p);
+    assert(res);
+    assert(p == Path::Root());
+  }
+  
+  tree.SetType(Path::Root(), NodeTypeContainer);
+  tree.SetType(Path(1, 0), NodeTypeData);
+  tree.SetType(Path(1, 1), NodeTypeFree);
+  for (uint64_t i = 0; i < baseCount; i++) {
+    res = tree.FindByShadow(i, p);
+    assert(res == (i < baseCount / 2));
+    if (i < baseCount / 2) {
+      assert(p == Path(1, 0));
+    }
+  }
+  
+  tree.SetType(Path(1, 0), NodeTypeContainer);
+  tree.SetType(Path(2, 0), NodeTypeFree);
+  tree.SetType(Path(2, 1), NodeTypeData);
+  
+  for (uint64_t i = 0; i < baseCount; i++) {
+    res = tree.FindByShadow(i, p);
+    if (i < baseCount / 4 || i >= baseCount / 2) {
+      assert(!res);
+    } else {
+      assert(res);
+      assert(p == Path(2, 1));
+    }
+  }
+}
+
+void TreeTester::TestCarveCenter() {
+  ScopedPass pass(name, "::Carve() [center]");
+  tree.FreeAll();
+  
+  uint64_t shadowCount = Path::DepthCount(tree.GetDepth() - 1);
+  
+  // carve in the two middle nodes
+  tree.SetType(Path::Root(), NodeTypeData);
+  tree.Carve(Path::Root(), shadowCount / 2 - 1, 2);
+  
+  Path p(1, 0);
+  while (p.GetDepth() < tree.GetDepth() - 1) {
+    assert(tree.GetType(p) == NodeTypeContainer);
+    assert(tree.GetType(p.Left()) == NodeTypeFree);
+    p = p.Right();
+  }
+  assert(tree.GetType(p) == NodeTypeData);
+  
+  p = Path(1, 1);
+  while (p.GetDepth() < tree.GetDepth() - 1) {
+    assert(tree.GetType(p) == NodeTypeContainer);
+    assert(tree.GetType(p.Right()) == NodeTypeFree);
+    p = p.Left();
+  }
+  assert(tree.GetType(p) == NodeTypeData);
+}
+
+void TreeTester::TestCarveSide() {
+  ScopedPass pass(name, "::Carve() [side]");
+  tree.FreeAll();
+  
+  uint64_t shadowCount = Path::DepthCount(tree.GetDepth() - 1);
+  
+  // carve in the two middle nodes
+  tree.SetType(Path::Root(), NodeTypeContainer);
+  tree.SetType(Path(1, 0), NodeTypeData);
+  tree.SetType(Path(1, 1), NodeTypeFree);
+  
+  // carve all but rightmost left node
+  tree.Carve(Path(1, 0), 0, shadowCount / 2 - 1);
+  
+  Path p(1, 0);
+  while (p.GetDepth() < tree.GetDepth() - 1) {
+    assert(tree.GetType(p) == NodeTypeContainer);
+    assert(tree.GetType(p.Left()) == NodeTypeData);
+    p = p.Right();
+  }
+  assert(tree.GetType(p) == NodeTypeFree);
+}
+
+void TreeTester::TestCarveFull() {
+  ScopedPass pass(name, "::Carve() [full]");
+  tree.FreeAll();
+  
+  uint64_t shadowCount = Path::DepthCount(tree.GetDepth() - 1);
+  
+  tree.SetType(Path::Root(), NodeTypeData);
+  tree.Carve(Path::Root(), 0, shadowCount);
+  assert(tree.GetType(Path::Root()) == NodeTypeData);
+}
+
+void TreeTester::TestAll() {
+  TestAllocAll();
+  TestSetGet();
+  TestFindFree();
+  TestBaseAlloc();
+  TestFragAlloc();
+  TestFindByShadow();
+  TestCarveCenter();
+  TestCarveSide();
+  TestCarveFull();
 }
 
 }

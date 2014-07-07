@@ -69,16 +69,22 @@ public:
   virtual bool Alloc(int depth, Path & pathOut);
   
   /**
+   * Free a data node. If the node's sibling is also free, the node's parent
+   * will be free'd, etc.
+   */
+  virtual void Dealloc(Path p);
+  
+  /**
    * Find a data node given its shadow on the base row. If no data node exists,
    * false will be returned.
    */
   virtual bool FindByShadow(uint64_t baseIndex, Path & path);
   
   /**
-   * Reserve a shadow on the base row by recursively splitting a data node and
+   * Carve a shadow on the base row by recursively splitting a data node and
    * freeing unneeded residual.
    */
-  virtual void Reserve(Path p, uint64_t baseStart, uint64_t baseCount);
+  virtual void Carve(Path p, uint64_t baseStart, uint64_t baseCount);
 };
 
 }

@@ -64,7 +64,7 @@ NodeType BTree::GetType(Path path) {
 }
 
 bool BTree::FindFree(int depth, Path & path) {
-  return FindFreeRecursive(depth, Path::RootPath(), path);
+  return FindFreeRecursive(depth, Path::Root(), path);
 }
 
 bool BTree::FindFreeRecursive(int _depth, Path p, Path & pathOut) {

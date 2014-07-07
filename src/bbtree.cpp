@@ -19,7 +19,7 @@ BBTree::BBTree(int _depth, uint8_t * bmMemory)
     prefixSizes[i] = CalculatePrefixSize(i);
   }
 #endif
-  WriteNode(Path::RootPath(), depth);
+  WriteNode(Path::Root(), depth);
 }
 
 BBTree::BBTree(const BBTree & tree) : bitmap(tree.bitmap), depth(tree.depth) {
@@ -53,8 +53,15 @@ void BBTree::SetType(Path path, NodeType type) {
     newValue = depth - path.GetDepth();
   } else if (type == NodeTypeData) {
     newValue = 0;
+    if (path.GetDepth() < depth - 1) {
+      // if a node's value is 0, it could either be a container with two full
+      // data nodes, or it could be a data node with two "free" subnodes.
+      WriteNode(path.Left(), depth - path.GetDepth() - 1);
+      WriteNode(path.Right(), depth - path.GetDepth() - 1);
+    }
   } else {
-    newValue = 0;
+    assert(path.GetDepth() < depth - 1);
+    newValue = depth - path.GetDepth() - 1;
     
     // subnodes should automatically be free'd
     WriteNode(path.Left(), depth - path.GetDepth() - 1);
@@ -87,7 +94,7 @@ bool BBTree::FindFree(int _depth, Path & path) {
   int minimumNode = depth - _depth;
   assert(minimumNode > 0);
   
-  path = Path::RootPath();
+  path = Path::Root();
   int pathValue = ReadNode(path);
   
   // this is the part that's O(log(N))

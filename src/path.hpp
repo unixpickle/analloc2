@@ -8,7 +8,7 @@ namespace ANAlloc {
 
 class Path {
 public:
-  inline static Path RootPath() {
+  inline static Path Root() {
     return Path(0, 0);
   }
   

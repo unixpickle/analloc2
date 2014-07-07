@@ -63,7 +63,7 @@ uint64_t TimeBranchAllocation() {
       p = p.Parent();
     }
     tree.SetType(p, NodeTypeFree);
-    assert(p == Path::RootPath());
+    assert(p == Path::Root());
   }
   
   uint64_t result = Microtime() - start;
@@ -100,7 +100,7 @@ template <class T>
 uint64_t TimeBaseAllocation() {
   uint8_t * buf = new uint8_t[T::MemorySize(12)];
   T tree(12, buf);
-  AllocAllButMiddle(tree, Path::RootPath());
+  AllocAllButMiddle(tree, Path::Root());
   
   uint64_t start = Microtime();
   
