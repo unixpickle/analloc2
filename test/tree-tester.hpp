@@ -17,6 +17,7 @@ public:
   
   void TestBaseAlloc();
   void TestFragAlloc();
+  void TestExhaustiveAlloc();
   void TestFindByShadow();
   void TestCarveCenter();
   void TestCarveSide();

@@ -135,7 +135,7 @@ void TreeTester::TestBaseAlloc() {
 }
 
 void TreeTester::TestFragAlloc() {
-  ScopedPass pass(name, "::Alloc()");
+  ScopedPass pass(name, "::Alloc() [variety]");
   tree.FreeAll();
   
   Path d1Path, d2Path, d3Path1, d3Path2;
@@ -188,6 +188,44 @@ void TreeTester::TestFragAlloc() {
   assert(tree.GetType(d2Path.Sibling()) == NodeTypeContainer);
   assert(tree.GetType(d3Path1) == NodeTypeData);
   assert(tree.GetType(d3Path2) == NodeTypeData);
+}
+
+void TreeTester::TestExhaustiveAlloc() {
+  ScopedPass pass(name, "::Alloc() [ordered base nodes]");
+  tree.FreeAll();
+  
+  Path throwAway;
+  
+  // allocate every base node
+  uint64_t baseCount = Path::DepthCount(tree.GetDepth() - 1);
+  for (uint64_t i = 0; i < baseCount; i++) {
+    bool res = tree.Alloc(tree.GetDepth() - 1, throwAway);
+    assert(res);
+  }
+  assert(!tree.Alloc(tree.GetDepth() - 1, throwAway));
+  
+  // verify the structure of the tree
+  for (int i = 0; i < tree.GetDepth() - 2; i++) {
+    for (uint64_t j = 0; j < Path::DepthCount(i); j++) {
+      Path p(i, j);
+      assert(tree.GetType(p) == NodeTypeContainer);
+    }
+  }
+  for (uint64_t i = 0; i < baseCount; i++) {
+    Path p(tree.GetDepth() - 1, i);
+    assert(tree.GetType(p) == NodeTypeData);
+  }
+  
+  // free each base node in order, verifing the tree's structure
+  for (uint64_t i = 0; i < baseCount; i++) {
+    Path p(tree.GetDepth() - 1, i);
+    tree.Dealloc(p);
+    while (1) {
+      assert(tree.GetType(p) == NodeTypeFree);
+      if (p.GetIndex() % 2 == 0) break;
+      p = p.Parent();
+    }
+  }
 }
 
 void TreeTester::TestFindByShadow() {
@@ -298,6 +336,7 @@ void TreeTester::TestAll() {
   TestFindFree();
   TestBaseAlloc();
   TestFragAlloc();
+  TestExhaustiveAlloc();
   TestFindByShadow();
   TestCarveCenter();
   TestCarveSide();
