@@ -17,21 +17,32 @@ uint64_t TimeOrderedAllocation();
 template <class T>
 uint64_t TimeBaseAllocation();
 
+template <class T>
+uint64_t TimeLeafAllocation();
+
 void AllocAllButMiddle(Tree & tree, Path p);
 
 int main() {
   std::cout << "BBTree::[Set/Get]Type()... " << std::flush
     << TimeBranchAllocation<BBTree>() << std::endl;
-  std::cout << "BBTree::FindFree() [ordered]... " << std::flush
-    << TimeOrderedAllocation<BBTree>() << std::endl;
-  std::cout << "BBTree::FindFree() [single-page]... " << std::flush
-    << TimeBaseAllocation<BBTree>() << std::endl;
   std::cout << "BTree::[Set/Get]Type()... " << std::flush
     << TimeBranchAllocation<BTree>() << std::endl;
+  
+  std::cout << "BBTree::FindFree() [ordered]... " << std::flush
+    << TimeOrderedAllocation<BBTree>() << std::endl;
   std::cout << "BTree::FindFree() [ordered]... " << std::flush
     << TimeOrderedAllocation<BTree>() << std::endl;
+  
+  std::cout << "BBTree::FindFree() [single-page]... " << std::flush
+    << TimeBaseAllocation<BBTree>() << std::endl;
   std::cout << "BTree::FindFree() [single-page]... " << std::flush
     << TimeBaseAllocation<BTree>() << std::endl;
+  
+  std::cout << "BBTree::[Alloc/Dealloc]() [leaf]... " << std::flush
+    << TimeLeafAllocation<BBTree>() << std::endl;
+  std::cout << "BTree::[Alloc/Dealloc]() [leaf]... " << std::flush
+    << TimeLeafAllocation<BTree>() << std::endl;
+  
   return 0;
 }
 
@@ -118,6 +129,37 @@ uint64_t TimeBaseAllocation() {
     assert(p.GetIndex() == (1 << (tree.GetDepth() - 1)) / 2);
     tree.SetType(p, NodeTypeFree);
   }
+  
+  uint64_t result = Microtime() - start;
+  delete buf;
+  return result;
+}
+
+template <class T>
+uint64_t TimeLeafAllocation() {
+  static const int depth = 15;
+  uint8_t * buf = new uint8_t[T::MemorySize(depth)];
+  T tree(depth, buf);
+  uint64_t start = Microtime();
+  
+  // allocate every single base node
+  for (int i = 0; i < (1 << (depth - 1)); i++) {
+    Path p;
+    bool res = tree.Alloc(depth - 1, p);
+    assert(res);
+    assert(p.GetDepth() == depth - 1);
+  }
+  
+  // assert that there are no base nodes left
+  Path noP;
+  assert(!tree.Alloc(depth - 1, noP));
+  
+  // free every base node
+  for (uint64_t i = 0; i < (1 << (depth - 1)); i++) {
+    tree.Dealloc(Path(depth - 1, i));
+  }
+  
+  assert(tree.GetType(Path::Root()) == NodeTypeFree);
   
   uint64_t result = Microtime() - start;
   delete buf;
