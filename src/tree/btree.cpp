@@ -67,6 +67,12 @@ bool BTree::FindAligned(int depth, int align, Path & path) {
   return FindFreeRecursive(depth, align, Path::Root(), path);
 }
 
+void BTree::Free(Path path) {
+  SetType(path, NodeTypeFree);
+}
+
+// PROTECTED //
+
 bool BTree::FindFreeRecursive(int _depth, int align, Path p, Path & pathOut) {
   NodeType type = GetType(p);
   if (type == NodeTypeFree) {

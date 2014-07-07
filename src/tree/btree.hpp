@@ -25,6 +25,7 @@ public:
   virtual void SetType(Path path, NodeType type);
   virtual NodeType GetType(Path path);
   virtual bool FindAligned(int depth, int align, Path & pathOut);
+  virtual void Free(Path path);
 
 private:
   Bitmap bitmap;
