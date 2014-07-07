@@ -2,9 +2,9 @@
 
 namespace ANAlloc {
 
-Malloc::Malloc(void * _start, Tree & _tree, int _psLog)
-  : start(_start), tree(_tree), psLog(_psLog),
-    length(1UL << (tree.GetDepth() - 1 + psLog)) {
+Malloc::Malloc(uint8_t * _start, Tree & _tree, int _psLog)
+  : start(_start), length(1UL << (_tree.GetDepth() - 1 + psLog)),
+    tree(_tree), psLog(_psLog) {
 }
 
 void * Malloc::Alloc(size_t size) {
@@ -31,7 +31,7 @@ void * Malloc::Align(size_t size, size_t align) {
   }
   
   Path p;
-  bool res = tree.Align(depth, alignDepth, p);
+  bool res = tree.Align(sizeDepth, alignDepth, p);
   if (!res) return NULL;
   
   // compute the resultant address
@@ -49,15 +49,23 @@ void Malloc::Free(void * buff) {
   tree.Dealloc(p);
 }
 
-bool Malloc::OwnsPointer(void * ptr) {
+bool Malloc::OwnsPointer(void * ptr) const {
   if ((uintptr_t)ptr < (uintptr_t)start) return false;
   if ((uintptr_t)ptr >= (uintptr_t)start + length) return false;
   return true;
 }
 
+const Tree & Malloc::GetTree() const {
+  return tree;
+}
+
+int Malloc::GetPageSizeLog() const {
+  return psLog;
+}
+
 // PROTECTED //
 
-int Malloc::DepthForSize(size_t size) {
+int Malloc::DepthForSize(size_t size) const {
   int power = Log2Ceil(size) - psLog;
   if (power < 0) power = 0;
   return tree.GetDepth() - power - 1;

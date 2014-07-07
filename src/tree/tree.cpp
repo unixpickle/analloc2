@@ -3,7 +3,7 @@
 
 namespace ANAlloc {
 
-bool Tree::FindFree(int depth, Path & pathOut) {
+bool Tree::FindFree(int depth, Path & pathOut) const {
   return FindAligned(depth, depth, pathOut);
 }
 
@@ -59,7 +59,7 @@ void Tree::Dealloc(Path p) {
   }
 }
 
-bool Tree::FindByShadow(uint64_t baseIndex, Path & path) {
+bool Tree::FindByShadow(uint64_t baseIndex, Path & path) const {
   uint64_t shadow = 0;
   uint64_t shadowSize = Path::DepthCount(GetDepth() - 1);
   

@@ -41,7 +41,7 @@ BBTree & BBTree::operator=(const BBTree & tree) {
   return *this;
 }
 
-int BBTree::GetDepth() {
+int BBTree::GetDepth() const {
   return depth;
 }
 
@@ -73,7 +73,7 @@ void BBTree::SetType(Path path, NodeType type) {
   }
 }
 
-NodeType BBTree::GetType(Path path) {
+NodeType BBTree::GetType(Path path) const {
   int value = ReadNode(path);
   if (!value) {
     if (path.GetDepth() == depth - 1) {
@@ -90,7 +90,7 @@ NodeType BBTree::GetType(Path path) {
   return NodeTypeContainer;
 }
 
-bool BBTree::FindFree(int _depth, Path & path) {
+bool BBTree::FindFree(int _depth, Path & path) const {
   int minimumNode = depth - _depth;
   assert(minimumNode > 0);
   
@@ -117,7 +117,7 @@ bool BBTree::FindFree(int _depth, Path & path) {
   }
 }
 
-bool BBTree::FindAligned(int _depth, int align, Path & path) {
+bool BBTree::FindAligned(int _depth, int align, Path & path) const {
   // TODO: profile to see if this O(log(n)) optimization is ever worth it
   if (FindFree(align > depth ? depth : align, path)) return true;
   return RecursiveFindAligned(_depth, align, Path::Root(), path);
@@ -131,7 +131,7 @@ void BBTree::Free(Path path) {
   SetType(path, NodeTypeFree);
 }
 
-bool BBTree::IsFree(Path path) {
+bool BBTree::IsFree(Path path) const {
   return ReadNode(path) == depth - path.GetDepth();
 }
 
@@ -158,7 +158,7 @@ uint64_t BBTree::TreeSizeAtDepth(int depth) {
   return treeSizes[depth];
 }
 
-int BBTree::FieldSizeAtDepth(int _depth) {
+int BBTree::FieldSizeAtDepth(int _depth) const {
   // log table probably not the best, but it's fast
   int numberLogs[] = {
     0, 0,
@@ -173,7 +173,7 @@ int BBTree::FieldSizeAtDepth(int _depth) {
   return numberLogs[depth - _depth + 1];
 }
 
-uint64_t BBTree::CalculatePrefixSize(int _depth) {
+uint64_t BBTree::CalculatePrefixSize(int _depth) const {
   uint64_t result = 0;
   for (int i = 0; i < _depth; i++) {
     result += (uint64_t)FieldSizeAtDepth(i) * (1UL << i);
@@ -181,7 +181,7 @@ uint64_t BBTree::CalculatePrefixSize(int _depth) {
   return result;
 }
 
-uint64_t BBTree::GetPrefixSize(int _depth) {
+uint64_t BBTree::GetPrefixSize(int _depth) const {
 #ifndef ANALLOC_BBTREE_DONT_CACHE_PREFIXES
   return prefixSizes[_depth];
 #else
@@ -190,7 +190,7 @@ uint64_t BBTree::GetPrefixSize(int _depth) {
 }
 
 
-int BBTree::ReadNode(Path p) {
+int BBTree::ReadNode(Path p) const {
   uint64_t fieldSize = FieldSizeAtDepth(p.GetDepth());
   uint64_t offset = GetPrefixSize(p.GetDepth()) + fieldSize * p.GetIndex();
   return bitmap.GetMultibit(offset, fieldSize);
@@ -223,7 +223,7 @@ void BBTree::UpdateParents(Path p, int pValue) {
 }
 
 bool BBTree::RecursiveFindAligned(int _depth, int align, Path path,
-                                  Path & pathOut) {
+                                  Path & pathOut) const {
   int pathValue = ReadNode(path);
   if (pathValue < depth - _depth) return false;
   if (pathValue == depth - path.GetDepth()) {

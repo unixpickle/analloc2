@@ -25,7 +25,7 @@ BTree & BTree::operator=(const BTree & aTree) {
   return *this;
 }
 
-int BTree::GetDepth() {
+int BTree::GetDepth() const {
   return depth;
 }
 
@@ -48,7 +48,7 @@ void BTree::SetType(Path path, NodeType type) {
   }
 }
 
-NodeType BTree::GetType(Path path) {
+NodeType BTree::GetType(Path path) const {
   bool bit = bitmap.GetBit(path.TreeIndex());
   if (!bit) return NodeTypeFree;
   if (path.GetDepth() == depth - 1) {
@@ -63,7 +63,7 @@ NodeType BTree::GetType(Path path) {
   return NodeTypeData;
 }
 
-bool BTree::FindAligned(int depth, int align, Path & path) {
+bool BTree::FindAligned(int depth, int align, Path & path) const {
   return FindFreeRecursive(depth, align, Path::Root(), path);
 }
 
@@ -73,7 +73,8 @@ void BTree::Free(Path path) {
 
 // PROTECTED //
 
-bool BTree::FindFreeRecursive(int _depth, int align, Path p, Path & pathOut) {
+bool BTree::FindFreeRecursive(int _depth, int align, Path p,
+                              Path & pathOut) const {
   NodeType type = GetType(p);
   if (type == NodeTypeFree) {
     pathOut = p;

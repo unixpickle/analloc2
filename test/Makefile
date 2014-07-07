@@ -14,14 +14,14 @@ build/btree: build
 build/bbtree: build
 	g++ $(CPPFLAGS) ../src/tree/tree.cpp ../src/tree/bitmap.cpp ../src/tree/bbtree.cpp tree-tester.cpp test-bbtree.cpp -o build/bbtree
 
+build/malloc: build
+	g++ $(CPPFLAGS) ../src/tree/bitmap.cpp ../src/tree/tree.cpp ../src/tree/bbtree.cpp ../src/tree/btree.cpp ../src/log.cpp ../src/malloc.cpp test-malloc.cpp -o build/malloc
+
 build/allocator: build
 	g++ $(CPPFLAGS) ../src/bitmap.cpp ../src/tree.cpp ../src/btree.cpp ../src/bbtree.cpp test_allocator.cpp -o build/allocator
 
 build/topology: build
 	g++ $(CPPFLAGS) ../src/bitmap.cpp ../src/tree.cpp ../src/btree.cpp ../src/bbtree.cpp ../src/topology/*.cpp test_topology.cpp -o build/topology
-
-build/malloc: build
-	g++ $(CPPFLAGS) ../src/bitmap.cpp ../src/tree.cpp ../src/bbtree.cpp ../src/topology/*.cpp test_malloc.cpp -o build/malloc
 
 build/prof-tree-o0: build
 	g++ -O0 $(CPPFLAGS) ../src/tree/tree.cpp ../src/tree/bitmap.cpp ../src/tree/bbtree.cpp ../src/tree/btree.cpp profile-tree.cpp -o build/prof-tree-o0

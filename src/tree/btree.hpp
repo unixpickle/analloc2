@@ -21,17 +21,17 @@ public:
   BTree(const BTree & t);
   BTree & operator=(const BTree & aTree);
   
-  virtual int GetDepth();
+  virtual int GetDepth() const;
   virtual void SetType(Path path, NodeType type);
-  virtual NodeType GetType(Path path);
-  virtual bool FindAligned(int depth, int align, Path & pathOut);
+  virtual NodeType GetType(Path path) const;
+  virtual bool FindAligned(int depth, int align, Path & pathOut) const;
   virtual void Free(Path path);
 
 private:
   Bitmap bitmap;
   int depth;
 
-  bool FindFreeRecursive(int depth, int align, Path p, Path & path);
+  bool FindFreeRecursive(int depth, int align, Path p, Path & path) const;
 };
 
 }

@@ -22,7 +22,7 @@ public:
    * Return the depth of this binary tree. A tree of depth 0 is invalid, so
    * this will probably range from 1 to 63.
    */
-  virtual int GetDepth() = 0;
+  virtual int GetDepth() const = 0;
   
   /**
    * Set the node-type at a path. The node's parent must be a container before
@@ -41,21 +41,21 @@ public:
    * Get the type of a node at a path. The node's parent must be a container
    * or the node just like with SetType().
    */
-  virtual NodeType GetType(Path p) = 0;
+  virtual NodeType GetType(Path p) const = 0;
   
   /**
    * Find a free node which is at most a certain depth. By default, this uses
    * FindFreeAlign(depth, depth, pathOut).
    * @return false if no desired nodes are available, true otherwise.
    */
-  virtual bool FindFree(int depth, Path & pathOut);
+  virtual bool FindFree(int depth, Path & pathOut) const;
   
   /**
    * Find a free node which is at most a given depth. The resultant node must
    * be aligned by `align`, meaning that it must start at the same shadow index
    * as a node at `align` depth or higher.
    */
-  virtual bool FindAligned(int depth, int align, Path & pathOut) = 0;
+  virtual bool FindAligned(int depth, int align, Path & pathOut) const = 0;
   
   /**
    * Recursively free every path in the tree starting at a given path. This may
@@ -91,7 +91,7 @@ public:
    * Find a data node given its shadow on the base row. If no data node exists,
    * false will be returned.
    */
-  virtual bool FindByShadow(uint64_t baseIndex, Path & path);
+  virtual bool FindByShadow(uint64_t baseIndex, Path & path) const;
   
   /**
    * Carve a shadow on the base row by recursively splitting a data node and

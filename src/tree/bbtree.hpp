@@ -24,14 +24,14 @@ public:
   BBTree(const BBTree & tree);
   BBTree & operator=(const BBTree & tree);
   
-  virtual int GetDepth();
+  virtual int GetDepth() const;
   virtual void SetType(Path path, NodeType type);
-  virtual NodeType GetType(Path path);
-  virtual bool FindFree(int depth, Path & pathOut);
-  virtual bool FindAligned(int depth, int align, Path & pathOut);
+  virtual NodeType GetType(Path path) const;
+  virtual bool FindFree(int depth, Path & pathOut) const;
+  virtual bool FindAligned(int depth, int align, Path & pathOut) const;
   virtual void Free(Path path);
   
-  bool IsFree(Path path);
+  bool IsFree(Path path) const;
   
 protected:
   Bitmap bitmap;
@@ -41,15 +41,16 @@ protected:
 #endif
   
   static uint64_t TreeSizeAtDepth(int depth);
-  int FieldSizeAtDepth(int depth);
-  uint64_t CalculatePrefixSize(int depth);
-  uint64_t GetPrefixSize(int depth);
+  int FieldSizeAtDepth(int depth) const;
+  uint64_t CalculatePrefixSize(int depth) const;
+  uint64_t GetPrefixSize(int depth) const;
   
-  int ReadNode(Path p);
+  int ReadNode(Path p) const;
   void WriteNode(Path p, int value);
   void UpdateParents(Path p, int pValue);
   
-  bool RecursiveFindAligned(int depth, int align, Path path, Path & pathOut);
+  bool RecursiveFindAligned(int depth, int align, Path path,
+                            Path & pathOut) const;
 };
 
 }

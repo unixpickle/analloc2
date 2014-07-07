@@ -14,13 +14,12 @@ namespace ANAlloc {
 class Malloc {  
 public:
   template <class T>
-  static Malloc * WrapRegion(void * start, size_t length, int psLog);
+  static Malloc * WrapRegion(uint8_t * start, size_t length, int psLog);
   
-  Malloc(void * start, Tree & tree, int psLog);
+  Malloc(uint8_t * start, Tree & tree, int psLog);
   
   /**
-   * Attempts to allocate a buffer of at least `size` bytes. If the operation
-   * fails, NULL is returned.
+   * Allocates memory or returns NULL on failure.
    */
   void * Alloc(size_t size);
   
@@ -31,27 +30,38 @@ public:
   void * Align(size_t size, size_t align);
   
   /**
-   * Free a buffer which was returned with Alloc().
+   * Free a buffer by passing the pointer to its start.
    */
   void Free(void * buff);
   
   /**
-   * Returns `true` if the buffer is contained within this allocator.
+   * Check if a pointer is contained within the boundary of the allocator's
+   * buffer.
    */
-  bool OwnsPointer(void * ptr);
+  bool OwnsPointer(void * ptr) const;
+  
+  /**
+   * Returns the internal tree used by the allocator.
+   */
+  const Tree & GetTree() const;
+  
+  /**
+   * Returns the log base 2 of the base node size.
+   */
+  int GetPageSizeLog() const;
   
 protected:
-  void * start;
+  uint8_t * start;
   uint64_t length;
   
-  T & tree;
+  Tree & tree;
   int psLog;
   
-  int DepthForSize(size_t size);
+  int DepthForSize(size_t size) const;
 };
 
 template <class T>
-Malloc * Malloc::WrapRegion(void * start, size_t length, int psLog) {
+Malloc * Malloc::WrapRegion(uint8_t * start, size_t length, int psLog) {
   int sizeLog = Log2Floor(length);
   int maxDepth = sizeLog - psLog;
   if (maxDepth < 0) return NULL;
@@ -59,9 +69,9 @@ Malloc * Malloc::WrapRegion(void * start, size_t length, int psLog) {
   size_t useLength = sizeof(T) + sizeof(Malloc) + T::MemorySize(maxDepth + 1);
   if (useLength > length) return NULL;
   
-  T * tree = (T *)base;
-  Malloc * result = (Malloc *)((uint8_t *)base + sizeof(T));
-  uint8_t * bmBuffer = (uint8_t *)base + sizeof(T) + sizeof(Malloc);
+  T * tree = (T *)start;
+  Malloc * result = (Malloc *)(start + sizeof(T));
+  uint8_t * bmBuffer = start + sizeof(T) + sizeof(Malloc);
   
   // create the tree
   new(tree) T(maxDepth + 1, bmBuffer);
