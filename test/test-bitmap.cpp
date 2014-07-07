@@ -2,7 +2,7 @@
 #include <cassert>
 #include <iostream>
 #include "scoped-pass.hpp"
-#include "../src/bitmap.hpp"
+#include "../src/tree/bitmap.hpp"
 
 #define RAND_BIT(i) (bool)((i % 2) ^ (i % 3 != 2) ^ (i % 7 == 0))
 

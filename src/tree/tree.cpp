@@ -3,6 +3,10 @@
 
 namespace ANAlloc {
 
+bool Tree::FindFree(int depth, Path & pathOut) {
+  return FindAligned(depth, depth, pathOut);
+}
+
 void Tree::Free(Path p) {
   NodeType type = GetType(p);
   if (type != NodeTypeFree) {
@@ -21,6 +25,18 @@ void Tree::FreeAll() {
 bool Tree::Alloc(int depth, Path & pathOut) {
   assert(depth < GetDepth());
   if (!FindFree(depth, pathOut)) return false;
+  while (pathOut.GetDepth() < depth) {
+    SetType(pathOut, NodeTypeContainer);
+    SetType(pathOut.Right(), NodeTypeFree);
+    pathOut = pathOut.Left();
+  }
+  SetType(pathOut, NodeTypeData);
+  return true;
+}
+
+bool Tree::Align(int depth, int align, Path & pathOut) {
+  assert(depth < GetDepth());
+  if (!FindAligned(depth, align, pathOut)) return false;
   while (pathOut.GetDepth() < depth) {
     SetType(pathOut, NodeTypeContainer);
     SetType(pathOut.Right(), NodeTypeFree);

@@ -1,5 +1,5 @@
-#include "../src/bbtree.hpp"
-#include "../src/btree.hpp"
+#include "../src/tree/bbtree.hpp"
+#include "../src/tree/btree.hpp"
 #include <sys/time.h>
 #include <cstdint>
 #include <iostream>
@@ -22,6 +22,12 @@ uint64_t TimeLeafAllocation();
 
 template <class T>
 uint64_t TimeFindByShadow();
+
+template <class T>
+uint64_t TimeLooseAlignment();
+
+template <class T>
+uint64_t TimeTightAlignment();
 
 void AllocAllButMiddle(Tree & tree, Path p);
 
@@ -50,6 +56,16 @@ int main() {
     << TimeFindByShadow<BBTree>() << std::endl;
   std::cout << "BTree::FindByShadow()... " << std::flush
     << TimeFindByShadow<BTree>() << std::endl;
+  
+  std::cout << "BBTree::FindAligned() [loose]... " << std::flush
+    << TimeLooseAlignment<BBTree>() << std::endl;
+  std::cout << "BTree::FindAligned() [loose]... " << std::flush
+    << TimeLooseAlignment<BTree>() << std::endl;
+  
+  std::cout << "BBTree::FindAligned() [tight]... " << std::flush
+    << TimeTightAlignment<BBTree>() << std::endl;
+  std::cout << "BTree::FindAligned() [tight]... " << std::flush
+    << TimeTightAlignment<BTree>() << std::endl;
   
   return 0;
 }
@@ -204,6 +220,107 @@ uint64_t TimeFindByShadow() {
   start = Microtime();
   for (int i = 0; i < 0x10000; i++) {
     tree.FindByShadow(0, p);
+  }
+  sum += Microtime() - start;
+  
+  delete buf;
+  return sum;
+}
+
+template <class T>
+uint64_t TimeLooseAlignment() {
+  static const int depth = 17;
+  uint8_t * buf = new uint8_t[T::MemorySize(depth)];
+  T tree(depth, buf);
+  
+  Path expectedFree(depth - 2, 0);
+  
+  // setup the tree to have one two-chunk free block on the left, and then
+  // badly aligned chunks everywhere else
+  for (int i = 0; i < depth - 1; i++) {
+    for (uint64_t j = 0; j < Path::DepthCount(i); j++) {
+      Path p(i, j);
+      tree.SetType(p, NodeTypeContainer);
+    }
+  }
+  tree.SetType(expectedFree, NodeTypeFree);
+  for (uint64_t j = 2; j < Path::DepthCount(depth - 1); j += 2) {
+    Path p(depth - 1, j);
+    tree.SetType(p, NodeTypeData);
+  }
+  
+  uint64_t sum = 0;
+  uint64_t start = Microtime();
+  for (int i = 0; i < 0x1000; i++) {
+    Path p;
+    bool res = tree.FindAligned(depth - 1, depth - 2, p);
+    assert(res);
+    assert(p == expectedFree);
+  }
+  sum += Microtime() - start;
+  
+  // put free guy on the right
+  expectedFree = Path(depth - 2, Path::DepthCount(depth - 2) - 1);
+  tree.SetType(Path(depth - 2, 0), NodeTypeContainer);
+  tree.SetType(Path(depth - 1, 0), NodeTypeData);
+  tree.SetType(expectedFree, NodeTypeFree);
+  start = Microtime();
+  for (int i = 0; i < 0x1000; i++) {
+    Path p;
+    bool res = tree.FindAligned(depth - 1, depth - 2, p);
+    assert(res);
+    assert(p == expectedFree);
+  }
+  sum += Microtime() - start;
+  
+  delete buf;
+  return sum;
+}
+
+template <class T>
+uint64_t TimeTightAlignment() {
+  static const int depth = 17;
+  uint8_t * buf = new uint8_t[T::MemorySize(depth)];
+  T tree(depth, buf);
+  
+  Path expectedFree(depth - 1, 0);
+  
+  // setup the tree to have one free chunk on the far left, and then badly
+  // aligned chunks everywhere else
+  for (int i = 0; i < depth - 1; i++) {
+    for (uint64_t j = 0; j < Path::DepthCount(i); j++) {
+      Path p(i, j);
+      tree.SetType(p, NodeTypeContainer);
+    }
+  }
+  tree.SetType(expectedFree.Sibling(), NodeTypeData);
+  for (uint64_t j = 2; j < Path::DepthCount(depth - 1); j += 2) {
+    Path p(depth - 1, j);
+    tree.SetType(p, NodeTypeData);
+  }
+  
+  uint64_t sum = 0;
+  uint64_t start = Microtime();
+  for (int i = 0; i < 0x1000; i++) {
+    Path p;
+    bool res = tree.FindAligned(depth - 1, depth - 2, p);
+    assert(res);
+    assert(p == expectedFree);
+  }
+  sum += Microtime() - start;
+  
+  // put free guy on the right
+  expectedFree = Path(depth - 1, Path::DepthCount(depth - 1) - 2);
+  tree.SetType(Path(depth - 1, 0), NodeTypeData);
+  tree.SetType(Path(depth - 1, 1), NodeTypeFree);
+  tree.SetType(expectedFree, NodeTypeFree);
+  tree.SetType(expectedFree.Sibling(), NodeTypeData);
+  start = Microtime();
+  for (int i = 0; i < 0x1000; i++) {
+    Path p;
+    bool res = tree.FindAligned(depth - 1, depth - 2, p);
+    assert(res);
+    assert(p == expectedFree);
   }
   sum += Microtime() - start;
   

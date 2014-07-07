@@ -27,7 +27,8 @@ public:
   virtual int GetDepth();
   virtual void SetType(Path path, NodeType type);
   virtual NodeType GetType(Path path);
-  virtual bool FindFree(int depth, Path & path);
+  virtual bool FindFree(int depth, Path & pathOut);
+  virtual bool FindAligned(int depth, int align, Path & pathOut);
   virtual void Free(Path path);
   
   bool IsFree(Path path);
@@ -47,6 +48,8 @@ protected:
   int ReadNode(Path p);
   void WriteNode(Path p, int value);
   void UpdateParents(Path p, int pValue);
+  
+  bool RecursiveFindAligned(int depth, int align, Path path, Path & pathOut);
 };
 
 }

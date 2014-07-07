@@ -114,6 +114,50 @@ void TreeTester::TestFindFree() {
   assert(!tree.FindFree(tree.GetDepth() - 1, p));
 }
 
+void TreeTester::TestFindAligned() {
+  ScopedPass pass(name, "::FindAligned()");
+  tree.FreeAll();
+  
+  tree.SetType(Path::Root(), NodeTypeContainer);
+  tree.SetType(Path(1, 0), NodeTypeContainer);
+  tree.SetType(Path(1, 1), NodeTypeContainer);
+  tree.SetType(Path(2, 0), NodeTypeFree);
+  tree.SetType(Path(2, 1), NodeTypeData);
+  tree.SetType(Path(2, 2), NodeTypeFree);
+  tree.SetType(Path(2, 3), NodeTypeData);
+  
+  Path p;
+  
+  // make sure we can't allocate a container
+  assert(!tree.FindAligned(0, 0, p));
+  assert(!tree.FindAligned(1, 1, p));
+  
+  // test root alignment
+  bool res = tree.FindAligned(2, 0, p);
+  assert(res);
+  assert(p == Path(2, 0));
+  tree.SetType(Path(2, 0), NodeTypeData);
+  assert(!tree.FindAligned(2, 0, p));
+  tree.SetType(Path(2, 1), NodeTypeFree);
+  assert(!tree.FindAligned(2, 0, p));
+  
+  // test depth-1 alignment
+  res = tree.FindAligned(2, 1, p);
+  assert(res);
+  assert(p == Path(2, 2));
+  tree.SetType(Path(2, 2), NodeTypeData);
+  tree.SetType(Path(2, 3), NodeTypeFree);
+  assert(!tree.FindAligned(2, 1, p));
+  
+  // test depth-2 alignment
+  tree.SetType(Path(2, 1), NodeTypeData);
+  res = tree.FindAligned(2, 2, p);
+  assert(res);
+  assert(p == Path(2, 3));
+  tree.SetType(Path(2, 3), NodeTypeData);
+  assert(!tree.FindAligned(2, 2, p));
+}
+
 void TreeTester::TestBaseAlloc() {
   ScopedPass pass(name, "::Alloc() [base node]");
   tree.FreeAll();
@@ -228,6 +272,29 @@ void TreeTester::TestExhaustiveAlloc() {
   }
 }
 
+void TreeTester::TestAlignAlloc() {
+  ScopedPass pass(name, "::Align()");
+  tree.FreeAll();
+  
+  Path p;
+  bool res = tree.Align(1, 0, p);
+  assert(res);
+  assert(p == Path(1, 0));
+  assert(tree.GetType(p.Parent()) == NodeTypeContainer);
+  assert(tree.GetType(p) == NodeTypeData);
+  assert(tree.GetType(p.Sibling()) == NodeTypeFree);
+  assert(!tree.Align(1, 0, p));
+  
+  res = tree.Align(2, 1, p);
+  assert(res);
+  assert(p == Path(2, 2));
+  assert(tree.GetType(Path::Root()) == NodeTypeContainer);
+  assert(tree.GetType(p.Parent()) == NodeTypeContainer);
+  assert(tree.GetType(p) == NodeTypeData);
+  assert(tree.GetType(p.Sibling()) == NodeTypeFree);
+  assert(tree.GetType(Path(1, 0)) == NodeTypeData);
+}
+
 void TreeTester::TestFindByShadow() {
   ScopedPass pass(name, "::FindByShadow()");
   tree.FreeAll();
@@ -334,9 +401,11 @@ void TreeTester::TestAll() {
   TestAllocAll();
   TestSetGet();
   TestFindFree();
+  TestFindAligned();
   TestBaseAlloc();
   TestFragAlloc();
   TestExhaustiveAlloc();
+  TestAlignAlloc();
   TestFindByShadow();
   TestCarveCenter();
   TestCarveSide();

@@ -1,8 +1,8 @@
 #ifndef __ANALLOC2_TREE_TESTER_HPP__
 #define __ANALLOC2_TREE_TESTER_HPP__
 
-#include "../src/path.hpp"
-#include "../src/tree.hpp"
+#include "../src/tree/path.hpp"
+#include "../src/tree/tree.hpp"
 
 namespace ANAlloc {
 
@@ -14,10 +14,12 @@ public:
   void TestAllocAll();
   void TestSetGet();
   void TestFindFree();
+  void TestFindAligned();
   
   void TestBaseAlloc();
   void TestFragAlloc();
   void TestExhaustiveAlloc();
+  void TestAlignAlloc();
   void TestFindByShadow();
   void TestCarveCenter();
   void TestCarveSide();

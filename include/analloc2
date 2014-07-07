@@ -1,4 +1,4 @@
-#include "../src/bbtree.hpp"
-#include "../src/btree.hpp"
+#include "../src/tree/bbtree.hpp"
+#include "../src/tree/btree.hpp"
 #include "../src/topology/allocator-list.hpp"
 #include "../src/malloc.hpp"

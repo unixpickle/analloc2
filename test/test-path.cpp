@@ -1,6 +1,6 @@
 #include <iostream>
 #include <cassert>
-#include "../src/tree.hpp"
+#include "../src/tree/tree.hpp"
 #include "scoped-pass.hpp"
 
 using namespace ANAlloc;

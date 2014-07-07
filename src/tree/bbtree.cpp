@@ -110,12 +110,17 @@ bool BBTree::FindFree(int _depth, Path & path) {
     pathValue = ReadNode(left);
     if (pathValue >= minimumNode) {
       path = left;
-      continue;
     } else {
       path = path.Right();
       pathValue = ReadNode(path);
     }
   }
+}
+
+bool BBTree::FindAligned(int _depth, int align, Path & path) {
+  // TODO: profile to see if this O(log(n)) optimization is ever worth it
+  if (FindFree(align > depth ? depth : align, path)) return true;
+  return RecursiveFindAligned(_depth, align, Path::Root(), path);
 }
 
 void BBTree::Free(Path path) {
@@ -214,6 +219,24 @@ void BBTree::UpdateParents(Path p, int pValue) {
       currentValue = newParentValue;
       WriteNode(currentPath, currentValue);
     }
+  }
+}
+
+bool BBTree::RecursiveFindAligned(int _depth, int align, Path path,
+                                  Path & pathOut) {
+  int pathValue = ReadNode(path);
+  if (pathValue < depth - _depth) return false;
+  if (pathValue == depth - path.GetDepth()) {
+    pathOut = path;
+    return true;
+  }
+  
+  if (RecursiveFindAligned(_depth, align, path.Left(), pathOut)) {
+    return true;
+  } else if (path.GetDepth() < align) {
+    return RecursiveFindAligned(_depth, align, path.Right(), pathOut);
+  } else {
+    return false;
   }
 }
 

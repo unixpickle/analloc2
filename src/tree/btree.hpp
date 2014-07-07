@@ -24,13 +24,13 @@ public:
   virtual int GetDepth();
   virtual void SetType(Path path, NodeType type);
   virtual NodeType GetType(Path path);
-  virtual bool FindFree(int depth, Path & path);
+  virtual bool FindAligned(int depth, int align, Path & pathOut);
 
 private:
   Bitmap bitmap;
   int depth;
 
-  bool FindFreeRecursive(int depth, Path p, Path & path);
+  bool FindFreeRecursive(int depth, int align, Path p, Path & path);
 };
 
 }

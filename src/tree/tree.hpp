@@ -44,11 +44,18 @@ public:
   virtual NodeType GetType(Path p) = 0;
   
   /**
-   * Find a free node which is at most a certain depth. This method may provide
-   * optimizations that any given tree algorithm has to offer.
+   * Find a free node which is at most a certain depth. By default, this uses
+   * FindFreeAlign(depth, depth, pathOut).
    * @return false if no desired nodes are available, true otherwise.
    */
-  virtual bool FindFree(int depth, Path & pathOut) = 0;
+  virtual bool FindFree(int depth, Path & pathOut);
+  
+  /**
+   * Find a free node which is at most a given depth. The resultant node must
+   * be aligned by `align`, meaning that it must start at the same shadow index
+   * as a node at `align` depth or higher.
+   */
+  virtual bool FindAligned(int depth, int align, Path & pathOut) = 0;
   
   /**
    * Recursively free every path in the tree starting at a given path. This may
@@ -67,6 +74,12 @@ public:
    * the node's parents if needed to create a node of exactly the right size.
    */
   virtual bool Alloc(int depth, Path & pathOut);
+  
+  /**
+   * Allocate a node at a certain depth that only branches to the left starting
+   * at another depth `depthAlign`.
+   */
+  virtual bool Align(int depth, int align, Path & pathOut);
   
   /**
    * Free a data node. If the node's sibling is also free, the node's parent
