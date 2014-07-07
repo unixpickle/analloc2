@@ -1,7 +1,5 @@
 #include "malloc.hpp"
 
-#include <iostream> // TODO: delete this
-
 namespace ANAlloc {
 
 Malloc::Malloc(uint8_t * _start, Tree & _tree, int _psLog)

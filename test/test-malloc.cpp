@@ -22,6 +22,7 @@ int main() {
   TestAlign<BTree>("BTree");
   TestFree<BBTree>("BBTree");
   TestFree<BTree>("BTree");
+  // TODO: test with initUsed != 0
   return 0;
 }
 

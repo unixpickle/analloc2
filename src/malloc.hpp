@@ -14,7 +14,8 @@ namespace ANAlloc {
 class Malloc {  
 public:
   template <class T>
-  static Malloc * WrapRegion(uint8_t * start, size_t length, int psLog);
+  static Malloc * WrapRegion(uint8_t * start, size_t length, int psLog,
+                             size_t initUsed = 0);
   
   Malloc(uint8_t * start, Tree & tree, int psLog);
   
@@ -61,17 +62,19 @@ protected:
 };
 
 template <class T>
-Malloc * Malloc::WrapRegion(uint8_t * start, size_t length, int psLog) {
+Malloc * Malloc::WrapRegion(uint8_t * start, size_t length, int psLog,
+                            size_t initUsed) {
   int sizeLog = Log2Floor(length);
   int maxDepth = sizeLog - psLog;
   if (maxDepth < 0) return NULL;
   
-  size_t useLength = sizeof(T) + sizeof(Malloc) + T::MemorySize(maxDepth + 1);
+  size_t useLength = initUsed + sizeof(T) + sizeof(Malloc)
+    + T::MemorySize(maxDepth + 1);
   if (useLength > length) return NULL;
   
-  T * tree = (T *)start;
-  Malloc * result = (Malloc *)(start + sizeof(T));
-  uint8_t * bmBuffer = start + sizeof(T) + sizeof(Malloc);
+  T * tree = (T *)start + initUsed;
+  Malloc * result = (Malloc *)(start + initUsed + sizeof(T));
+  uint8_t * bmBuffer = start + initUsed + sizeof(T) + sizeof(Malloc);
   
   // create the tree
   new(tree) T(maxDepth + 1, bmBuffer);
