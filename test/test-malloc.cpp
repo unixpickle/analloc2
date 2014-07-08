@@ -15,6 +15,9 @@ void TestAlign(const char * name);
 template <class T>
 void TestFree(const char * name);
 
+template <class T>
+void TestInitUsed(const char * name);
+
 int main() {
   TestWrapRegion<BBTree>("BBTree");
   TestWrapRegion<BTree>("BTree");
@@ -22,7 +25,8 @@ int main() {
   TestAlign<BTree>("BTree");
   TestFree<BBTree>("BBTree");
   TestFree<BTree>("BTree");
-  // TODO: test with initUsed != 0
+  TestInitUsed<BBTree>("BBTree");
+  TestInitUsed<BTree>("BTree");
   return 0;
 }
 
@@ -116,4 +120,39 @@ void TestFree(const char * name) {
   
   delete treeBuffer;
   free(buffer);
+}
+
+template <class T>
+void TestInitUsed(const char * name) {
+  ScopedPass pass("Malloc::WrapRegion<", name, ">() [initUsed != 0]");
+  
+  uint8_t * buf = new uint8_t[0x200000];
+  
+  for (size_t initUsed = 0x10; initUsed < 0x100000; initUsed += 0x5001) {
+    // create a new Malloc with page size 64
+    Malloc * m = Malloc::WrapRegion<T>(buf, 0x200000, 6, initUsed);
+    assert(m != NULL);
+  
+    assert(m->GetTree().GetDepth() == 16);
+    assert(m->GetPageSizeLog() == 6);
+  
+    uint64_t useSize = initUsed + sizeof(Malloc) + sizeof(T)
+      + T::MemorySize(16);
+    uint64_t baseCount = useSize >> 6;
+    if (baseCount << 6 < useSize) ++baseCount;
+  
+    // make sure it carved up space correctly
+    for (uint64_t i = 0; i < Path::DepthCount(15); i++) {
+      Path p;
+      bool res = m->GetTree().FindByShadow(i, p);
+      assert(res == (i < baseCount));
+    }
+  
+    assert(m->OwnsPointer(buf));
+    assert(m->OwnsPointer(buf + 0x1fffff));
+    assert(!m->OwnsPointer(buf - 1));
+    assert(!m->OwnsPointer(buf + 0x200000));
+  }
+  
+  delete buf;
 }

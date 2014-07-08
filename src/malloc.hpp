@@ -64,6 +64,9 @@ protected:
 template <class T>
 Malloc * Malloc::WrapRegion(uint8_t * start, size_t length, int psLog,
                             size_t initUsed) {
+  if (initUsed & 0xf) {
+    initUsed += 0x10 - (initUsed & 0xf);
+  }
   int sizeLog = Log2Floor(length);
   int maxDepth = sizeLog - psLog;
   if (maxDepth < 0) return NULL;
@@ -72,7 +75,7 @@ Malloc * Malloc::WrapRegion(uint8_t * start, size_t length, int psLog,
     + T::MemorySize(maxDepth + 1);
   if (useLength > length) return NULL;
   
-  T * tree = (T *)start + initUsed;
+  T * tree = (T *)(start + initUsed);
   Malloc * result = (Malloc *)(start + initUsed + sizeof(T));
   uint8_t * bmBuffer = start + initUsed + sizeof(T) + sizeof(Malloc);
   
