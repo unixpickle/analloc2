@@ -1,5 +1,5 @@
-#ifndef __ANALLOC2_BTREE_H__
-#define __ANALLOC2_BTREE_H__
+#ifndef __ANALLOC2_BTREE_HPP__
+#define __ANALLOC2_BTREE_HPP__
 
 #include "tree.hpp"
 #include "bitmap.hpp"

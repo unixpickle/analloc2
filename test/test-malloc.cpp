@@ -138,6 +138,9 @@ void TestInitUsed(const char * name) {
   
     uint64_t useSize = initUsed + sizeof(Malloc) + sizeof(T)
       + T::MemorySize(16);
+    if (initUsed & 0xf) {
+      useSize += 0x10 - (initUsed & 0xf);
+    }
     uint64_t baseCount = useSize >> 6;
     if (baseCount << 6 < useSize) ++baseCount;
   
@@ -154,5 +157,5 @@ void TestInitUsed(const char * name) {
     assert(!m->OwnsPointer(buf + 0x200000));
   }
   
-  delete buf;
+  delete[] buf;
 }

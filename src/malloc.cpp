@@ -16,7 +16,7 @@ void * Malloc::Alloc(size_t size) {
   if (!res) return NULL;
   
   // compute the resultant address
-  uint64_t nodeSize = 1UL << (psLog + (tree.GetDepth() - depth - 1));
+  UInt nodeSize = 1UL << (psLog + (tree.GetDepth() - depth - 1));
   return (void *)(start + nodeSize * p.GetIndex());
 }
 
@@ -35,12 +35,12 @@ void * Malloc::Align(size_t size, size_t align) {
   if (!res) return NULL;
   
   // compute the resultant address
-  uint64_t nodeSize = 1UL << (psLog + (tree.GetDepth() - sizeDepth - 1));
+  UInt nodeSize = 1UL << (psLog + (tree.GetDepth() - sizeDepth - 1));
   return (void *)(start + nodeSize * p.GetIndex());
 }
 
 void Malloc::Free(void * buff) {
-  uint64_t baseIndex = (uint64_t)(((uintptr_t)buff - (uintptr_t)start)
+  UInt baseIndex = (UInt)(((uintptr_t)buff - (uintptr_t)start)
     >> psLog);
   
   Path p;

@@ -4,7 +4,7 @@ namespace ANAlloc {
 
 size_t BTree::MemorySize(int depth) {
   if (depth <= 3) return 1;
-  return (1 << (depth - 3));
+  return (size_t)(1UL << (depth - 3));
 }
 
 BTree::BTree() {
@@ -38,7 +38,7 @@ void BTree::SetType(Path path, NodeType type) {
     case NodeTypeContainer:
       bitmap.SetBit(path.TreeIndex(), true);
       if (path.GetDepth() != depth - 1) {
-        uint64_t right = path.Right().TreeIndex();
+        UInt right = path.Right().TreeIndex();
         bitmap.SetBit(right, false);
         bitmap.SetBit(right - 1, false);
       }
@@ -57,7 +57,7 @@ NodeType BTree::GetType(Path path) const {
   }
   
   // if neither child is set, this is a data node; otherwise, it's a container.
-  uint64_t leftIdx = path.Left().TreeIndex();
+  UInt leftIdx = path.Left().TreeIndex();
   if (bitmap.GetBit(leftIdx)) return NodeTypeContainer;
   if (bitmap.GetBit(leftIdx + 1)) return NodeTypeContainer;
   return NodeTypeData;

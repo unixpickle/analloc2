@@ -1,5 +1,5 @@
-#ifndef __ANALLOC2_MALLOC_H__
-#define __ANALLOC2_MALLOC_H__
+#ifndef __ANALLOC2_MALLOC_HPP__
+#define __ANALLOC2_MALLOC_HPP__
 
 #include "tree/tree.hpp"
 #include "log.hpp"
@@ -53,7 +53,7 @@ public:
   
 protected:
   uint8_t * start;
-  uint64_t length;
+  UInt length;
   
   Tree & tree;
   int psLog;
@@ -83,7 +83,7 @@ Malloc * Malloc::WrapRegion(uint8_t * start, size_t length, int psLog,
   new(tree) T(maxDepth + 1, bmBuffer);
   
   // carve out the beginning of the buffer
-  uint64_t carvePageCount = useLength >> psLog;
+  UInt carvePageCount = useLength >> psLog;
   if (useLength % (1UL << psLog)) {
     ++carvePageCount;
   }

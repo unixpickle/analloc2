@@ -19,16 +19,16 @@ Bitmap & Bitmap::operator=(const Bitmap & bm) {
   return *this;
 }
 
-Bitmap::Bitmap(uint8_t * _ptr, uint64_t count) {
+Bitmap::Bitmap(uint8_t * _ptr, UInt count) {
   ptr = _ptr;
   bitCount = count;
 }
 
-void Bitmap::SetBit(uint64_t idx, bool value) {
+void Bitmap::SetBit(UInt idx, bool value) {
   assert(idx < bitCount);
   
-  uint64_t byteIndex = idx >> 3;
-  uint64_t bitIndex = idx & 7;
+  UInt byteIndex = idx >> 3;
+  UInt bitIndex = idx & 7;
   if (!value) {
     ptr[byteIndex] &= 0xff ^ (1 << bitIndex);
   } else {
@@ -36,7 +36,7 @@ void Bitmap::SetBit(uint64_t idx, bool value) {
   }
 }
 
-void Bitmap::SetMultibit(uint64_t idx, int len, uint64_t value) {
+void Bitmap::SetMultibit(UInt idx, int len, UInt value) {
   assert(idx + len <= bitCount);
   for (int i = 0; i < len; i++) {
     bool flag = value & (1L << i) ? 1 : 0;
@@ -44,25 +44,25 @@ void Bitmap::SetMultibit(uint64_t idx, int len, uint64_t value) {
   }
 }
 
-bool Bitmap::GetBit(uint64_t idx) const {
+bool Bitmap::GetBit(UInt idx) const {
   assert(idx < bitCount);
   
-  uint64_t byteIndex = idx >> 3;
-  uint64_t bitIndex = idx & 7;
+  UInt byteIndex = idx >> 3;
+  UInt bitIndex = idx & 7;
   return (ptr[byteIndex] & (1 << bitIndex)) != 0;
 }
 
-uint64_t Bitmap::GetMultibit(uint64_t idx, int len) const {
+UInt Bitmap::GetMultibit(UInt idx, int len) const {
   // there are len bits, and the one at idx is the most significant
   assert(idx + len <= bitCount);
-  uint64_t result = 0;
+  UInt result = 0;
   for (int i = 0; i < len; i++) {
-    result += (uint64_t)GetBit(i + idx) << (len - i - 1);
+    result += (UInt)GetBit(i + idx) << (len - i - 1);
   }
   return result;
 }
 
-uint64_t Bitmap::GetBitCount() const {
+UInt Bitmap::GetBitCount() const {
   return bitCount;
 }
 

@@ -54,5 +54,6 @@ int main() {
   assert(bm.GetBit(8) == true);
   assert(bm.GetBit(9) == false);
   
+  delete[] buffer;
   return 0;
 }

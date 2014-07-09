@@ -1,5 +1,5 @@
-#ifndef __ANALLOC2_TREE_H__
-#define __ANALLOC2_TREE_H__
+#ifndef __ANALLOC2_TREE_HPP__
+#define __ANALLOC2_TREE_HPP__
 
 #include "path.hpp"
 
@@ -91,13 +91,13 @@ public:
    * Find a data node given its shadow on the base row. If no data node exists,
    * false will be returned.
    */
-  virtual bool FindByShadow(uint64_t baseIndex, Path & path) const;
+  virtual bool FindByShadow(UInt baseIndex, Path & path) const;
   
   /**
    * Carve a shadow on the base row by recursively splitting a data node and
    * freeing unneeded residual.
    */
-  virtual void Carve(Path p, uint64_t baseStart, uint64_t baseCount);
+  virtual void Carve(Path p, UInt baseStart, UInt baseCount);
 };
 
 }

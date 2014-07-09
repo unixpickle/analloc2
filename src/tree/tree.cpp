@@ -59,9 +59,9 @@ void Tree::Dealloc(Path p) {
   }
 }
 
-bool Tree::FindByShadow(uint64_t baseIndex, Path & path) const {
-  uint64_t shadow = 0;
-  uint64_t shadowSize = Path::DepthCount(GetDepth() - 1);
+bool Tree::FindByShadow(UInt baseIndex, Path & path) const {
+  UInt shadow = 0;
+  UInt shadowSize = Path::DepthCount(GetDepth() - 1);
   
   path = Path::Root();
   
@@ -79,14 +79,14 @@ bool Tree::FindByShadow(uint64_t baseIndex, Path & path) const {
   }
 }
 
-void Tree::Carve(Path p, uint64_t baseStart, uint64_t baseCount) {
+void Tree::Carve(Path p, UInt baseStart, UInt baseCount) {
   // At the moment, I have no reason to highly optimize this method because it
   // is not used profusely by my Operating System.
-  uint64_t shadowSize = 1UL << (GetDepth() - p.GetDepth() - 1);
-  uint64_t shadowStart = shadowSize * p.GetIndex();
+  UInt shadowSize = 1UL << (GetDepth() - p.GetDepth() - 1);
+  UInt shadowStart = shadowSize * p.GetIndex();
   
-  uint64_t shadowEnd = shadowSize + shadowStart;
-  uint64_t baseEnd = baseStart + baseCount;
+  UInt shadowEnd = shadowSize + shadowStart;
+  UInt baseEnd = baseStart + baseCount;
   
   if (shadowStart >= baseEnd || baseStart >= shadowEnd) {
     SetType(p, NodeTypeFree);

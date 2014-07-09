@@ -19,6 +19,6 @@ int main() {
   TreeTester tester(tree, "BBTree");
   tester.TestAll();
   
-  delete memory;
+  delete[] memory;
   return 0;
 }

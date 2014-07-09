@@ -1,15 +1,15 @@
 #ifndef __ANALLOC2_LOG_HPP__
 #define __ANALLOC2_LOG_HPP__
 
-#include <cstdint>
+#include "int.hpp"
 
 namespace ANAlloc {
 
-inline uint8_t Log2Floor(uint64_t value) {
+inline int Log2Floor(UInt value) {
   return sizeof(long long) * 8 - __builtin_clzll(value) - 1;
-}
+};
 
-uint8_t Log2Ceil(uint64_t value);
+int Log2Ceil(UInt value);
 
 }
 

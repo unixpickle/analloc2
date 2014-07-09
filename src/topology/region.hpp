@@ -1,8 +1,7 @@
-#ifndef __ANALLOC2_REGION_H__
-#define __ANALLOC2_REGION_H__
+#ifndef __ANALLOC2_REGION_HPP__
+#define __ANALLOC2_REGION_HPP__
 
-#include <cstdint>
-#include <cstddef>
+#include "../int-type.hpp"
 
 namespace ANAlloc {
 
@@ -10,21 +9,43 @@ namespace ANAlloc {
  * Represents an abstract region of memory.
  */
 class Region {
-private:
-  uintptr_t start = 0;
-  size_t size = 0;
-  
 public:
-  Region(uintptr_t _start, size_t _size);
-  Region();
-  Region(const Region & reg);
-  Region & operator=(const Region & reg);
+  inline Region() : start(0), size(0), {
+  }
   
-  uintptr_t GetStart() const;
-  uintptr_t GetEnd() const;
-  size_t GetSize() const;
-  bool Contains(uintptr_t ptr) const;
-   
+  inline Region(Integer _start, Integer _size) : start(_start), size(_size) {
+  }
+  
+  Region(const Region & reg) : start(reg.start), size(reg.size) {
+  }
+  
+  Region & operator=(const Region & reg) {
+    start = reg.start;
+    size = reg.size;
+    return *this;
+  }
+  
+  inline Integer GetStart() const {
+    return start;
+  }
+  
+  inline Integer GetEnd() const {
+    return start + size;
+  }
+  
+  inline Integer GetSize() const {
+    return size;
+  }
+  
+  bool Contains(Integer ptr) const {
+    if (ptr < start) return false;
+    if (ptr >= End()) return false;
+    return true;
+  }
+
+private:
+  Integer start;
+  Integer size;
 };
 
 }

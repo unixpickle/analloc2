@@ -102,7 +102,7 @@ uint64_t TimeBranchAllocation() {
   }
   
   uint64_t result = Microtime() - start;
-  delete buf;
+  delete[] buf;
   return result;
 }
 
@@ -127,7 +127,7 @@ uint64_t TimeOrderedAllocation() {
   }
   
   uint64_t result = Microtime() - start;
-  delete buf;
+  delete[] buf;
   return result;
 }
 
@@ -155,7 +155,7 @@ uint64_t TimeBaseAllocation() {
   }
   
   uint64_t result = Microtime() - start;
-  delete buf;
+  delete[] buf;
   return result;
 }
 
@@ -186,7 +186,7 @@ uint64_t TimeLeafAllocation() {
   assert(tree.GetType(Path::Root()) == NodeTypeFree);
   
   uint64_t result = Microtime() - start;
-  delete buf;
+  delete[] buf;
   return result;
 }
 
@@ -223,7 +223,7 @@ uint64_t TimeFindByShadow() {
   }
   sum += Microtime() - start;
   
-  delete buf;
+  delete[] buf;
   return sum;
 }
 
@@ -273,7 +273,7 @@ uint64_t TimeLooseAlignment() {
   }
   sum += Microtime() - start;
   
-  delete buf;
+  delete[] buf;
   return sum;
 }
 
@@ -324,7 +324,7 @@ uint64_t TimeTightAlignment() {
   }
   sum += Microtime() - start;
   
-  delete buf;
+  delete[] buf;
   return sum;
 }
 

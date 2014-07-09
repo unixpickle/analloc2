@@ -1,7 +1,7 @@
 #ifndef __ANALLOC2_PATH_HPP__
 #define __ANALLOC2_PATH_HPP__
 
-#include <cstdint>
+#include "../int.hpp"
 #include <cassert>
 
 namespace ANAlloc {
@@ -12,7 +12,7 @@ public:
     return Path(0, 0);
   }
   
-  inline static Path FromTreeIndex(uint64_t idx) {
+  inline static Path FromTreeIndex(UInt idx) {
     int depth;
     for (depth = 63; depth >= 0; depth--) {
       if ((idx + 1) & (1L << depth)) break;
@@ -21,14 +21,14 @@ public:
     return Path(depth, idx - (DepthCount(depth) - 1));
   }
   
-  inline static uint64_t DepthCount(int depth) {
+  inline static UInt DepthCount(int depth) {
     return 1UL << depth;
   }
   
   inline Path() : depth(0), index(0) {
   }
   
-  inline Path(int _depth, uint64_t _index) : depth(_depth), index(_index) {
+  inline Path(int _depth, UInt _index) : depth(_depth), index(_index) {
   }
   
   inline Path(const Path & p) : depth(p.depth), index(p.index) {
@@ -52,7 +52,7 @@ public:
     return depth;
   }
   
-  inline uint64_t GetIndex() const {
+  inline UInt GetIndex() const {
     return index;
   }
   
@@ -78,13 +78,13 @@ public:
     }
   }
   
-  inline uint64_t TreeIndex() const {
+  inline UInt TreeIndex() const {
     return (1UL << depth) - 1UL + index;
   }
   
 private:
   int depth;
-  uint64_t index;
+  UInt index;
 };
 
 }

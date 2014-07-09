@@ -4,9 +4,9 @@
 namespace ANAlloc {
 
 size_t BBTree::MemorySize(int depth) {
-  uint64_t bitCount = TreeSizeAtDepth(depth);
+  UInt bitCount = TreeSizeAtDepth(depth);
   if (bitCount & 7) return bitCount / 8 + 1;
-  return bitCount / 8;
+  return (size_t)(bitCount / 8);
 }
 
 BBTree::BBTree() {
@@ -137,9 +137,9 @@ bool BBTree::IsFree(Path path) const {
 
 // protected //
 
-uint64_t BBTree::TreeSizeAtDepth(int depth) {
+UInt BBTree::TreeSizeAtDepth(int depth) {
   // size table is the best we're going to get
-  uint64_t treeSizes[] = {
+  UInt treeSizes[] = {
     0UL, 1UL, 4UL, 10UL, 23UL, 49UL, 101UL, 205UL, 414UL, 832UL, 1668UL,
     3340UL, 6684UL, 13372UL, 26748UL, 53500UL, 107005UL, 214015UL, 428035UL,
     856075UL, 1712155UL, 3424315UL, 6848635UL, 13697275UL, 27394555UL,
@@ -173,15 +173,15 @@ int BBTree::FieldSizeAtDepth(int _depth) const {
   return numberLogs[depth - _depth + 1];
 }
 
-uint64_t BBTree::CalculatePrefixSize(int _depth) const {
-  uint64_t result = 0;
+UInt BBTree::CalculatePrefixSize(int _depth) const {
+  UInt result = 0;
   for (int i = 0; i < _depth; i++) {
-    result += (uint64_t)FieldSizeAtDepth(i) * (1UL << i);
+    result += (UInt)FieldSizeAtDepth(i) * (1UL << i);
   }
   return result;
 }
 
-uint64_t BBTree::GetPrefixSize(int _depth) const {
+UInt BBTree::GetPrefixSize(int _depth) const {
 #ifndef ANALLOC_BBTREE_DONT_CACHE_PREFIXES
   return prefixSizes[_depth];
 #else
@@ -191,15 +191,15 @@ uint64_t BBTree::GetPrefixSize(int _depth) const {
 
 
 int BBTree::ReadNode(Path p) const {
-  uint64_t fieldSize = FieldSizeAtDepth(p.GetDepth());
-  uint64_t offset = GetPrefixSize(p.GetDepth()) + fieldSize * p.GetIndex();
+  UInt fieldSize = FieldSizeAtDepth(p.GetDepth());
+  UInt offset = GetPrefixSize(p.GetDepth()) + fieldSize * p.GetIndex();
   return bitmap.GetMultibit(offset, fieldSize);
 }
 
 void BBTree::WriteNode(Path p, int value) {
-  uint64_t fieldSize = FieldSizeAtDepth(p.GetDepth());
-  uint64_t offset = GetPrefixSize(p.GetDepth()) + fieldSize * p.GetIndex();
-  bitmap.SetMultibit(offset, fieldSize, (uint64_t)value);
+  UInt fieldSize = FieldSizeAtDepth(p.GetDepth());
+  UInt offset = GetPrefixSize(p.GetDepth()) + fieldSize * p.GetIndex();
+  bitmap.SetMultibit(offset, fieldSize, (UInt)value);
 }
 
 void BBTree::UpdateParents(Path p, int pValue) {

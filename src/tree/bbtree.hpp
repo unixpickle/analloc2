@@ -1,5 +1,5 @@
-#ifndef __ANALLOC2_BBTREE_H__
-#define __ANALLOC2_BBTREE_H__
+#ifndef __ANALLOC2_BBTREE_HPP__
+#define __ANALLOC2_BBTREE_HPP__
 
 #include "tree.hpp"
 #include "bitmap.hpp"
@@ -37,13 +37,13 @@ protected:
   Bitmap bitmap;
   int depth;
 #ifndef ANALLOC_BBTREE_DONT_CACHE_PREFIXES
-  uint64_t prefixSizes[0x40];
+  UInt prefixSizes[0x40];
 #endif
   
-  static uint64_t TreeSizeAtDepth(int depth);
+  static UInt TreeSizeAtDepth(int depth);
   int FieldSizeAtDepth(int depth) const;
-  uint64_t CalculatePrefixSize(int depth) const;
-  uint64_t GetPrefixSize(int depth) const;
+  UInt CalculatePrefixSize(int depth) const;
+  UInt GetPrefixSize(int depth) const;
   
   int ReadNode(Path p) const;
   void WriteNode(Path p, int value);

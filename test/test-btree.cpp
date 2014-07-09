@@ -20,6 +20,6 @@ int main() {
   TreeTester tester(tree, "BTree");
   tester.TestAll();
   
-  delete memory;
+  delete[] memory;
   return 0;
 }
