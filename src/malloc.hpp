@@ -1,8 +1,7 @@
 #ifndef __ANALLOC2_MALLOC_HPP__
 #define __ANALLOC2_MALLOC_HPP__
 
-#include "tree/tree.hpp"
-#include "log.hpp"
+#include "allocator.hpp"
 #include <new>
 
 namespace ANAlloc {
@@ -11,8 +10,12 @@ namespace ANAlloc {
  * This lightweight template wraps the tree of your choice to provide a simple
  * linear address allocator.
  */
-class Malloc {  
+class Malloc : protected Allocator {  
 public:
+  using Allocator::GetTree;
+  using Allocator::GetPageSizeLog;
+  typedef Allocator super;
+  
   template <class T>
   static Malloc * WrapRegion(uint8_t * start, size_t length, int psLog,
                              size_t initUsed = 0);
@@ -40,25 +43,6 @@ public:
    * buffer.
    */
   bool OwnsPointer(void * ptr) const;
-  
-  /**
-   * Returns the internal tree used by the allocator.
-   */
-  const Tree & GetTree() const;
-  
-  /**
-   * Returns the log base 2 of the base node size.
-   */
-  int GetPageSizeLog() const;
-  
-protected:
-  uint8_t * start;
-  UInt length;
-  
-  Tree & tree;
-  int psLog;
-  
-  int DepthForSize(size_t size) const;
 };
 
 template <class T>

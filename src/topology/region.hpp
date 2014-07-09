@@ -1,51 +1,46 @@
 #ifndef __ANALLOC2_REGION_HPP__
 #define __ANALLOC2_REGION_HPP__
 
-#include "../int-type.hpp"
+#include "../int.hpp"
 
 namespace ANAlloc {
 
-/**
- * Represents an abstract region of memory.
- */
 class Region {
 public:
-  inline Region() : start(0), size(0), {
+  inline Region() {
   }
   
-  inline Region(Integer _start, Integer _size) : start(_start), size(_size) {
+  inline Region(UInt _start, UInt _size) : start(_start), size(_size) {
   }
   
-  Region(const Region & reg) : start(reg.start), size(reg.size) {
+  inline Region(const Region & reg) : start(reg.start), size(reg.size) {
   }
   
-  Region & operator=(const Region & reg) {
+  inline Region & operator=(const Region & reg) {
     start = reg.start;
     size = reg.size;
     return *this;
   }
   
-  inline Integer GetStart() const {
+  inline bool Contains(UInt ptr) const {
+    return ptr >= start && ptr < start + size;
+  }
+  
+  inline UInt GetStart() const {
     return start;
   }
   
-  inline Integer GetEnd() const {
-    return start + size;
-  }
-  
-  inline Integer GetSize() const {
+  inline UInt GetSize() const {
     return size;
   }
   
-  bool Contains(Integer ptr) const {
-    if (ptr < start) return false;
-    if (ptr >= End()) return false;
-    return true;
+  inline UInt GetEnd() const {
+    return GetStart() + GetSize();
   }
-
+  
 private:
-  Integer start;
-  Integer size;
+  UInt start;
+  UInt size;
 };
 
 }
