@@ -15,6 +15,12 @@ public:
   Allocator(UInt start, Tree & tree, int psLog);
   
   /**
+   * If you wish to use Reserve(), it must be the first method you call on an
+   * allocator.
+   */
+  void Reserve(UInt resStart, UInt resSize);
+  
+  /**
    * Allocate a chunk of address space.
    */
   bool Alloc(UInt size, UInt & result);
@@ -37,6 +43,16 @@ public:
   bool OwnsAddress(UInt addr) const;
   
   /**
+   * Return the number of free "bytes"
+   */
+  UInt GetFreeSize() const;
+  
+  /**
+   * Return the number of free *and* used "bytes"
+   */
+  UInt GetTotalSize() const;
+  
+  /**
    * Returns the internal tree used by the allocator.
    */
   const Tree & GetTree() const;
@@ -52,6 +68,8 @@ protected:
   
   Tree & tree;
   int psLog;
+  
+  UInt freeSize;
   
   int DepthForSize(UInt size) const;
 };

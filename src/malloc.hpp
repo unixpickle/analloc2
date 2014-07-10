@@ -23,6 +23,12 @@ public:
   Malloc(uint8_t * start, Tree & tree, int psLog);
   
   /**
+   * If you want to use Reserve(), it must be your first call on a Malloc after
+   * initializing it.
+   */
+  void Reserve(size_t resStart, size_t resSize);
+  
+  /**
    * Allocates memory or returns NULL on failure.
    */
   void * Alloc(size_t size);
@@ -43,6 +49,17 @@ public:
    * buffer.
    */
   bool OwnsPointer(void * ptr) const;
+  
+  /**
+   * Return the number of free bytes in the allocator.
+   */
+  size_t GetFreeSize() const;
+  
+  /**
+   * Return the number of bytes controlled by the Malloc object.
+   */
+  size_t GetTotalSize() const;
+  
 };
 
 template <class T>
@@ -66,16 +83,12 @@ Malloc * Malloc::WrapRegion(uint8_t * start, size_t length, int psLog,
   // create the tree
   new(tree) T(maxDepth + 1, bmBuffer);
   
-  // carve out the beginning of the buffer
-  UInt carvePageCount = useLength >> psLog;
-  if (useLength % (1UL << psLog)) {
-    ++carvePageCount;
-  }
-  tree->SetType(Path::Root(), NodeTypeData);
-  tree->Carve(Path::Root(), 0, carvePageCount);
-  
   // create the actually Malloc object
   new(result) Malloc(start, *tree, psLog);
+  
+  // carve out the beginning of the buffer
+  result->Reserve(0, useLength);
+  
   return result;
 }
 

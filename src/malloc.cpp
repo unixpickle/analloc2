@@ -6,6 +6,10 @@ Malloc::Malloc(uint8_t * _start, Tree & _tree, int _psLog)
   : super((UInt)_start, _tree, _psLog) {
 }
 
+void Malloc::Reserve(size_t resStart, size_t resSize) {
+  super::Reserve((UInt)resStart, (UInt)resSize);
+}
+
 void * Malloc::Alloc(size_t size) {
   UInt result;
   if (!super::Alloc((UInt)size, result)) {
@@ -30,6 +34,14 @@ void Malloc::Free(void * buff) {
 
 bool Malloc::OwnsPointer(void * ptr) const {
   return super::OwnsAddress((UInt)ptr);
+}
+
+size_t Malloc::GetFreeSize() const {
+  return (size_t)super::GetFreeSize();
+}
+
+size_t Malloc::GetTotalSize() const {
+  return (size_t)super::GetTotalSize();
 }
 
 }

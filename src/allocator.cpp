@@ -1,10 +1,30 @@
 #include "malloc.hpp"
 
+#include <iostream> // TODO: delete this
+
 namespace ANAlloc {
 
 Allocator::Allocator(UInt _start, Tree & _tree, int _psLog)
   : start(_start), length(1UL << (_tree.GetDepth() - 1 + _psLog)),
-    tree(_tree), psLog(_psLog) {
+    tree(_tree), psLog(_psLog), freeSize(length) {
+  assert(tree.GetType(Path::Root()) == NodeTypeFree);
+}
+
+void Allocator::Reserve(UInt resStart, UInt resSize) {
+  assert(resSize + resStart < start + length);
+  
+  UInt blockStart = resStart >> psLog;
+  UInt blockEnd = (resStart + resSize) >> psLog;
+  if (blockEnd << psLog != resStart + resSize) {
+    ++blockEnd;
+  }
+  UInt blockCount = blockEnd - blockStart;
+  
+  assert(tree.GetType(Path::Root()) == NodeTypeFree);
+  tree.SetType(Path::Root(), NodeTypeData);
+  tree.Carve(Path::Root(), blockStart, blockCount);
+  
+  freeSize -= blockCount << psLog;
 }
 
 bool Allocator::Alloc(UInt size, UInt & result) {
@@ -17,6 +37,7 @@ bool Allocator::Alloc(UInt size, UInt & result) {
   
   // compute the resultant address
   UInt nodeSize = 1UL << (psLog + (tree.GetDepth() - depth - 1));
+  freeSize -= nodeSize;
   result = start + nodeSize * p.GetIndex();
   return true;
 }
@@ -37,6 +58,7 @@ bool Allocator::Align(UInt size, UInt align, UInt & result) {
   
   // compute the resultant address
   UInt nodeSize = 1UL << (psLog + (tree.GetDepth() - sizeDepth - 1));
+  freeSize -= nodeSize;
   result = start + nodeSize * p.GetIndex();
   return true;
 }
@@ -48,10 +70,21 @@ void Allocator::Free(UInt addr) {
   bool res = tree.FindByShadow(baseIndex, p);
   assert(res);
   tree.Dealloc(p);
+  
+  UInt nodeSize = 1UL << (psLog + (tree.GetDepth() - p.GetDepth() - 1));
+  freeSize += nodeSize;
 }
 
 bool Allocator::OwnsAddress(UInt addr) const {
   return addr >= start && addr < start + length;
+}
+
+UInt Allocator::GetFreeSize() const {
+  return freeSize;
+}
+
+UInt Allocator::GetTotalSize() const {
+  return length;
 }
 
 const Tree & Allocator::GetTree() const {
