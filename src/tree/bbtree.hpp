@@ -30,6 +30,7 @@ public:
   virtual bool FindFree(int depth, Path & pathOut) const;
   virtual bool FindAligned(int depth, int align, Path & pathOut) const;
   virtual void Free(Path path);
+  virtual int AllocHeuristic();
   
   bool IsFree(Path path) const;
   

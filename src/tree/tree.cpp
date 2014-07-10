@@ -99,4 +99,8 @@ void Tree::Carve(Path p, UInt baseStart, UInt baseCount) {
   }
 }
 
+int Tree::AllocHeuristic() {
+  return 0;
+}
+
 }

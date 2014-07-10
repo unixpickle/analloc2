@@ -31,6 +31,8 @@ bool Allocator::Alloc(UInt size, UInt & result) {
   int depth = DepthForSize(size);
   if (depth < 0) return false;
   
+  if (tree.AllocHeuristic() > depth) return false;
+  
   Path p;
   bool res = tree.Alloc(depth, p);
   if (!res) return false;
@@ -51,6 +53,8 @@ bool Allocator::Align(UInt size, UInt align, UInt & result) {
   if (sizeDepth < 0 || alignDepth < 0) {
     return false;
   }
+  
+  if (tree.AllocHeuristic() > sizeDepth) return false;
   
   Path p;
   bool res = tree.Align(sizeDepth, alignDepth, p);

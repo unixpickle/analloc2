@@ -131,6 +131,10 @@ void BBTree::Free(Path path) {
   SetType(path, NodeTypeFree);
 }
 
+int BBTree::AllocHeuristic() {
+  return depth - ReadNode(Path::Root());
+}
+
 bool BBTree::IsFree(Path path) const {
   return ReadNode(path) == depth - path.GetDepth();
 }

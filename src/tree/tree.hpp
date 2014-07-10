@@ -98,6 +98,16 @@ public:
    * freeing unneeded residual.
    */
   virtual void Carve(Path p, UInt baseStart, UInt baseCount);
+  
+  /**
+   * Returns the highest depth that could possibly contain a free node. For
+   * example, if this returns 1, you will not be able to allocate the root
+   * node. If it returns 2, you will only be able to allocate nodes of depth 2
+   * or more.
+   *
+   * The default implementation of this method returns 0.
+   */
+  virtual int AllocHeuristic();
 };
 
 }
