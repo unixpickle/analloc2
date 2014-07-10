@@ -1,6 +1,8 @@
-#include "../src/fixed-cluster.hpp"
+#include "../src/cluster/fixed-cluster.hpp"
+#include "../src/cluster/cluster-builder.hpp"
 #include "../src/tree/btree.hpp"
 #include "../src/tree/bbtree.hpp"
+#include "../src/topology/fixed-desc-list.hpp"
 #include "scoped-pass.hpp"
 
 using namespace ANAlloc;
@@ -11,11 +13,16 @@ void TestReserveNormal(const char * treeName);
 template <class T>
 void TestOperations(const char * treeName);
 
+template <class T>
+void TestBuilder(const char * treeName);
+
 int main() {
   TestReserveNormal<BTree>("BTree");
   TestReserveNormal<BBTree>("BBTree");
   TestOperations<BTree>("BTree");
   TestOperations<BBTree>("BBTree");
+  TestBuilder<BTree>("BTree");
+  TestBuilder<BBTree>("BBTree");
   return 0;
 }
 
@@ -100,4 +107,36 @@ void TestOperations(const char * treeName) {
   delete[] treeData1;
   delete[] treeData2;
   delete[] treeData3;
+}
+
+template <class T>
+void TestBuilder(const char * treeName) {
+  ScopedPass pass("ClusterBuilder<", treeName, ">");
+  
+  FixedDescList<3> descs;
+  descs.Push(Desc(0, 10));
+  descs.Push(Desc(0x800, 9));
+  descs.Push(Desc(0xa00, 10));
+  
+  FixedCluster<3> cluster;
+  ClusterBuilder<T> builder(descs, cluster, 1);
+  
+  UInt space = builder.RequiredSpace();
+  assert(space == T::MemorySize(10) * 2 + T::MemorySize(9) + sizeof(T) * 3);
+  
+  uint8_t * buffer = new uint8_t[space];
+  builder.CreateAllocators(buffer);
+  
+  const T & tree1 = static_cast<const T &>(cluster[0].GetTree());
+  const T & tree2 = static_cast<const T &>(cluster[1].GetTree());
+  const T & tree3 = static_cast<const T &>(cluster[2].GetTree());
+  
+  assert((const uint8_t *)&tree1 == buffer);
+  assert((const uint8_t *)&tree2 == buffer + sizeof(T));
+  assert((const uint8_t *)&tree3 == buffer + sizeof(T) * 2);
+  
+  assert(cluster.GetFreeSize() == cluster.GetTotalSize());
+  assert(cluster.GetTotalSize() == 0xa00);
+  
+  delete[] buffer;
 }

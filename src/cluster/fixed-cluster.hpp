@@ -1,13 +1,13 @@
 #ifndef __ANALLOC2_FIXED_CLUSTER_HPP__
 #define __ANALLOC2_FIXED_CLUSTER_HPP__
 
-#include "cluster.hpp"
+#include "mutable-cluster.hpp"
 #include <new>
 
 namespace ANAlloc {
 
 template <int capacity>
-class FixedCluster : public Cluster {
+class FixedCluster : public MutableCluster {
 public:
   virtual int GetCount() const {
     return count;

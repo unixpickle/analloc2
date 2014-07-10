@@ -14,7 +14,11 @@ public:
     return descs[idx];
   }
   
-  virtual int GetCount() {
+  virtual const Desc & operator[](int idx) const {
+    return descs[idx];
+  }
+  
+  virtual int GetCount() const {
     return count;
   }
   

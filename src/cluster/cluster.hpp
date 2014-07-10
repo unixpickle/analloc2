@@ -1,7 +1,7 @@
 #ifndef __ANALLOC2_CLUSTER_HPP__
 #define __ANALLOC2_CLUSTER_HPP__
 
-#include "allocator.hpp"
+#include "../allocator.hpp"
 
 namespace ANAlloc {
 
