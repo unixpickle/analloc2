@@ -44,4 +44,8 @@ size_t Malloc::GetTotalSize() const {
   return (size_t)super::GetTotalSize();
 }
 
+void * Malloc::GetStart() const {
+  return (void *)super::GetStart();
+}
+
 }

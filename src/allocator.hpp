@@ -16,7 +16,8 @@ public:
   
   /**
    * If you wish to use Reserve(), it must be the first method you call on an
-   * allocator.
+   * allocator. The `resStart` argument is relative to the beginning of this
+   * allocator, not absolute.
    */
   void Reserve(UInt resStart, UInt resSize);
   
@@ -51,6 +52,11 @@ public:
    * Return the number of free *and* used "bytes"
    */
   UInt GetTotalSize() const;
+  
+  /**
+   * Return the start of the covered region.
+   */
+  UInt GetStart() const;
   
   /**
    * Returns the internal tree used by the allocator.

@@ -60,6 +60,11 @@ public:
    */
   size_t GetTotalSize() const;
   
+  /**
+   * Return the start of the buffer
+   */
+  void * GetStart() const;
+  
 };
 
 template <class T>

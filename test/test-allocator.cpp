@@ -70,4 +70,6 @@ void TestFreeSize(const char * treeName) {
   assert(alloc.GetFreeSize() == 0x400 - 0x4c);
   alloc.Free(addr2);
   assert(alloc.GetFreeSize() == 0x400 - 0xc);
+  
+  delete[] buffer;
 }

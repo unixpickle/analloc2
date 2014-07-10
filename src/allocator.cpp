@@ -11,7 +11,7 @@ Allocator::Allocator(UInt _start, Tree & _tree, int _psLog)
 }
 
 void Allocator::Reserve(UInt resStart, UInt resSize) {
-  assert(resSize + resStart < start + length);
+  assert(resSize + resStart <= length);
   
   UInt blockStart = resStart >> psLog;
   UInt blockEnd = (resStart + resSize) >> psLog;
@@ -48,11 +48,14 @@ bool Allocator::Align(UInt size, UInt align, UInt & result) {
   if (start % align) {
     return false;
   }
+  
   int sizeDepth = DepthForSize(size);
   int alignDepth = DepthForSize(align);
-  if (sizeDepth < 0 || alignDepth < 0) {
-    return false;
-  }
+  
+  // if they are trying to allocate this entire allocator and align it by
+  // whatever the allocator is aligned to, why stop them?
+  if (sizeDepth < 0) return false;
+  if (alignDepth < 0) alignDepth = 0;
   
   if (tree.AllocHeuristic() > sizeDepth) return false;
   
@@ -89,6 +92,10 @@ UInt Allocator::GetFreeSize() const {
 
 UInt Allocator::GetTotalSize() const {
   return length;
+}
+
+UInt Allocator::GetStart() const {
+  return start;
 }
 
 const Tree & Allocator::GetTree() const {

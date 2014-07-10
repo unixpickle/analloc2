@@ -23,6 +23,9 @@ build/malloc: build
 build/layout: build
 	g++ $(CPPFLAGS) ../src/topology/layout.cpp test-layout.cpp -o build/layout
 
+build/cluster: build
+	g++ $(CPPFLAGS) ../src/tree/bitmap.cpp ../src/tree/tree.cpp ../src/tree/bbtree.cpp ../src/tree/btree.cpp ../src/log.cpp ../src/allocator.cpp ../src/cluster.cpp test-cluster.cpp -o build/cluster
+
 build/prof-tree-o0: build
 	g++ -O0 $(CPPFLAGS) ../src/tree/tree.cpp ../src/tree/bitmap.cpp ../src/tree/bbtree.cpp ../src/tree/btree.cpp profile-tree.cpp -o build/prof-tree-o0
 
