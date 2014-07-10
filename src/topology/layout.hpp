@@ -8,21 +8,25 @@ namespace ANAlloc {
 
 class Layout {
 public:
-  Layout(DescList & descs, int psLog, UInt maxAlignment, UInt minAlignment);
+  Layout(DescList & descs, const RegionList & regions, int psLog,
+         UInt maxAlignment, UInt minAlignment);
   
-  void Run(const RegionList & regs);
+  void Run();
   
 protected:
-  bool GenerateDesc(const RegionList & regs, UInt alignment);
-  bool BiggestFree(const Region & reg, UInt alignment, Desc & desc);
+  bool GenerateDesc();
+  bool BiggestFree(const Region & reg, Desc & desc);
   Desc * NextDescInRegion(const Region & reg, UInt start);
   UInt DescEnd(const Desc & d);
   
 private:
   DescList & descs;
+  const RegionList & regions;
   int psLog;
   UInt maxAlignment;
   UInt minAlignment;
+  
+  UInt alignment;
 };
 
 }

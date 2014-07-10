@@ -6,7 +6,7 @@
 
 namespace ANAlloc {
 
-template <size_t capacity>
+template <int capacity>
 class FixedDescList : public DescList {
 public:
   // overloaded methods
@@ -24,9 +24,13 @@ public:
     return true;
   }
   
+  virtual void Empty() {
+    count = 0;
+  }
+  
 private:
   Desc descs[capacity];
-  int count;
+  int count = 0;
 };
 
 }

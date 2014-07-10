@@ -1,17 +1,23 @@
-#include "../logs.hpp"
+#include "../log.hpp"
+#include "layout.hpp"
+#include <cstddef>
+#include <cassert>
 
 namespace ANAlloc {
 
-Layout::Layout(DescList & _descs, int _psLog, UInt _maxAlignment,
-               UInt _minAlignment)
-  : descs(_descs), psLog(_psLog), maxAlignment(_maxAlignment), minAlignment(_minAlignment) {
+Layout::Layout(DescList & _descs, const RegionList & _regions, int _psLog,
+               UInt _maxAlignment, UInt _minAlignment)
+  : descs(_descs), regions(_regions), psLog(_psLog),
+    maxAlignment(_maxAlignment), minAlignment(_minAlignment) {
+  assert(minAlignment != 0);
+  assert(maxAlignment != 0);
 }
 
-void Layout::Run(const RegionList & regs) {
+void Layout::Run() {
   // keep adding descriptions until we can't anymore
-  UInt alignment = maxAlignment;
-  while (alignment >= minAlignment && descs.CanPush()) {
-    if (!GenerateDesc(regs, alignment, keepGoing)) {
+  alignment = maxAlignment;
+  while (alignment >= minAlignment) {
+    if (!GenerateDesc()) {
       alignment >>= 1;
     }
   }
@@ -19,13 +25,12 @@ void Layout::Run(const RegionList & regs) {
 
 // PROTECTED //
 
-bool Layout::GenerateDesc(const RegionList & regs, UInt alignment) {
+bool Layout::GenerateDesc() {
   Desc biggest(0, 0);
-  keepGoing = true;
-  for (int i = 0; i < regs.GetCount(); i++) {
-    const Region & reg = regs[i];
+  for (int i = 0; i < regions.GetCount(); i++) {
+    const Region & reg = regions[i];
     Desc output;
-    if (BiggestFree(reg, alignment, output)) {
+    if (BiggestFree(reg, output)) {
       if (output.GetDepth() > biggest.GetDepth()) {
         biggest = output;
       }
@@ -35,7 +40,7 @@ bool Layout::GenerateDesc(const RegionList & regs, UInt alignment) {
   return descs.Push(biggest);
 }
 
-bool Layout::BiggestFree(const Region & reg, UInt alignment, Desc & desc) {
+bool Layout::BiggestFree(const Region & reg, Desc & desc) {
   const UInt pageSize = 1UL << psLog;
   desc = Desc(0, 0);
   
@@ -44,7 +49,7 @@ bool Layout::BiggestFree(const Region & reg, UInt alignment, Desc & desc) {
     Desc * nextDesc = NextDescInRegion(reg, chunkStart);
     
     // calculate the beginning and end of this free chunk
-    UInt chunkEnd = nextDesc ? nextDesc.GetStart() : reg.GetEnd();
+    UInt chunkEnd = nextDesc ? nextDesc->GetStart() : reg.GetEnd();
     if (chunkStart % alignment) {
       chunkStart += alignment - (chunkStart % alignment);
     }
@@ -58,7 +63,7 @@ bool Layout::BiggestFree(const Region & reg, UInt alignment, Desc & desc) {
     }
     
     // calculate the depth of this free region and create an allocator in it
-    int possibleDepth = Log2Floor(chunkEnd - chunkStart);
+    int possibleDepth = Log2Floor(chunkEnd - chunkStart) - psLog + 1;
     if (possibleDepth > desc.GetDepth()) {
       desc = Desc(chunkStart, possibleDepth);
     }
@@ -68,7 +73,7 @@ bool Layout::BiggestFree(const Region & reg, UInt alignment, Desc & desc) {
     continue;
   }
   
-  return desc.depth != 0;
+  return desc.GetDepth() != 0;
 }
 
 Desc * Layout::NextDescInRegion(const Region & reg, UInt start) {

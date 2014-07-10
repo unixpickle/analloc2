@@ -5,7 +5,7 @@
 
 namespace ANAlloc {
 
-template <size_t capacity>
+template <int capacity>
 class FixedRegionList : public RegionList {
 public:
   // overloaded methods
@@ -25,11 +25,12 @@ public:
   virtual bool Push(const Region & reg) {
     if (count == capacity) return false;
     regions[count++] = reg;
+    return true;
   }
   
 private:
   Region regions[capacity];
-  int count;
+  int count = 0;
 };
 
 }
