@@ -2,9 +2,9 @@
 
 namespace ANAlloc {
 
-size_t BTree::MemorySize(int depth) {
+UInt BTree::MemorySize(int depth) {
   if (depth <= 3) return 1;
-  return (size_t)(1UL << (depth - 3));
+  return (UInt)(1UL << (depth - 3));
 }
 
 BTree::BTree() {

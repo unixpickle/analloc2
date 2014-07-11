@@ -3,6 +3,7 @@
 
 #include "tree.hpp"
 #include "bitmap.hpp"
+#include <cstddef>
 
 namespace ANAlloc {
 
@@ -13,7 +14,7 @@ namespace ANAlloc {
  */
 class BTree : public Tree {
 public:
-  static size_t MemorySize(int depth);
+  static UInt MemorySize(int depth);
   
   BTree(); // for placement-new placeholder only
   BTree(int depth, uint8_t * bmMemory);

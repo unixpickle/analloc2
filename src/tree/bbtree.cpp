@@ -3,10 +3,10 @@
 
 namespace ANAlloc {
 
-size_t BBTree::MemorySize(int depth) {
+UInt BBTree::MemorySize(int depth) {
   UInt bitCount = TreeSizeAtDepth(depth);
   if (bitCount & 7) return bitCount / 8 + 1;
-  return (size_t)(bitCount / 8);
+  return (UInt)(bitCount / 8);
 }
 
 BBTree::BBTree() {

@@ -78,7 +78,7 @@ Malloc * Malloc::WrapRegion(uint8_t * start, size_t length, int psLog,
   if (maxDepth < 0) return NULL;
   
   size_t useLength = initUsed + sizeof(T) + sizeof(Malloc)
-    + T::MemorySize(maxDepth + 1);
+    + (size_t)T::MemorySize(maxDepth + 1);
   if (useLength > length) return NULL;
   
   T * tree = (T *)(start + initUsed);

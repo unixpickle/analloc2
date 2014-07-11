@@ -17,7 +17,7 @@ namespace ANAlloc {
  */
 class BBTree : public Tree {
 public:
-  static size_t MemorySize(int depth);
+  static UInt MemorySize(int depth);
   
   BBTree(); // for placement-new placeholder only
   BBTree(int depth, uint8_t * bmMemory);
