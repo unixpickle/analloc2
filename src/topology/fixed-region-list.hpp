@@ -28,6 +28,15 @@ public:
     return true;
   }
   
+  virtual bool Insert(const Region & reg, int idx) {
+    if (count == capacity) return false;
+    for (int i = idx; i < count; ++i) {
+      regions[i + 1] = regions[i];
+    }
+    regions[idx] = reg;
+    ++count;
+  }
+  
 private:
   Region regions[capacity];
   int count = 0;
