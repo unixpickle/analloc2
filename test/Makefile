@@ -1,6 +1,6 @@
 CPPFLAGS ?= -Wextra -Wall -std=c++11
 
-all: build/bitmap build/path build/btree build/bbtree build/allocator build/malloc build/layout build/prof-tree-o0 build/prof-tree-o2 build/prof-malloc-o0 build/prof-malloc-o2
+all: build/bitmap build/path build/btree build/bbtree build/allocator build/malloc build/layout build/cluster build/prof-tree-o0 build/prof-tree-o2 build/prof-malloc-o0 build/prof-malloc-o2
 
 build/bitmap: build
 	g++ $(CPPFLAGS) ../src/tree/bitmap.cpp test-bitmap.cpp -o build/bitmap
