@@ -35,6 +35,7 @@ public:
     }
     regions[idx] = reg;
     ++count;
+    return true;
   }
   
 private:
