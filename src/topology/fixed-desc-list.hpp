@@ -1,7 +1,7 @@
 #ifndef __ANALLOC2_FIXED_DESC_LIST_HPP__
 #define __ANALLOC2_FIXED_DESC_LIST_HPP__
 
-#include "region-list.hpp"
+#include "desc-list.hpp"
 #include <cassert>
 
 namespace ANAlloc {
