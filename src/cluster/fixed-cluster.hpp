@@ -3,6 +3,7 @@
 
 #include "mutable-cluster.hpp"
 #include <new>
+#include <cstdint>
 
 namespace ANAlloc {
 
