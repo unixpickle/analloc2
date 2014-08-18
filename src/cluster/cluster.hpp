@@ -19,6 +19,7 @@ public:
   virtual bool Alloc(UInt size, UInt & addrOut);
   virtual bool Align(UInt size, UInt align, UInt & addrOut);
   virtual void Free(UInt addr);
+  virtual bool OwnsAddress(UInt addr);
 };
 
 }

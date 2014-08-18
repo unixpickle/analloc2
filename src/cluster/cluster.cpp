@@ -67,4 +67,14 @@ void Cluster::Free(UInt addr) {
   }
 }
 
+bool Cluster::OwnsAddress(UInt addr) {
+  for (int i = 0; i < GetCount(); i++) {
+    Allocator & allocator = (*this)[i];
+    if (allocator.OwnsAddress(addr)) {
+      return true;
+    }
+  }
+  return false;
+}
+
 }
