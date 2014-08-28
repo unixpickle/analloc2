@@ -119,7 +119,7 @@ bool BBTree::FindFree(int _depth, Path & path) const {
 
 bool BBTree::FindAligned(int _depth, int align, Path & path) const {
   // TODO: profile to see if this O(log(n)) optimization is ever worth it
-  if (FindFree(align > depth ? depth : align, path)) return true;
+  if (FindFree(align > _depth ? _depth : align, path)) return true;
   return RecursiveFindAligned(_depth, align, Path::Root(), path);
 }
 
