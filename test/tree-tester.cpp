@@ -156,6 +156,17 @@ void TreeTester::TestFindAligned() {
   assert(p == Path(2, 3));
   tree.SetType(Path(2, 3), NodeTypeData);
   assert(!tree.FindAligned(2, 2, p));
+  
+  // test bottom alignment
+  tree.FreeAll();
+  p = Path::Root();
+  for (int depth = 0; depth < tree.GetDepth() - 1; ++depth) {
+    tree.SetType(p, NodeTypeContainer);
+    p = p.Left();
+  }
+  tree.SetType(p, NodeTypeData);
+  assert(tree.FindAligned(tree.GetDepth() - 2, tree.GetDepth() - 1, p));
+  assert(p == Path(tree.GetDepth() - 2, 1));
 }
 
 void TreeTester::TestBaseAlloc() {
