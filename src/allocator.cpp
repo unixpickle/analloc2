@@ -74,6 +74,7 @@ void Allocator::Free(UInt addr) {
   Path p;
   bool res = tree.FindByShadow(baseIndex, p);
   assert(res);
+  (void)res; // avoid unused variable warning
   tree.Dealloc(p);
   
   UInt nodeSize = 1UL << (psLog + (tree.GetDepth() - p.GetDepth() - 1));
