@@ -6,7 +6,7 @@
 namespace analloc {
 
 template <typename AddressType, typename SizeType = AddressType>
-class Aligner : public Allocator<AddressType, SizeType> {
+class Aligner : public virtual Allocator<AddressType, SizeType> {
 public:
  /**
   * Allocate [size] units and return the beginning of the allocated region via
