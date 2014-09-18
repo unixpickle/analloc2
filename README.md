@@ -22,7 +22,6 @@ I will focus on the following features for version 1.0.0:
 Here is my current TODO list. I will update it as I think of new things to implement:
 
  * Depend on ansa for bitmap, logarithm, and locking features
- * Abstract allocator class
  * Abstract virtual allocator class
  * Bitmap allocator class
 
