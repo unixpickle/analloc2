@@ -2,7 +2,7 @@
 #define __ANALLOC2_VIRTUAL_ALIGNER_HPP__
 
 #include "virtual-allocator.hpp"
-#include "virtual-aligner.hpp"
+#include "aligner.hpp"
 
 namespace analloc {
 
