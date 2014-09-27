@@ -1,0 +1,22 @@
+import 'package:anbuild/anbuild.dart';
+
+void main(_, port) {
+  runFailureGuard(port, () {
+    var result = new TargetResult();
+    result.addScanSources(['src']);
+    result.addIncludes('c', ['includes']);
+    result.addIncludes('c++', ['includes']);
+    result.addFlags('c', ['-c']);
+    result.addFlags('c++', ['-c']);
+    result.addFlags('c++', ['-std=c++11']);
+
+    // fetch ansa
+    var ansaUrl = 'https://github.com/unixpickle/ansa.git';
+    fetchGitDependency('ansa', ansaUrl).then((_) {
+      return runDependency('dependencies/ansa/build.dart');
+    }).then((res) {
+      result.addFromTargetResult(res);
+      port.send(result.pack());
+    });
+  });
+}
