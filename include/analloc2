@@ -1,2 +1,2 @@
 #include "../src/abstract/virtual-aligner.hpp"
-#include "../src/bitmap/bitmap-allocator.hpp"
+#include "../src/bitmap/bitmap-aligner.hpp"

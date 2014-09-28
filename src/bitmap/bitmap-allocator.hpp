@@ -76,7 +76,7 @@ public:
     }
   }
   
-private:
+protected:
   AddressType baseAddress;
 };
 
