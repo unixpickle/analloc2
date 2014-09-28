@@ -28,7 +28,7 @@ public:
   /**
    * Deallocate a memory region without knowing its size.
    */
-  virtual void Dealloc(uintptr_t) = 0;
+  virtual void Free(uintptr_t) = 0;
 };
 
 }

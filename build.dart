@@ -8,7 +8,6 @@ void main(_, port) {
     result.addIncludes('c++', ['includes']);
     result.addFlags('c', ['-c']);
     result.addFlags('c++', ['-c']);
-    result.addFlags('c++', ['-std=c++11']);
 
     // fetch "ansa" dependency
     var ansaUrl = 'https://github.com/unixpickle/ansa.git';

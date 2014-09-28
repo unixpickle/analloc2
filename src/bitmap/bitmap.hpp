@@ -59,7 +59,7 @@ public:
   template <typename ValueType>
   ValueType GetBits(size_t idx, size_t len) {
     ValueType result = 0;
-    for (int i = 0; i < len; ++i) {
+    for (size_t i = 0; i < len; ++i) {
       ValueType flag = (ValueType)(GetBit(i + idx) ? 1 : 0);
       result |= flag << (len - (i + 1));
     }
