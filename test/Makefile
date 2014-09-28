@@ -4,13 +4,19 @@ export EXTRA_FLAGS=-I../include -I../dependencies/ansa/include
 export OBJECTS=build/objects/*.o
 export CXXFLAGS=-std=c++11 -Wall -Wextra
 
-all: build/test-bitmap build/test-bitmap-allocator
+all: build/test-bitmap build/test-bitmap-allocator build/profile-bitmap-allocator-o0 build/profile-bitmap-allocator-o3
 
 build/test-bitmap: build/objects
 	$(CXX) $(CXXFLAGS) $(EXTRA_FLAGS) $(OBJECTS) test-bitmap.cpp -o build/test-bitmap
 
 build/test-bitmap-allocator: build/objects
 	$(CXX) $(CXXFLAGS) $(EXTRA_FLAGS) $(OBJECTS) test-bitmap-allocator.cpp -o build/test-bitmap-allocator
+
+build/profile-bitmap-allocator-o0: build/objects
+	$(CXX) $(CXXFLAGS) $(EXTRA_FLAGS) $(OBJECTS) profile-bitmap-allocator.cpp -o build/profile-bitmap-allocator-o0
+
+build/profile-bitmap-allocator-o3: build/objects
+	$(CXX) $(CXXFLAGS) $(EXTRA_FLAGS) $(OBJECTS) -O3 profile-bitmap-allocator.cpp -o build/profile-bitmap-allocator-o3
 
 build/objects: build
 	anbuild --output build ../build.dart

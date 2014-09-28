@@ -36,6 +36,17 @@ public:
       if (this->GetBit(i)) {
         // This cell is not free, so freeSoFar gets reset.
         freeSoFar = 0;
+        
+        // Skip the entire unit if we are at the beginning of it and it doesn't
+        // pass this bitmap's allowed bit range (i.e. the bitmap ends
+        // mid-unit).
+        if (!(i % this->UnitBitCount) && i + this->UnitBitCount <=
+            this->GetBitCount()) {
+          if (!~(this->units[i / this->UnitBitCount])) {
+            i += this->UnitBitCount - 1;
+          }
+        }
+        
         continue;
       }
       if (freeSoFar) {

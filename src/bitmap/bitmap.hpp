@@ -70,7 +70,7 @@ public:
     return bitCount;
   }
   
-private:
+protected:
   Unit * units;
   size_t bitCount;
 };
