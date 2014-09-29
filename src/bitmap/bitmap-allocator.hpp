@@ -10,8 +10,8 @@ namespace analloc {
  * An allocator which runs with O(n) allocation time.
  */
 template <typename Unit, typename AddressType, typename SizeType = AddressType>
-class BitmapAllocator : public Allocator<AddressType, SizeType>,
-                        public Bitmap<Unit> {
+class BitmapAllocator : public Bitmap<Unit>,
+                        public virtual Allocator<AddressType, SizeType> {
 public:
   BitmapAllocator(AddressType base, Unit * ptr, size_t bc)
       : Bitmap<Unit>(ptr, bc), baseAddress(base) {

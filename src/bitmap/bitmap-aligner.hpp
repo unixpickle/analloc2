@@ -7,12 +7,17 @@
 namespace analloc {
 
 template <typename Unit, typename AddressType, typename SizeType = AddressType>
-class BitmapAligner : public Aligner<AddressType, SizeType>,
-                      public BitmapAllocator<Unit, AddressType, SizeType> {
+class BitmapAligner : public BitmapAllocator<Unit, AddressType, SizeType>,
+                      public Aligner<AddressType, SizeType> {
 public:
+  BitmapAligner(AddressType base, Unit * ptr, size_t bc)
+      : BitmapAllocator<Unit, AddressType, SizeType>(base, ptr, bc) {}
+  
   virtual bool Align(AddressType & addressOut, AddressType align,
                      SizeType size) {
-    if (!align) return Align(addressOut, 1, size);
+    if (align < 2) {
+      return this->Alloc(addressOut, size);
+    }
     SizeType freeSoFar = 0;
     size_t startIdx = 0;
     // Iterate through each bit. For each unallocated bit, we increment 
@@ -21,14 +26,29 @@ public:
     for (size_t i = 0; i < this->GetBitCount(); ++i) {
       if (!freeSoFar) {
         // Skip to the next aligned region
-        if (i % (size_t)align) {
-          i += (size_t)align - (i % (size_t)align) - 1;
+        AddressType misalignment = ((AddressType)i + this->baseAddress) %
+            align;
+        if (misalignment) {
+          i += (size_t)(align - misalignment - 1);
           continue;
         }
       }
       if (this->GetBit(i)) {
         // This cell is not free, so freeSoFar gets reset.
         freeSoFar = 0;
+        
+        if (align < this->UnitBitCount) {
+          // Skip the entire unit if we are at the beginning of it and it
+          // doesn't pass this bitmap's allowed bit range (i.e. the bitmap ends
+          // mid-unit).
+          if (!(i % this->UnitBitCount) && i + this->UnitBitCount <=
+              this->GetBitCount()) {
+            if (!~(this->units[i / this->UnitBitCount])) {
+              i += this->UnitBitCount - 1;
+            }
+          }
+        }
+        
         continue;
       }
       if (freeSoFar) {
