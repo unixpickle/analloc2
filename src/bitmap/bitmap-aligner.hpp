@@ -6,6 +6,9 @@
 
 namespace analloc {
 
+/**
+ * An aligner that runs in O(n) time.
+ */
 template <typename Unit, typename AddressType, typename SizeType = AddressType>
 class BitmapAligner : public BitmapAllocator<Unit, AddressType, SizeType>,
                       public Aligner<AddressType, SizeType> {
