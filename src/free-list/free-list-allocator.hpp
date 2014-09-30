@@ -43,16 +43,8 @@ public:
         reg = reg->next;
       } else if (reg->size == size) {
         // Remove the region from the list
-        if (!reg->last) {
-          firstRegion = reg->next;
-        } else {
-          reg->last->next = reg->next;
-        }
-        if (reg->next) {
-          reg->next->last = reg->last;
-        }
         out = reg->start;
-        allocator.Dealloc((uintptr_t)reg, sizeof(FreeRegion));
+        Remove(reg);
         return true;
       } else {
         // Take a chunk out of the region
@@ -83,11 +75,7 @@ public:
       if (after && after->start == before->start + before->size) {
         // The expanded before region extends all the way to the after region.
         before->size += after->size;
-        before->next = after->next;
-        if (before->next) {
-          before->next->last = before;
-        }
-        allocator.Dealloc((uintptr_t)after, sizeof(FreeRegion));
+        Remove(after);
       }
     } else if (after && address + size == after->start) {
       // The freed region does not touch the region before it, but it does
@@ -97,24 +85,7 @@ public:
     } else {
       // The freed region touches neither the region before it nor the one
       // after it.
-      uintptr_t ptr;
-      if (!allocator.Alloc(ptr, sizeof(FreeRegion))) {
-        failureHandler(this);
-        return;
-      }
-      FreeRegion * reg = (FreeRegion *)ptr;
-      reg->start = address;
-      reg->size = size;
-      reg->last = before;
-      reg->next = after;
-      if (before) {
-        before->next = reg;
-      } else {
-        firstRegion = reg;
-      }
-      if (after) {
-        after->last = reg;
-      }
+      InsertAfter(before, address, size);
     }
   }
   
@@ -128,6 +99,44 @@ protected:
   FreeRegion * firstRegion = NULL;
   VirtualAllocator & allocator;
   FailureHandler failureHandler;
+  
+  void InsertAfter(FreeRegion * before, AddressType addr, SizeType size) {
+    uintptr_t ptr;
+    if (!allocator.Alloc(ptr, sizeof(FreeRegion))) {
+      failureHandler(this);
+      return;
+    }
+    FreeRegion * insert = (FreeRegion *)ptr;
+    insert->start = addr;
+    insert->size = size;
+    if (before) {
+      if (before->next) {
+        before->next->last = insert;
+      }
+      insert->next = before->next;
+      insert->last = before;
+      before->next = insert;
+    } else {
+      if (firstRegion) {
+        firstRegion->last = insert;
+      }
+      insert->next = firstRegion;
+      insert->last = NULL;
+      firstRegion = insert;
+    }
+  }
+  
+  void Remove(FreeRegion * region) {
+    if (region->last) {
+      region->last->next = region->next;
+    } else {
+      firstRegion = region->next;
+    }
+    if (region->next) {
+      region->next->last = region->last;
+    }
+    allocator.Dealloc((uintptr_t)region, sizeof(FreeRegion));
+  }
 };
 
 }
