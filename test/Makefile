@@ -30,4 +30,7 @@ build:
 
 clean:
 	$(RM) -r build
+
+clean-all: clean
 	$(RM) -r ../dependencies
+

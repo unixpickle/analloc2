@@ -1,2 +1,3 @@
 #include "../src/abstract/virtual-aligner.hpp"
 #include "../src/bitmap/bitmap-aligner.hpp"
+#include "../src/free-list/free-list-allocator.hpp"
