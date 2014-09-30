@@ -33,16 +33,8 @@ public:
         reg = reg->next;
       } else if (offset == 0 && size == reg->size) {
         // Remove the region from the list
-        if (!reg->last) {
-          this->firstRegion = reg->next;
-        } else {
-          reg->last->next = reg->next;
-        }
-        if (reg->next) {
-          reg->next->last = reg->last;
-        }
         out = reg->start;
-        this->allocator.Dealloc((uintptr_t)reg, sizeof(FreeRegion));
+        Remove(reg);
         return true;
       } else if (offset == 0 && size < reg->size) {
         // Take the first chunk out of the region
@@ -58,21 +50,9 @@ public:
       } else {
         // Carve out the middle of the region
         out = reg->start + offset;
-        uintptr_t ptr;
-        if (!this->allocator.Alloc(ptr, sizeof(FreeRegion))) {
-          failureHandler(this);
-          return false;
-        }
-        FreeRegion * newReg = (FreeRegion *)ptr;
-        newReg->start = reg->start + offset + size;
-        newReg->size = reg->size - (offset + size);
-        newReg->last = reg;
-        newReg->next = reg->next;
-        reg->next = newReg;
+        InsertAfter(reg, reg->start + offset + size,
+                    reg->size - (offset + size));
         reg->size = offset;
-        if (newReg->next) {
-          newReg->next->last = newReg;
-        }
       }
     }
     return false;
