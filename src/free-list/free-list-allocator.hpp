@@ -21,7 +21,7 @@ public:
    * when a free region cannot be recorded because memory could not be
    * obtained.
    */
-  typedef void (* FailureHandler)(FreeListAllocator *);
+  typedef void (* FailureHandler)(FreeListAllocator<AddressType, SizeType> *);
   
   /**
    * Create a new [FreeListAllocator] with no free memory regions.
@@ -58,6 +58,8 @@ public:
         // Take a chunk out of the region
         out = reg->start;
         reg->start += size;
+        reg->size -= size;
+        return true;
       }
     }
     return false;
@@ -101,6 +103,8 @@ public:
         return;
       }
       FreeRegion * reg = (FreeRegion *)ptr;
+      reg->start = address;
+      reg->size = size;
       reg->last = before;
       reg->next = after;
       if (before) {

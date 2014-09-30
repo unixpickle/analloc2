@@ -4,7 +4,7 @@ export EXTRA_FLAGS=-I../include -I../dependencies/ansa/include
 export OBJECTS=build/objects/*.o
 export CXXFLAGS=-std=c++11 -Wall -Wextra
 
-all: build/test-bitmap build/test-bitmap-allocator build/profile-bitmap-allocator-o0 build/profile-bitmap-allocator-o3 build/test-bitmap-aligner
+all: build/test-bitmap build/test-bitmap-allocator build/profile-bitmap-allocator-o0 build/profile-bitmap-allocator-o3 build/test-bitmap-aligner build/test-free-list-allocator
 
 build/test-bitmap: build/objects
 	$(CXX) $(CXXFLAGS) $(EXTRA_FLAGS) $(OBJECTS) test-bitmap.cpp -o build/test-bitmap
@@ -20,6 +20,9 @@ build/profile-bitmap-allocator-o3: build/objects
 
 build/test-bitmap-aligner: build/objects
 	$(CXX) $(CXXFLAGS) $(EXTRA_FLAGS) $(OBJECTS) test-bitmap-aligner.cpp -o build/test-bitmap-aligner
+
+build/test-free-list-allocator: build/objects
+	$(CXX) $(CXXFLAGS) $(EXTRA_FLAGS) $(OBJECTS) test-free-list-allocator.cpp posix-virtual-aligner.cpp -o build/test-free-list-allocator
 
 build/objects: build
 	anbuild --output build ../build.dart
