@@ -71,17 +71,53 @@ void TestPartialRegion() {
 }
 
 void TestJoins() {
-  assert(false);
   ScopedPass pass("FreeListAllocator [joins]");
   
   PosixVirtualAligner aligner;
   FreeListAllocator<uint16_t, uint8_t> allocator(aligner, HandleFailure);
   uint16_t addr;
   
-  // TODO: this
-  
   // Joining a middle region to two outer regions
   allocator.Dealloc(0x100, 0x10);
+  allocator.Dealloc(0x120, 0x10);
+  allocator.Dealloc(0x110, 0x10);
+  assert(allocator.Alloc(addr, 0x30));
+  assert(addr == 0x100);
+  assert(!allocator.Alloc(addr, 1));
+  
+  // Joining a region with it's previous region (with another further region)
+  allocator.Dealloc(0x100, 0x10);
+  allocator.Dealloc(0x120, 0x10);
+  allocator.Dealloc(0x110, 0xf);
+  assert(allocator.Alloc(addr, 0x1f));
+  assert(addr == 0x100);
+  assert(allocator.Alloc(addr, 0x10));
+  assert(addr == 0x120);
+  assert(!allocator.Alloc(addr, 1));
+  
+  // Joining a region with the next region (with a distant region below it)
+  allocator.Dealloc(0x100, 0xf);
+  allocator.Dealloc(0x120, 0x10);
+  allocator.Dealloc(0x110, 0x10);
+  assert(allocator.Alloc(addr, 0x20));
+  assert(addr == 0x110);
+  assert(allocator.Alloc(addr, 0xf));
+  assert(addr == 0x100);
+  assert(!allocator.Alloc(addr, 1));
+  
+  // Joining a region with it's previous region (no distant region)
+  allocator.Dealloc(0x100, 0x10);
+  allocator.Dealloc(0x110, 0xf);
+  assert(allocator.Alloc(addr, 0x1f));
+  assert(addr == 0x100);
+  assert(!allocator.Alloc(addr, 1));
+  
+  // Joining a region with it's next region (no distant region)
+  allocator.Dealloc(0x110, 0xf);
+  allocator.Dealloc(0x100, 0x10);
+  assert(allocator.Alloc(addr, 0x1f));
+  assert(addr == 0x100);
+  assert(!allocator.Alloc(addr, 1));
 }
 
 void HandleFailure(FreeListAllocator<uint16_t, uint8_t> *) {
