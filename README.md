@@ -26,6 +26,12 @@ NOTE: The performance benchmark for this allocator uses the standard POSIX `mall
 
 # TODO
 
+Specific TODOs:
+
+ * Add LastUsedAddress() to `BitmapAllocator` and `FreeListAllocator`.
+ * Add RegionCount() to `FreeListAllocator`.
+ * (Possibly) some sort of standard deviation algorithm to see how fragmented allocators are.
+
 I will focus on the following features for version 1.0.0:
 
  * Template-determined integer types
