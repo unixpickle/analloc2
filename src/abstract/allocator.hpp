@@ -6,9 +6,24 @@ namespace analloc {
 /**
  * This is an allocator in its most basic form.
  */
-template <typename AddressType, typename SizeType = AddressType>
+template <typename _AddressType, typename _SizeType = _AddressType>
 class Allocator {
 public:
+  /**
+   * The type which can address any individual unit within this allocator.
+   *
+   * This type must be no smaller than [SizeType].
+   */
+  typedef _AddressType AddressType;
+  
+  /**
+   * The type which can be used to contain the size of the largest continuous
+   * chunk of address space that can be allocated in one piece.
+   *
+   * This type must be no larger than [AddressType].
+   */
+  typedef _SizeType SizeType;
+  
   /**
    * Allocate [size] units and return the beginning of the allocated region via
    * the [addressOut] argument.

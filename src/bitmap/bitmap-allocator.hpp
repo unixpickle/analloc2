@@ -13,8 +13,7 @@ template <typename Unit, typename AddressType, typename SizeType = AddressType>
 class BitmapAllocator : public Bitmap<Unit>,
                         public virtual Allocator<AddressType, SizeType> {
 public:
-  BitmapAllocator(AddressType base, Unit * ptr, size_t bc)
-      : Bitmap<Unit>(ptr, bc), baseAddress(base) {
+  BitmapAllocator(Unit * ptr, size_t bc) : Bitmap<Unit>(ptr, bc) {
     // Zero the buffer as efficiently as possible without overwriting any bits
     // that this bitmap doesn't own
     size_t fullUnits = bc / (sizeof(Unit) * 8);
@@ -61,7 +60,7 @@ public:
         for (size_t j = startIdx; j <= i; ++j) {
           this->SetBit(j, true);
         }
-        addressOut = (AddressType)startIdx + baseAddress;
+        addressOut = (AddressType)startIdx;
         return true;
       }
     }
@@ -69,15 +68,12 @@ public:
   }
   
   virtual void Dealloc(AddressType address, SizeType size) {
-    size_t idx = (size_t)(address - baseAddress);
+    size_t idx = (size_t)address;
     assert(idx < this->GetBitCount() && idx + size <= this->GetBitCount());
     for (size_t i = idx; i < idx + size; ++i) {
       this->SetBit(i, false);
     }
   }
-  
-protected:
-  AddressType baseAddress;
 };
 
 }

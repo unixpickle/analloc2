@@ -8,27 +8,26 @@ int main() {
   
   uint16_t address;
   uint16_t units[0x10];
-  BitmapAligner<uint16_t, uint16_t> aligner(0xf, units, 0x100);
+  BitmapAligner<uint16_t, uint16_t> aligner(units, 0x100);
   
-  assert(aligner.Align(address, 0, 1));
-  assert(address == 0xf);
-  aligner.Dealloc(address, 1);
-  assert(aligner.Align(address, 0x10, 0x20));
-  assert(address == 0x10);
-  assert(aligner.Align(address, 1, 1));
-  assert(address == 0xf);
-  assert(aligner.Align(address, 0x40, 0x40));
-  assert(address == 0x40);
-  assert(aligner.Align(address, 0x10, 0x20));
+  // Test alignment by large number, by full size, and by half size
+  assert(aligner.Align(address, 0x1000, 1));
+  assert(address == 0);
+  assert(!aligner.Align(address, 0x100, 1));
+  assert(aligner.Align(address, 0x80, 0x80));
   assert(address == 0x80);
-  assert(aligner.Align(address, 0x10, 0x10));
-  assert(address == 0x30);
-  assert(!aligner.Align(address, 0x100, 0x10));
-  assert(aligner.Align(address, 0x100, 0xf));
-  assert(address == 0x100);
-  assert(aligner.Align(address, 0x50, 0x60));
-  assert(address == 0xa0);
-  assert(!aligner.Alloc(address, 1));
+  aligner.Dealloc(address, 0x80);
+  aligner.Dealloc(0, 1);
+  
+  // Test alignment where the first region is unavailable
+  assert(aligner.Alloc(address, 0x80));
+  assert(address == 0);
+  aligner.Dealloc(1, 0x7e);
+  // 0x7f and 1 are still reserved
+  assert(aligner.Align(address, 0x10, 0x70));
+  assert(address == 0x80);
+  assert(aligner.Alloc(address, 0x70));
+  assert(address == 0x1);
   
   return 0;
 }

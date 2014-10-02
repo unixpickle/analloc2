@@ -35,7 +35,7 @@ template <typename T>
 uint64_t ProfileBitmapWorst(size_t iterations, size_t bitCount) {
   assert(bitCount % (sizeof(T) * 8) == 0);
   T * list = new T[bitCount / (sizeof(T) * 8)];
-  BitmapAllocator<T, size_t, size_t> allocator(0, list, bitCount);
+  BitmapAllocator<T, size_t, size_t> allocator(list, bitCount);
   
   uint64_t startTime = Nanotime();
   size_t result;

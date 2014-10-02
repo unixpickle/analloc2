@@ -13,8 +13,8 @@ template <typename Unit, typename AddressType, typename SizeType = AddressType>
 class BitmapAligner : public BitmapAllocator<Unit, AddressType, SizeType>,
                       public virtual Aligner<AddressType, SizeType> {
 public:
-  BitmapAligner(AddressType base, Unit * ptr, size_t bc)
-      : BitmapAllocator<Unit, AddressType, SizeType>(base, ptr, bc) {}
+  BitmapAligner(Unit * ptr, size_t bc)
+      : BitmapAllocator<Unit, AddressType, SizeType>(ptr, bc) {}
   
   virtual bool Align(AddressType & addressOut, AddressType align,
                      SizeType size) {
@@ -29,8 +29,7 @@ public:
     for (size_t i = 0; i < this->GetBitCount(); ++i) {
       if (!freeSoFar) {
         // Skip to the next aligned region
-        AddressType misalignment = ((AddressType)i + this->baseAddress) %
-            align;
+        AddressType misalignment = (AddressType)i % align;
         if (misalignment) {
           i += (size_t)(align - misalignment - 1);
           continue;
@@ -66,7 +65,7 @@ public:
         for (size_t j = startIdx; j <= i; ++j) {
           this->SetBit(j, true);
         }
-        addressOut = (AddressType)startIdx + this->baseAddress;
+        addressOut = (AddressType)startIdx;
         return true;
       }
     }

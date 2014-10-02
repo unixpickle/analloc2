@@ -1,5 +1,5 @@
 #include "../src/abstract/virtual-aligner.hpp"
 #include "../src/bitmap/bitmap-aligner.hpp"
 #include "../src/free-list/free-list-aligner.hpp"
-#include "../src/transformers/aligner-scaler.hpp"
-#include "../src/transformers/allocator-virtualizer.hpp"
+#include "../src/generic/generic-scaler.hpp"
+#include "../src/generic/generic-virtualizer.hpp"
