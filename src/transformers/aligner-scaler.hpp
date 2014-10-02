@@ -17,8 +17,8 @@ template <class T, typename AddressType, typename SizeType = AddressType>
 class AlignerScaler : public AllocatorScaler<T, AddressType, SizeType> {
 public:
   template <typename... Args>
-  AlignerScaler(AddressType _start, AddressType _scale, Args... args)
-      : AllocatorScaler<T, AddressType, SizeType>(_start, _scale, args...) {}
+  AlignerScaler(AddressType start, AddressType scale, Args... args)
+      : AllocatorScaler<T, AddressType, SizeType>(start, scale, args...) {}
   
   virtual bool Align(AddressType & output, AddressType align, SizeType size) {
     if (this->scalerStart % align) {

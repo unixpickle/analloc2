@@ -13,8 +13,8 @@ template <class T, typename AddressType, typename SizeType = AddressType>
 class AllocatorScaler : public T {
 public:
   template <typename... Args>
-  AllocatorScaler(AddressType _start, AddressType _scale, Args... args)
-      : T(args...), scalerStart(_start), scalerMultiple(_scale) {}
+  AllocatorScaler(AddressType start, AddressType scale, Args... args)
+      : T(args...), scalerStart(start), scalerMultiple(scale) {}
   
   virtual bool Alloc(AddressType & output, SizeType size) {
     if (!T::Alloc(output, ScaleSize(size))) {
