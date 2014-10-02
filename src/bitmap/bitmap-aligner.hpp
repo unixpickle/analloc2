@@ -11,7 +11,7 @@ namespace analloc {
  */
 template <typename Unit, typename AddressType, typename SizeType = AddressType>
 class BitmapAligner : public BitmapAllocator<Unit, AddressType, SizeType>,
-                      public Aligner<AddressType, SizeType> {
+                      public virtual Aligner<AddressType, SizeType> {
 public:
   BitmapAligner(AddressType base, Unit * ptr, size_t bc)
       : BitmapAllocator<Unit, AddressType, SizeType>(base, ptr, bc) {}
