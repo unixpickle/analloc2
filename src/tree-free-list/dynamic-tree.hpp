@@ -19,6 +19,8 @@ public:
    */
   class Node {
   public:
+    Node(const T & value) : content(value) {}
+    
     /**
      * Returns a constant reference to the contents of this node. This object
      * will be destroyed when this node is destroyed, so you should not store
@@ -29,8 +31,6 @@ public:
     }
     
   private:
-    Node(const T & value) : content(value) {}
-    
     T content;
   };
   

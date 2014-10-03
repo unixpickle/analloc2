@@ -97,6 +97,8 @@ public:
     }
     
   private:
+    friend class AvlTree<T>;
+    
     AvlNode(const T & val) : super::Node(val) {}
     
     AvlNode * parent = NULL;
@@ -167,7 +169,7 @@ public:
     if (!this->GetAllocator().Alloc(allocated, sizeof(AvlNode))) {
       return NULL;
     }
-    AvlNode * node = (AvlNode *)allocated;
+    AvlNode * node = new((void *)allocated) AvlNode(value);
     
     // Check if the tree is empty (trivial case)
     if (!root) {
@@ -226,9 +228,9 @@ private:
     if (current->GetContent() == value) {
       return current;
     } else if (current->GetContent() < value) {
-      return RecursiveAboveOrEqual(current->right);
+      return RecursiveAboveOrEqual(current->right, value);
     } else { // current->GetContent() > value
-      AvlNode * res = RecursiveAboveOrEqual(current->left);
+      AvlNode * res = RecursiveAboveOrEqual(current->left, value);
       if (res) return res;
       return current;
     }
@@ -360,7 +362,7 @@ private:
   void RecursivelyDelete(AvlNode * node) {
     if (!node) return;
     if (node->left) RecursivelyDelete(node->left);
-    if (node->right) Recursivelydelete(node->right);
+    if (node->right) RecursivelyDelete(node->right);
     this->GetAllocator().Dealloc((uintptr_t)node, sizeof(AvlNode));
   }
 };
