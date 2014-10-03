@@ -11,7 +11,7 @@ void main(_, port) {
 
     // fetch "ansa" dependency
     var ansaUrl = 'https://github.com/unixpickle/ansa.git';
-    fetchGitDependency('ansa', ansaUrl, branch: 'v0.1.1').then((_) {
+    fetchGitDependency('ansa', ansaUrl, branch: 'v0.1.2').then((_) {
       return runDependency('dependencies/ansa/build.dart');
     }).then((res) {
       result.addFromTargetResult(res);
