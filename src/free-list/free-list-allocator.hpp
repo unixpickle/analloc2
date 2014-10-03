@@ -36,6 +36,15 @@ public:
   FreeListAllocator(VirtualAllocator & anAlloc, FailureHandler onAllocFail)
       : allocator(anAlloc), failureHandler(onAllocFail) {}
   
+  /**
+   * Deallocates all free regions.
+   */
+  virtual ~FreeListAllocator() {
+    while (firstRegion) {
+      Remove(firstRegion);
+    }
+  }
+  
   virtual bool Alloc(AddressType & out, SizeType size) {
     FreeRegion * reg = firstRegion;
     while (reg) {

@@ -40,6 +40,8 @@ public:
    */
   DynamicTree(VirtualAllocator & allocator) : allocator(allocator) {}
   
+  virtual ~DynamicTree() {}
+  
   /**
    * Find the [Node] with the lowest value in this tree which is greater than
    * or equal to a given [value].

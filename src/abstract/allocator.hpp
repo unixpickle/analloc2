@@ -25,6 +25,12 @@ public:
   typedef _SizeType SizeType;
   
   /**
+   * Since allocators have virtual methods, they should have virtual
+   * destructors.
+   */
+  virtual ~Allocator() {}
+  
+  /**
    * Allocate [size] units and return the beginning of the allocated region via
    * the [addressOut] argument.
    *

@@ -1,5 +1,5 @@
-#ifndef __ANALLOC2_AVL_TREE_HPP__
-#define __ANALLOC2_AVL_TREE_HPP__
+#ifndef __ANALLOC2_Avl_TREE_HPP__
+#define __ANALLOC2_Avl_TREE_HPP__
 
 #include "dynamic-tree.hpp"
 #include <ansa/math>
@@ -10,7 +10,7 @@ namespace analloc {
  * An AVL tree is a self-balancing binary search tree.
  */
 template <class T>
-class AVLTree : public DynamicTree<T> {
+class AvlTree : public DynamicTree<T> {
 public:
   typedef DynamicTree<T> super;
   
@@ -19,47 +19,47 @@ public:
   /**
    * A node in an AVL tree.
    */
-  class AVLNode : public Node {
+  class AvlNode : public Node {
   public:
     /**
      * Get the left subnode of this node, or `NULL` if there is none.
      */
-    inline const AVLNode * GetLeft() const {
+    inline const AvlNode * GetLeft() const {
       return left;
     }
     
     /**
      * Get the left subnode of this node, or `NULL` if there is none.
      */
-    inline AVLNode * GetLeft() {
+    inline AvlNode * GetLeft() {
       return left;
     }
     
     /**
      * Get the right subnode of this node, or `NULL` if there is none.
      */
-    inline const AVLNode * GetRight() const {
+    inline const AvlNode * GetRight() const {
       return right;
     }
     
     /**
      * Get the right subnode of this node, or `NULL` if there is none.
      */
-    inline AVLNode * GetRight() {
+    inline AvlNode * GetRight() {
       return right;
     }
     
     /**
      * Get the parent of this node, or `NULL` if there is none.
      */
-    inline const AVLNode * GetParent() const {
+    inline const AvlNode * GetParent() const {
       return parent;
     }
     
     /**
      * Get the parent of this node, or `NULL` if there is none.
      */
-    inline AVLNode * GetParent() {
+    inline AvlNode * GetParent() {
       return parent;
     }
     
@@ -97,11 +97,11 @@ public:
     }
     
   private:
-    AVLNode(const T & val) : super::Node(val) {}
+    AvlNode(const T & val) : super::Node(val) {}
     
-    AVLNode * parent = NULL;
-    AVLNode * left = NULL;
-    AVLNode * right = NULL;
+    AvlNode * parent = NULL;
+    AvlNode * left = NULL;
+    AvlNode * right = NULL;
     int depth = 0; // depth 0 = no children
     
     inline void ComputeDepth() {
@@ -112,14 +112,21 @@ public:
   /**
    * Create a new, empty AVL tree.
    */
-  AVLTree(VirtualAllocator & allocator) : super(allocator) {}
+  AvlTree(VirtualAllocator & allocator) : super(allocator) {}
   
-  virtual AVLNode * FindAboveOrEqual(const T & value) {
+  /**
+   * Deallocate the AVL tree and all its nodes.
+   */
+  virtual ~AvlTree() {
+    RecursivelyDelete(root);
+  }
+  
+  virtual AvlNode * FindAboveOrEqual(const T & value) {
     return RecursiveAboveOrEqual(root, value);
   }
   
-  virtual AVLNode * FindEqual(const T & value) {
-    AVLNode * current = root;
+  virtual AvlNode * FindEqual(const T & value) {
+    AvlNode * current = root;
     while (current) {
       if (current->GetContent() == value) {
         return current;
@@ -133,13 +140,13 @@ public:
   }
   
   /**
-   * Statically casts [node] to an [AVLNode] and removes it.
+   * Statically casts [node] to an [AvlNode] and removes it.
    */
   virtual void Remove(Node * node) {
-    Remove(static_cast<AVLNode *>(node));
+    Remove(static_cast<AvlNode *>(node));
   }
   
-  virtual void Remove(AVLNode * node) {
+  virtual void Remove(AvlNode * node) {
     if (!node) return;
     if (!node->parent) {
       assert(root == node);
@@ -151,16 +158,16 @@ public:
       node->parent->right = NULL;
       RecursivelyComputeDepth(node->parent);
     }
-    this->GetAllocator().Dealloc((uintptr_t)node, sizeof(AVLNode));
+    this->GetAllocator().Dealloc((uintptr_t)node, sizeof(AvlNode));
     Balance();
   }
   
-  virtual AVLNode * Add(const T & value) {
+  virtual AvlNode * Add(const T & value) {
     uintptr_t allocated;
-    if (!this->GetAllocator().Alloc(allocated, sizeof(AVLNode))) {
+    if (!this->GetAllocator().Alloc(allocated, sizeof(AvlNode))) {
       return NULL;
     }
-    AVLNode * node = (AVLNode *)allocated;
+    AvlNode * node = (AvlNode *)allocated;
     
     // Check if the tree is empty (trivial case)
     if (!root) {
@@ -169,7 +176,7 @@ public:
     }
     
     // Perform an insertion by searching the tree
-    AVLNode * current = root;
+    AvlNode * current = root;
     while (true) {
       if (current->GetContent() > value) {
         // Go to the left of the current node
@@ -196,7 +203,7 @@ public:
   /**
    * Returns the root node of the tree, or `NULL` if the tree is empty.
    */
-  inline AVLNode * GetRoot() {
+  inline AvlNode * GetRoot() {
     return root;
   }
   
@@ -212,22 +219,22 @@ public:
   }
   
 private:
-  AVLNode * root = NULL;
+  AvlNode * root = NULL;
   
-  AVLNode * RecursiveAboveOrEqual(AVLNode * current, const T & value) {
+  AvlNode * RecursiveAboveOrEqual(AvlNode * current, const T & value) {
     if (!current) return NULL;
     if (current->GetContent() == value) {
       return current;
     } else if (current->GetContent() < value) {
       return RecursiveAboveOrEqual(current->right);
     } else { // current->GetContent() > value
-      AVLNode * res = RecursiveAboveOrEqual(current->left);
+      AvlNode * res = RecursiveAboveOrEqual(current->left);
       if (res) return res;
       return current;
     }
   }
   
-  void RecursivelyComputeDepth(AVLNode * node) {
+  void RecursivelyComputeDepth(AvlNode * node) {
     while (node) {
       node->ComputeDepth();
       node = node->parent;
@@ -238,7 +245,7 @@ private:
     Balance(root, root);
   }
   
-  void Balance(AVLNode *& parentSlot, AVLNode * nodeA) {
+  void Balance(AvlNode *& parentSlot, AvlNode * nodeA) {
     if (!nodeA) return;
     
     // Balance the node's children
@@ -264,8 +271,8 @@ private:
     }
   }
   
-  void BalanceRightRight(AVLNode *& parentSlot, AVLNode * nodeA) {
-    AVLNode * nodeB = nodeA->right;
+  void BalanceRightRight(AvlNode *& parentSlot, AvlNode * nodeA) {
+    AvlNode * nodeB = nodeA->right;
     parentSlot = nodeB;
     nodeB->parent = nodeA->parent;
     
@@ -281,9 +288,9 @@ private:
     nodeB->ComputeDepth();
   }
   
-  void BalanceRightLeft(AVLNode *& parentSlot, AVLNode * nodeA) {
-    AVLNode * nodeB = nodeA->right;
-    AVLNode * nodeC = nodeA->right->left;
+  void BalanceRightLeft(AvlNode *& parentSlot, AvlNode * nodeA) {
+    AvlNode * nodeB = nodeA->right;
+    AvlNode * nodeC = nodeA->right->left;
     parentSlot = nodeB;
     nodeB->parent = nodeA->parent;
     
@@ -307,8 +314,8 @@ private:
     nodeB->ComputeDepth();
   }
   
-  void BalanceLeftLeft(AVLNode *& parentSlot, AVLNode * nodeA) {
-    AVLNode * nodeB = nodeA->left;
+  void BalanceLeftLeft(AvlNode *& parentSlot, AvlNode * nodeA) {
+    AvlNode * nodeB = nodeA->left;
     parentSlot = nodeB;
     nodeB->parent = nodeA->parent;
     
@@ -324,9 +331,9 @@ private:
     nodeB->ComputeDepth();
   }
   
-  void BalanceLeftRight(AVLNode *& parentSlot, AVLNode * nodeA) {
-    AVLNode * nodeB = nodeA->left;
-    AVLNode * nodeC = nodeA->left->right;
+  void BalanceLeftRight(AvlNode *& parentSlot, AvlNode * nodeA) {
+    AvlNode * nodeB = nodeA->left;
+    AvlNode * nodeC = nodeA->left->right;
     parentSlot = nodeB;
     nodeB->parent = nodeA->parent;
     
@@ -348,6 +355,13 @@ private:
     nodeA->ComputeDepth();
     nodeC->ComputeDepth();
     nodeB->ComputeDepth();
+  }
+  
+  void RecursivelyDelete(AvlNode * node) {
+    if (!node) return;
+    if (node->left) RecursivelyDelete(node->left);
+    if (node->right) Recursivelydelete(node->right);
+    this->GetAllocator().Dealloc((uintptr_t)node, sizeof(AvlNode));
   }
 };
 
