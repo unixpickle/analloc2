@@ -4,6 +4,8 @@
 #include <ansa/math>
 #include <cstddef>
 
+#include <iostream> // TODO: delete this
+
 namespace analloc {
 
 template <class T>
@@ -104,9 +106,9 @@ struct AvlNode {
       }
       return RotateLeft(this, right);
     } else if (imbalance == 2) {
-      if (right->IsRightHeavy()) {
+      if (left->IsRightHeavy()) {
         // Reduce left-right case to left-left case
-        right = RotateLeft(left, left->right);
+        left = RotateLeft(left, left->right);
         assert(!RecomputeDepth());
       }
       return RotateRight(this, left);
