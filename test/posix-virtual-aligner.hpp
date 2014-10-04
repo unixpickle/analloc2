@@ -10,6 +10,13 @@ public:
   virtual bool Realloc(uintptr_t & address, size_t newSize);
   virtual void Free(uintptr_t ptr);
   virtual bool Align(uintptr_t & output, uintptr_t align, size_t size);
+  
+  inline size_t GetAllocCount() {
+    return allocCount;
+  }
+  
+private:
+  size_t allocCount = 0;
 };
 
 #endif

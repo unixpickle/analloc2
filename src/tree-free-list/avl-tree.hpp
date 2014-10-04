@@ -58,7 +58,7 @@ public:
    * O(log(n)) time.
    */
   virtual bool Contains(const T & value) {
-    return FindEqual(value) != NULL;
+    return FindEqual(value) != nullptr;
   }
   
   /**
@@ -113,7 +113,16 @@ public:
   }
   
   /**
-   * Returns the root node of the tree, or `NULL` if the tree is empty.
+   * Recursively free all the nodes in this tree. This performs O(n)
+   * deallocations and runs in O(n) time (assuming constant-time deallocation).
+   */
+  virtual void Clear() {
+    RecursivelyDeallocNode(root);
+    root = nullptr;
+  }
+  
+  /**
+   * Returns the root node of the tree, or `nullptr` if the tree is empty.
    */
   inline const Node * GetRoot() {
     return root;
@@ -134,7 +143,7 @@ protected:
   /**
    * The root node in the tree.
    */
-  Node * root = NULL;
+  Node * root = nullptr;
   
   /**
    * Return a node's memory to the tree's allocator.
@@ -149,7 +158,7 @@ protected:
   Node * AllocNode(const T & value) {
     uintptr_t ptr;
     if (!this->GetAllocator().Alloc(ptr, sizeof(Node))) {
-      return NULL;
+      return nullptr;
     }
     return new((Node *)ptr) Node(value);
   }
@@ -170,7 +179,7 @@ protected:
    */
   Node * RecursivelySearchAbove(Node * current, const T & value,
                                    bool equal) {
-    if (!current) return NULL;
+    if (!current) return nullptr;
     if (current->GetValue() < value) {
       return RecursivelySearchAbove(current->right, value, equal);
     } else if (equal && current->GetValue() == value) {
@@ -191,7 +200,7 @@ protected:
    */
   Node * RecursivelySearchBelow(Node * current, const T & value,
                                    bool equal) {
-    if (!current) return NULL;
+    if (!current) return nullptr;
     if (current->GetValue() > value) {
       return RecursivelySearchBelow(current->left, value, equal);
     } else if (equal && current->GetValue() == value) {
@@ -236,14 +245,14 @@ protected:
         node = node->left;
       }
     }
-    return NULL;
+    return nullptr;
   }
   
   /**
    * Remove a [node] from the tree and deallocate it.
    */
   void RemoveNode(Node * node) {
-    assert(node != NULL);
+    assert(node != nullptr);
     Node ** parentSlot = NodeParentSlot(node);
     if (!node->left) {
       // Trivial case #1: replace the node with it's right child.

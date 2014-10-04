@@ -69,7 +69,7 @@ public:
   virtual void Dealloc(AddressType address, SizeType size) {
     // Find the regions that surround the freed address
     FreeRegion * after = firstRegion;
-    FreeRegion * before = NULL;
+    FreeRegion * before = nullptr;
     while (after) {
       if (after->start > address) {
         break;
@@ -105,7 +105,7 @@ protected:
     SizeType size;
   };
   
-  FreeRegion * firstRegion = NULL;
+  FreeRegion * firstRegion = nullptr;
   VirtualAllocator & allocator;
   FailureHandler failureHandler;
   
@@ -130,7 +130,7 @@ protected:
         firstRegion->last = insert;
       }
       insert->next = firstRegion;
-      insert->last = NULL;
+      insert->last = nullptr;
       firstRegion = insert;
     }
   }

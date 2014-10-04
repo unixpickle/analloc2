@@ -2,6 +2,7 @@
 #define __ANALLOC2_AVL_NODE_HPP__
 
 #include <ansa/math>
+#include <cstddef>
 
 namespace analloc {
 
@@ -16,17 +17,17 @@ struct AvlNode {
   /**
    * The parent of this node.
    */
-  AvlNode * parent = NULL;
+  AvlNode * parent = nullptr;
   
   /**
    * The left child of this node.
    */
-  AvlNode * left = NULL;
+  AvlNode * left = nullptr;
   
   /**
    * The right child of this node.
    */
-  AvlNode * right = NULL;
+  AvlNode * right = nullptr;
   
   /**
    * The depth of this node. A depth of 0 indicates a node with no children.
@@ -85,7 +86,7 @@ struct AvlNode {
    * Rebalance this node and return the node that should take its place.
    *
    * If the node is too imbalanced to balance with a single operation, this
-   * method returns `NULL`.
+   * method returns `nullptr`.
    *
    * Upon success, the returned node may have a different depth than this node
    * originally had. This node's parent will not be affected in any way, so it
@@ -112,7 +113,7 @@ struct AvlNode {
     } else if (imbalance > -2 && imbalance < 2) {
       return this;
     } else {
-      return NULL;
+      return nullptr;
     }
   }
   
@@ -134,6 +135,8 @@ protected:
     parent->parent = child;
     parent->left = child->right;
     child->right = parent;
+    parent->RecomputeDepth();
+    child->RecomputeDepth();
     return child;
   }
   

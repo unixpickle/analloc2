@@ -11,20 +11,20 @@ class Bitmap {
 public:
   static const int UnitBitCount = sizeof(Unit) * 8;
   
-  Bitmap() : units(NULL) {
+  Bitmap() : units(nullptr) {
   }
   
   Bitmap(Unit * ptr, size_t bc) : units(ptr), bitCount(bc) {
   }
   
   Bitmap(Bitmap && bm) : units(bm.units), bitCount(bm.bitCount) {
-    bm.units = NULL;
+    bm.units = nullptr;
   }
   
   Bitmap & operator=(Bitmap && bm) {
     units = bm.units;
     bitCount = bm.bitCount;
-    bm.units = NULL;
+    bm.units = nullptr;
     return *this;
   }
   

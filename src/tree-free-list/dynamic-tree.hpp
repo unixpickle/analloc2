@@ -101,6 +101,11 @@ public:
   virtual bool Add(const T & value) = 0;
   
   /**
+   * Remove all nodes from this tree.
+   */
+  virtual void Clear() = 0;
+  
+  /**
    * Returns the allocator which this tree uses to allocate nodes.
    */
   inline VirtualAllocator & GetAllocator() {
