@@ -5,6 +5,7 @@
 using namespace analloc;
 
 void TestBalancedInsertions();
+void TestBalancedDeletions();
 
 int main() {
   TestBalancedInsertions();

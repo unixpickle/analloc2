@@ -1,0 +1,140 @@
+#ifndef __ANALLOC2_AVL_NODE_HPP__
+#define __ANALLOC2_AVL_NODE_HPP__
+
+#include <ansa/math>
+
+namespace analloc {
+
+class AvlTree;
+
+/**
+ * A node which is appropriate for use in an AVL tree.
+ */
+template <class T>
+struct AvlNode {
+  /**
+   * The parent of this node.
+   */
+  AvlNode * parent = NULL;
+  
+  /**
+   * The left child of this node.
+   */
+  AvlNode * left = NULL;
+  
+  /**
+   * The right child of this node.
+   */
+  AvlNode * right = NULL;
+  
+  /**
+   * The depth of this node. A depth of 0 indicates a node with no children.
+   */
+  int depth = 0;
+  
+  /**
+   * Create a new [AvlNode] with a given value [val].
+   */
+  AvlNode(const T & val) : value(val) {}
+  
+  /**
+   * Get the read-only value contained by this node.
+   */
+  inline const T & GetValue() const {
+    return value;
+  }
+ 
+  /**
+   * One more than the depth of the left subnode of this node, or zero if no
+   * left subnode exists.
+   */
+  inline int GetLeftDepth() const {
+    if (!left) return 0;
+    return left->depth + 1;
+  }
+ 
+  /**
+   * One more than the depth of the right subnode of this node, or zero if no
+   * right subnode exists.
+   */
+  inline int GetRightDepth() const {
+    if (!right) return 0;
+    return right->depth + 1;
+  }
+ 
+  /**
+   * Returns `true` if the right child's depth is greater than the left child's
+   * depth.
+   */
+  inline bool IsRightHeavy() const {
+    return GetLeftDepth() < GetRightDepth();
+  }
+  
+  /**
+   * Recompute the depth of this node using its two children. Returns `true` if
+   * the depth changed.
+   */
+  inline bool RecomputeDepth() {
+    int oldDepth = depth;
+    depth = ansa::Max(GetLeftDepth(), GetRightDepth());
+    return oldDepth != depth;
+  }
+  
+  /**
+   * Rebalance this node and return the node that should take its place.
+   *
+   * If the node is too imbalanced to balance with a single operation, this
+   * method returns `NULL`.
+   */
+  AvlNode * Rebalance() {
+    int imbalance = GetLeftDepth() - GetRightDepth();
+    if (imbalance == -2) {
+      // Right side is too heavy
+      if (!right->IsRightHeavy()) {
+        // Reduce right-left case to right-right case
+        right = RotateRight(right, right->left);
+        assert(!RecomputeDepth());
+      }
+      return RotateLeft(this, right);
+    } else if (imbalance == 2) {
+      if (right->IsRightHeavy()) {
+        // Reduce left-right case to left-left case
+        right = RotateLeft(left, left->right);
+        assert(!RecomputeDepth());
+      }
+      return RotateRight(this, left);
+    } else if (imbalance > -2 && imbalance < 2) {
+      return this;
+    } else {
+      return NULL;
+    }
+  }
+  
+protected:
+  static AvlNode * RotateLeft(AvlNode * parent, AvlNode * child) {
+    assert(parent->right == child);
+    child->parent = parent->parent;
+    parent->parent = child;
+    parent->right = child->left;
+    child->left = parent;
+    parent->RecomputeDepth();
+    child->RecomputeDepth();
+    return child;
+  }
+  
+  static AvlNode * RotateRight(AvlNode * parent, AvlNode * child) {
+    assert(parent->left == child);
+    child->parent = parent->parent;
+    parent->parent = child;
+    parent->left = child->right;
+    child->right = parent;
+    return child;
+  }
+  
+private:
+  T value;
+};
+
+}
+
+#endif

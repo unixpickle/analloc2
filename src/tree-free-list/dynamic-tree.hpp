@@ -15,61 +15,90 @@ template <class T>
 class DynamicTree {
 public:
   /**
-   * A node which is contained within a tree.
-   */
-  class Node {
-  public:
-    Node(const T & value) : content(value) {}
-    
-    /**
-     * Returns a constant reference to the contents of this node. This object
-     * will be destroyed when this node is destroyed, so you should not store
-     * this reference indefinitely.
-     */
-    inline const T & GetContent() const {
-      return content;
-    }
-    
-  private:
-    T content;
-  };
-  
-  /**
    * Create a new [DynamicTree] which will use a specified [allocator] to
    * allocate nodes.
    */
   DynamicTree(VirtualAllocator & allocator) : allocator(allocator) {}
   
+  /**
+   * Subclasses may use their destructors to deallocate the internal tree
+   * structure.
+   */
   virtual ~DynamicTree() {}
   
   /**
-   * Find the [Node] with the lowest value in this tree which is greater than
-   * or equal to a given [value].
+   * Find the lowest value in this tree which is greater than [value].
    *
-   * If no such node exists, `NULL` will be returned.
+   * If the tree does not contain such a value, `false` is returned. Otherwise,
+   * `true` is returned and [result] is set to the value which was found.
+   *
+   * If [remove] is explicitly specified as `true`, the value will be removed
+   * from the tree before it is returned.
    */
-  virtual Node * FindAboveOrEqual(const T & value) = 0;
+  virtual bool FindGreaterThan(T & result, const T & value,
+                               bool remove = false) = 0;
   
   /**
-   * Find the first [Node] which has a [value].
+   * Find the lowest value in this tree which is greater than or equal to
+   * [value].
    *
-   * If no such node exists, `NULL` will be returned.
+   * If the tree does not contain such a value, `false` is returned. Otherwise,
+   * `true` is returned and [result] is set to the value which was found.
+   *
+   * If [remove] is explicitly specified as `true`, the value will be removed
+   * from the tree before it is returned.
    */
-  virtual Node * FindEqual(const T & value) = 0;
+  virtual bool FindGreaterThanOrEqualTo(T & result, const T & value,
+                                        bool remove = false) = 0;
   
   /**
-   * Remove a [node] from the tree.
+   * Find the highest value in this tree which is less than [value].
+   *
+   * If the tree does not contain such a value, `false` is returned. Otherwise,
+   * `true` is returned and [result] is set to the value which was found.
+   *
+   * If [remove] is explicitly specified as `true`, the value will be removed
+   * from the tree before it is returned.
    */
-  virtual void Remove(Node * node) = 0;
+  virtual bool FindLessThan(T & result, const T & value,
+                            bool remove = false) = 0;
   
   /**
-   * Add a node to the tree with a given [value].
+   * Find the highest value in this tree which is less than or equal to 
+   * [value].
    *
-   * The specified [value] will be copied with T(const T &). If the node cannot
-   * be allocated because the tree's allocator fails, `NULL` will be returned.
-   * Otherwise, a new node is returned which stores the added [value].
+   * If the tree does not contain such a value, `false` is returned. Otherwise,
+   * `true` is returned and [result] is set to the value which was found.
+   *
+   * If [remove] is explicitly specified as `true`, the value will be removed
+   * from the tree before it is returned.
    */
-  virtual Node * Add(const T & value) = 0;
+  virtual bool FindLessThanOrEqualTo(T & result, const T & value,
+                                     bool remove = false) = 0;
+  
+  /**
+   * Check if this tree contains an exact value.
+   *
+   * If [value] is found in the tree, `true` is returned.
+   */
+  virtual bool Contains(const T & value) = 0;
+  
+  /**
+   * Remove a [value] from the tree.
+   *
+   * If the value is found and removed, `true` is returned. Otherwise, `false`
+   * is returned.
+   */
+  virtual bool Remove(const T & value) = 0;
+  
+  /**
+   * Add a given [value] to the tree.
+   *
+   * The specified [value] will be copied with T(const T &). If the insertion
+   * fails because a node cannot be allocated, this method will return `false`.
+   * Otherwise, it will return `true`.
+   */
+  virtual bool Add(const T & value) = 0;
   
   /**
    * Returns the allocator which this tree uses to allocate nodes.
