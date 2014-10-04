@@ -15,6 +15,8 @@ class AvlTree : public DynamicTree<T> {
 public:
   typedef DynamicTree<T> super;
   
+  typedef AvlNode<T> Node;
+  
   /**
    * Create a new, empty AVL tree.
    */
@@ -63,7 +65,7 @@ public:
    * Remove a value from the tree. This runs in O(log(n)) time.
    */
   virtual bool Remove(const T & value) {
-    AvlNode * node = FindEqual(value);
+    Node * node = FindEqual(value);
     if (!node) {
       return false;
     } else {
@@ -76,7 +78,7 @@ public:
    * Add a value to the tree. This runs in O(log(n)) time.
    */
   virtual bool Add(const T & value) {
-    AvlNode * node = AllocNode();
+    Node * node = AllocNode(value);
     if (!node) return false;
     
     // Trivial insertion case: the tree was empty
@@ -85,9 +87,10 @@ public:
       return true;
     }
     
-    AvlNode * current = root;
+    // Find a leaf node which is as close to this node as possible
+    Node * current = root;
     while (true) {
-      if (value > current->value) {
+      if (value > current->GetValue()) {
         if (current->right) {
           current = current->right;
         } else {
@@ -112,7 +115,7 @@ public:
   /**
    * Returns the root node of the tree, or `NULL` if the tree is empty.
    */
-  inline const AvlNode * GetRoot() {
+  inline const Node * GetRoot() {
     return root;
   }
   
@@ -131,30 +134,30 @@ protected:
   /**
    * The root node in the tree.
    */
-  AvlNode * root = NULL;
+  Node * root = NULL;
   
   /**
    * Return a node's memory to the tree's allocator.
    */
-  void DeallocNode(AvlNode * node) {
-    GetAllocator().Dealloc((uintptr_t)node, sizeof(AvlNode));
+  void DeallocNode(Node * node) {
+    this->GetAllocator().Dealloc((uintptr_t)node, sizeof(Node));
   }
   
   /**
    * Allocate a new node from the tree's allocator.
    */
-  AvlNode * AllocNode() {
+  Node * AllocNode(const T & value) {
     uintptr_t ptr;
-    if (!GetAllocator().Alloc(ptr, sizeof(AvlNode))) {
+    if (!this->GetAllocator().Alloc(ptr, sizeof(Node))) {
       return NULL;
     }
-    return (AvlNode *)ptr;
+    return new((Node *)ptr) Node(value);
   }
   
   /**
    * Used by the destructor to deallocate a node and its descendants.
    */
-  void RecursivelyDeallocNode(AvlNode * node) {
+  void RecursivelyDeallocNode(Node * node) {
     if (!node) return;
     RecursivelyDeallocNode(node->left);
     RecursivelyDeallocNode(node->right);
@@ -165,15 +168,15 @@ protected:
    * Recursively find a value which is greater than (or equal to, if [equal] is
    * `true`) a given [value].
    */
-  AvlNode * RecursivelySearchAbove(AvlNode * current, const T & value,
+  Node * RecursivelySearchAbove(Node * current, const T & value,
                                    bool equal) {
     if (!current) return NULL;
-    if (current->value < value) {
+    if (current->GetValue() < value) {
       return RecursivelySearchAbove(current->right, value, equal);
-    } else if (equal && current->value == value) {
+    } else if (equal && current->GetValue() == value) {
       return current;
     } else {
-      AvlNode * res = RecursivelySearchAbove(current->left, value, equal);
+      Node * res = RecursivelySearchAbove(current->left, value, equal);
       if (res) {
         return res;
       } else {
@@ -186,15 +189,15 @@ protected:
    * Recursively find a value which is less than (or equal to, if [equal] is
    * `true`) a given [value].
    */
-  AvlNode * RecursivelySearchBelow(AvlNode * current, const T & value,
+  Node * RecursivelySearchBelow(Node * current, const T & value,
                                    bool equal) {
     if (!current) return NULL;
-    if (current->value > value) {
+    if (current->GetValue() > value) {
       return RecursivelySearchBelow(current->left, value, equal);
-    } else if (equal && current->value == value) {
+    } else if (equal && current->GetValue() == value) {
       return current;
     } else {
-      AvlNode * res = RecursivelySearchBelow(current->right, value, equal);
+      Node * res = RecursivelySearchBelow(current->right, value, equal);
       if (res) {
         return res;
       } else {
@@ -207,11 +210,11 @@ protected:
    * The internal mechanism behind all of the find methods. This is used to
    * save a few lines of code in each of the four methods.
    */
-  inline bool InternalFind(AvlNode * node, T & output, bool remove) {
+  inline bool InternalFind(Node * node, T & output, bool remove) {
     if (!node) {
       return false;
     } else {
-      output = node->value;
+      output = node->GetValue();
       if (remove) {
         RemoveNode(node);
       }
@@ -222,12 +225,12 @@ protected:
   /**
    * Find a node in the tree which contains a given [value].
    */
-  AvlNode * FindEqual(const T & value) {
-    AvlNode * node = root;
+  Node * FindEqual(const T & value) {
+    Node * node = root;
     while (node) {
-      if (node->value == value) {
+      if (node->GetValue() == value) {
         return node;
-      } else if (node->value < value) {
+      } else if (node->GetValue() < value) {
         node = node->right;
       } else {
         node = node->left;
@@ -239,9 +242,9 @@ protected:
   /**
    * Remove a [node] from the tree and deallocate it.
    */
-  void RemoveNode(AvlNode * node) {
+  void RemoveNode(Node * node) {
     assert(node != NULL);
-    AvlNode ** parentSlot = NodeParentSlot(node);
+    Node ** parentSlot = NodeParentSlot(node);
     if (!node->left) {
       // Trivial case #1: replace the node with it's right child.
       (*parentSlot) = node->right;
@@ -256,7 +259,7 @@ protected:
       Rebalance(node->parent);
     } else {
       // Find the rightmost subnode of the left node.
-      AvlNode * rightmost = node;
+      Node * rightmost = node;
       while (rightmost->right) {
         rightmost = rightmost->right;
       }
@@ -267,7 +270,7 @@ protected:
         rightmost->left->parent = rightmost->parent;
       }
       // We will balance upwards from the parent of the rightmost node.
-      AvlNode * balanceStart = rightmost->parent;
+      Node * balanceStart = rightmost->parent;
       // Replace the node to delete with the rightmost node.
       (*parentSlot) = rightmost;
       rightmost->parent = node->parent;
@@ -284,13 +287,13 @@ protected:
    * Rebalance a given [node] and all its ancestors. If an ancestor's depth is
    * not changed, the balancing process can be safely halted.
    */
-  void Rebalance(AvlNode * node) {
+  void Rebalance(Node * node) {
     while (node) {
       if (!node->RecomputeDepth()) {
         return;
       }
-      AvlNode ** parentSlot = NodeParentSlot(node);
-      AvlNode * parent = node->parent;
+      Node ** parentSlot = NodeParentSlot(node);
+      Node * parent = node->parent;
       (*parentSlot) = node->Rebalance();
       node = parent;
     }
@@ -302,7 +305,7 @@ protected:
    * Doing `(*NodeParentSlot(node)) = someNode` essentially replaces [node]
    * with a new node (in this case called [someNode]).
    */
-  AvlNode ** NodeParentSlot(AvlNode * node) {
+  Node ** NodeParentSlot(Node * node) {
     if (!node->parent) {
       return &root;
     } else {

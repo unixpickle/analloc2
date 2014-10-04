@@ -5,6 +5,7 @@
 
 namespace analloc {
 
+template <class T>
 class AvlTree;
 
 /**
@@ -85,6 +86,11 @@ struct AvlNode {
    *
    * If the node is too imbalanced to balance with a single operation, this
    * method returns `NULL`.
+   *
+   * Upon success, the returned node may have a different depth than this node
+   * originally had. This node's parent will not be affected in any way, so it
+   * is the caller's responsibility to set the returned [AvlNode] in the
+   * parent's corresponding field and to recalculate the parent's depth.
    */
   AvlNode * Rebalance() {
     int imbalance = GetLeftDepth() - GetRightDepth();
