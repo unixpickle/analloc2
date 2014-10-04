@@ -267,8 +267,8 @@ protected:
       node->left->parent = node->parent;
       Rebalance(node->parent);
     } else {
-      // Find the rightmost subnode of the left node.
-      Node * rightmost = node;
+      // Find the rightmost subnode of the node's left child.
+      Node * rightmost = node->left;
       while (rightmost->right) {
         rightmost = rightmost->right;
       }
@@ -298,13 +298,14 @@ protected:
    */
   void Rebalance(Node * node) {
     while (node) {
-      if (!node->RecomputeDepth()) {
-        return;
-      }
+      int oldDepth = node->depth;
+      node->RecomputeDepth();
       Node ** parentSlot = NodeParentSlot(node);
       Node * parent = node->parent;
       (*parentSlot) = node->Rebalance();
-      // TODO: assign new parent here
+      if ((*parentSlot)->depth == oldDepth) {
+        break;
+      }
       node = parent;
     }
   }

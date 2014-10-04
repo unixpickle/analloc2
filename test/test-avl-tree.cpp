@@ -12,12 +12,14 @@ void TestBasicRootUnbalancedInsertions();
 void TestBasicNonrootUnbalancedInsertions();
 void TestRandomInsertions();
 void TestBalancedTrivialDeletions();
+void TestUnbalancedTrivialDeletions();
 
 bool IsLeaf(const AvlNode<int> * node);
 bool IsFull(const AvlNode<int> * node);
 bool IsLeftOnly(const AvlNode<int> * node);
 bool IsRightOnly(const AvlNode<int> * node);
 bool ValidateParent(const AvlNode<int> * node);
+bool ValidateRoot(const AvlNode<int> * node);
 
 int main() {
   TestBalancedInsertions();
@@ -31,6 +33,8 @@ int main() {
   TestRandomInsertions();
   assert(aligner.GetAllocCount() == 0);
   TestBalancedTrivialDeletions();
+  assert(aligner.GetAllocCount() == 0);
+  TestUnbalancedTrivialDeletions();
   assert(aligner.GetAllocCount() == 0);
   return 0;
 }
@@ -487,6 +491,32 @@ void TestBalancedTrivialDeletions() {
   assert(aligner.GetAllocCount() == 0);
 }
 
+void TestUnbalancedTrivialDeletions() {
+  ScopedPass pass("AvlTree<int>::Remove() [unbalanced, trivial]");
+  AvlTree<int> tree(aligner);
+  
+  // Leaf deletion causing single-layer right-left rebalance.
+  tree.Add(2);
+  tree.Add(1);
+  tree.Add(4);
+  tree.Add(3);
+  assert(aligner.GetAllocCount() == 4);
+  tree.Remove(1);
+  assert(aligner.GetAllocCount() == 3);
+  assert(ValidateRoot(tree.GetRoot()));
+  assert(IsFull(tree.GetRoot()));
+  assert(IsLeaf(tree.GetRoot()->left));
+  assert(IsLeaf(tree.GetRoot()->right));
+  assert(ValidateParent(tree.GetRoot()->left));
+  assert(ValidateParent(tree.GetRoot()->right));
+  assert(tree.GetRoot()->GetValue() == 3);
+  assert(tree.GetRoot()->left->GetValue() == 2);
+  assert(tree.GetRoot()->right->GetValue() == 4);
+  
+  // TODO: Leaf deletion causing two rotations
+  assert(false);
+}
+
 bool IsLeaf(const AvlNode<int> * node) {
   if (!node) return false;
   return node->left == nullptr && node->right == nullptr;
@@ -510,4 +540,8 @@ bool IsRightOnly(const AvlNode<int> * node) {
 bool ValidateParent(const AvlNode<int> * node) {
   if (!node->parent) return true;
   return node->parent->left == node || node->parent->right == node;
+}
+
+bool ValidateRoot(const AvlNode<int> * node) {
+  return node != nullptr && node->parent == nullptr;
 }
