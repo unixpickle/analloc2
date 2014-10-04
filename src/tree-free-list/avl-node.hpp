@@ -4,8 +4,6 @@
 #include <ansa/math>
 #include <cstddef>
 
-#include <iostream> // TODO: delete this
-
 namespace analloc {
 
 template <class T>
@@ -125,6 +123,9 @@ protected:
     child->parent = parent->parent;
     parent->parent = child;
     parent->right = child->left;
+    if (parent->right) {
+      parent->right->parent = parent;
+    }
     child->left = parent;
     parent->RecomputeDepth();
     child->RecomputeDepth();
@@ -136,6 +137,9 @@ protected:
     child->parent = parent->parent;
     parent->parent = child;
     parent->left = child->right;
+    if (parent->left) {
+      parent->left->parent = parent;
+    }
     child->right = parent;
     parent->RecomputeDepth();
     child->RecomputeDepth();

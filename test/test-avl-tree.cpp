@@ -10,6 +10,13 @@ void TestBalancedInsertions();
 void TestBalancedDeletions();
 void TestBasicRootUnbalancedInsertions();
 void TestBasicNonrootUnbalancedInsertions();
+void TestRandomInsertions();
+
+bool IsLeaf(const AvlNode<int> * node);
+bool IsFull(const AvlNode<int> * node);
+bool IsLeftOnly(const AvlNode<int> * node);
+bool IsRightOnly(const AvlNode<int> * node);
+bool ValidateParent(const AvlNode<int> * node);
 
 int main() {
   TestBalancedInsertions();
@@ -19,6 +26,8 @@ int main() {
   TestBasicRootUnbalancedInsertions();
   assert(aligner.GetAllocCount() == 0);
   TestBasicNonrootUnbalancedInsertions();
+  assert(aligner.GetAllocCount() == 0);
+  TestRandomInsertions();
   assert(aligner.GetAllocCount() == 0);
   return 0;
 }
@@ -178,10 +187,12 @@ void TestBasicRootUnbalancedInsertions() {
       tree.Add(2);
     }
     assert(aligner.GetAllocCount() == 3);
-    assert(tree.GetRoot() != nullptr);
-    assert(tree.GetRoot()->GetValue() == 2);
-    assert(tree.GetRoot()->left != nullptr);
-    assert(tree.GetRoot()->right != nullptr);
+    assert(IsFull(tree.GetRoot()));
+    assert(IsLeaf(tree.GetRoot()->left));
+    assert(IsLeaf(tree.GetRoot()->right));
+    assert(tree.GetRoot()->parent == nullptr);
+    assert(ValidateParent(tree.GetRoot()->left));
+    assert(ValidateParent(tree.GetRoot()->right));
     assert(tree.GetRoot()->left->GetValue() == 1);
     assert(tree.GetRoot()->right->GetValue() == 3);
     tree.Clear();
@@ -227,24 +238,24 @@ void TestBasicNonrootUnbalancedInsertions() {
       }
       assert(aligner.GetAllocCount() == 5);
       AvlNode<int> * rotated;
+      assert(tree.GetRoot() != nullptr);
+      assert(tree.GetRoot()->parent == nullptr);
+      assert(IsFull(tree.GetRoot()));
+      assert(ValidateParent(tree.GetRoot()->right));
       if (j == 0) {
-        assert(tree.GetRoot() != nullptr);
-        assert(tree.GetRoot()->right != nullptr);
-        assert(tree.GetRoot()->left != nullptr);
         assert(tree.GetRoot()->GetValue() == 4);
         assert(tree.GetRoot()->right->GetValue() == 5);
         rotated = tree.GetRoot()->left;
       } else {
-        assert(tree.GetRoot() != nullptr);
-        assert(tree.GetRoot()->right != nullptr);
-        assert(tree.GetRoot()->left != nullptr);
         assert(tree.GetRoot()->GetValue() == 0);
         assert(tree.GetRoot()->left->GetValue() == -1);
         rotated = tree.GetRoot()->right;
       }
+      assert(IsFull(rotated));
+      assert(ValidateParent(rotated));
+      assert(ValidateParent(rotated->left));
+      assert(ValidateParent(rotated->right));
       assert(rotated->GetValue() == 2);
-      assert(rotated->left != nullptr);
-      assert(rotated->right != nullptr);
       assert(rotated->left->GetValue() == 1);
       assert(rotated->right->GetValue() == 3);
       tree.Clear();
@@ -252,4 +263,153 @@ void TestBasicNonrootUnbalancedInsertions() {
       assert(aligner.GetAllocCount() == 0);
     }
   }
+}
+
+void TestRandomInsertions() {
+  ScopedPass pass("AvlTree<int>::Add() [pre-randomized]");
+  AvlTree<int> tree(aligner);
+  
+  int values[] = {5, 6, 9, 11, 14, 15, 10, 17, 3, 7, 1, 8, 16, 4, 12, 13, 2};
+  static_assert(sizeof(values) == sizeof(int) * 17, "Invalid random values");
+  for (int i = 0; i < 17; ++i) {
+    assert(aligner.GetAllocCount() == (size_t)i);
+    tree.Add(values[i]);
+    assert(aligner.GetAllocCount() == (size_t)i + 1);
+    if (i == 5) {
+      assert(tree.GetRoot() != nullptr);
+      assert(tree.GetRoot()->parent == nullptr);
+      assert(IsFull(tree.GetRoot()));
+      assert(IsFull(tree.GetRoot()->left));
+      assert(IsRightOnly(tree.GetRoot()->right));
+      assert(IsLeaf(tree.GetRoot()->right->right));
+      assert(IsLeaf(tree.GetRoot()->left->left));
+      assert(IsLeaf(tree.GetRoot()->left->right));
+      assert(ValidateParent(tree.GetRoot()->left));
+      assert(ValidateParent(tree.GetRoot()->right));
+      assert(ValidateParent(tree.GetRoot()->left->left));
+      assert(ValidateParent(tree.GetRoot()->left->right));
+      assert(ValidateParent(tree.GetRoot()->right->right));
+      assert(tree.GetRoot()->GetValue() == 11);
+      assert(tree.GetRoot()->left->GetValue() == 6);
+      assert(tree.GetRoot()->right->GetValue() == 14);
+      assert(tree.GetRoot()->left->left->GetValue() == 5);
+      assert(tree.GetRoot()->left->right->GetValue() == 9);
+      assert(tree.GetRoot()->right->right->GetValue() == 15);
+    } else if (i == 9) {
+      assert(tree.GetRoot() != nullptr);
+      assert(tree.GetRoot()->parent == nullptr);
+      assert(IsFull(tree.GetRoot()));
+      assert(IsFull(tree.GetRoot()->left));
+      assert(IsFull(tree.GetRoot()->right));
+      assert(IsLeftOnly(tree.GetRoot()->left->left));
+      assert(IsFull(tree.GetRoot()->left->right));
+      assert(IsLeaf(tree.GetRoot()->right->left));
+      assert(IsLeaf(tree.GetRoot()->right->right));
+      assert(IsLeaf(tree.GetRoot()->left->left->left));
+      assert(IsLeaf(tree.GetRoot()->left->right->left));
+      assert(IsLeaf(tree.GetRoot()->left->right->right));
+      assert(ValidateParent(tree.GetRoot()->left));
+      assert(ValidateParent(tree.GetRoot()->right));
+      assert(ValidateParent(tree.GetRoot()->left->left));
+      assert(ValidateParent(tree.GetRoot()->left->right));
+      assert(ValidateParent(tree.GetRoot()->right->left));
+      assert(ValidateParent(tree.GetRoot()->right->right));
+      assert(ValidateParent(tree.GetRoot()->left->left->left));
+      assert(ValidateParent(tree.GetRoot()->left->right->left));
+      assert(ValidateParent(tree.GetRoot()->left->right->right));
+      assert(tree.GetRoot()->GetValue() == 11);
+      assert(tree.GetRoot()->left->GetValue() == 6);
+      assert(tree.GetRoot()->right->GetValue() == 15);
+      assert(tree.GetRoot()->left->left->GetValue() == 5);
+      assert(tree.GetRoot()->left->right->GetValue() == 9);
+      assert(tree.GetRoot()->right->left->GetValue() == 14);
+      assert(tree.GetRoot()->right->right->GetValue() == 17);
+      assert(tree.GetRoot()->left->left->left->GetValue() == 3);
+      assert(tree.GetRoot()->left->right->left->GetValue() == 7);
+      assert(tree.GetRoot()->left->right->right->GetValue() == 10);
+    } else if (i == 16) {
+      assert(tree.GetRoot() != nullptr);
+      assert(tree.GetRoot()->parent == nullptr);
+      assert(IsFull(tree.GetRoot()));
+      assert(IsFull(tree.GetRoot()->left));
+      assert(IsFull(tree.GetRoot()->right));
+      // Depth 2
+      assert(IsFull(tree.GetRoot()->left->left));
+      assert(IsRightOnly(tree.GetRoot()->left->right));
+      assert(IsFull(tree.GetRoot()->right->left));
+      assert(IsLeftOnly(tree.GetRoot()->right->right));
+      // Depth 3
+      assert(IsRightOnly(tree.GetRoot()->left->left->left));
+      assert(IsLeftOnly(tree.GetRoot()->left->left->right));
+      assert(IsLeaf(tree.GetRoot()->left->right->right));
+      assert(IsLeaf(tree.GetRoot()->right->left->left));
+      assert(IsFull(tree.GetRoot()->right->left->right));
+      assert(IsLeaf(tree.GetRoot()->right->right->left));
+      // Depth 4
+      assert(IsLeaf(tree.GetRoot()->left->left->left->right));
+      assert(IsLeaf(tree.GetRoot()->left->left->right->left));
+      assert(IsLeaf(tree.GetRoot()->right->left->right->left));
+      assert(IsLeaf(tree.GetRoot()->right->left->right->right));
+      // Parental validation
+      assert(ValidateParent(tree.GetRoot()->left));
+      assert(ValidateParent(tree.GetRoot()->right));
+      assert(ValidateParent(tree.GetRoot()->left->left));
+      assert(ValidateParent(tree.GetRoot()->left->right));
+      assert(ValidateParent(tree.GetRoot()->right->left));
+      assert(ValidateParent(tree.GetRoot()->right->right));
+      assert(ValidateParent(tree.GetRoot()->left->left->left));
+      assert(ValidateParent(tree.GetRoot()->left->left->right));
+      assert(ValidateParent(tree.GetRoot()->left->right->right));
+      assert(ValidateParent(tree.GetRoot()->right->left->left));
+      assert(ValidateParent(tree.GetRoot()->right->left->right));
+      assert(ValidateParent(tree.GetRoot()->right->right->left));
+      assert(ValidateParent(tree.GetRoot()->left->left->left->right));
+      assert(ValidateParent(tree.GetRoot()->left->left->right->left));
+      assert(ValidateParent(tree.GetRoot()->right->left->right->left));
+      assert(ValidateParent(tree.GetRoot()->right->left->right->right));
+      // Value validation
+      assert(tree.GetRoot()->GetValue() == 9);
+      assert(tree.GetRoot()->left->GetValue() == 6);
+      assert(tree.GetRoot()->right->GetValue() == 15);
+      assert(tree.GetRoot()->left->left->GetValue() == 3);
+      assert(tree.GetRoot()->left->right->GetValue() == 7);
+      assert(tree.GetRoot()->right->left->GetValue() == 11);
+      assert(tree.GetRoot()->right->right->GetValue() == 17);
+      assert(tree.GetRoot()->left->left->left->GetValue() == 1);
+      assert(tree.GetRoot()->left->left->right->GetValue() == 5);
+      assert(tree.GetRoot()->left->right->right->GetValue() == 8);
+      assert(tree.GetRoot()->right->left->left->GetValue() == 10);
+      assert(tree.GetRoot()->right->left->right->GetValue() == 13);
+      assert(tree.GetRoot()->right->right->left->GetValue() == 16);
+      assert(tree.GetRoot()->left->left->left->right->GetValue() == 2);
+      assert(tree.GetRoot()->left->left->right->left->GetValue() == 4);
+      assert(tree.GetRoot()->right->left->right->left->GetValue() == 12);
+      assert(tree.GetRoot()->right->left->right->right->GetValue() == 14);
+    }
+  }
+}
+
+bool IsLeaf(const AvlNode<int> * node) {
+  if (!node) return false;
+  return node->left == nullptr && node->right == nullptr;
+}
+
+bool IsFull(const AvlNode<int> * node) {
+  if (!node) return false;
+  return node->left != nullptr && node->right != nullptr;
+}
+
+bool IsLeftOnly(const AvlNode<int> * node) {
+  if (!node) return false;
+  return node->left != nullptr && node->right == nullptr;
+}
+
+bool IsRightOnly(const AvlNode<int> * node) {
+  if (!node) return false;
+  return node->left == nullptr && node->right != nullptr;
+}
+
+bool ValidateParent(const AvlNode<int> * node) {
+  if (!node->parent) return true;
+  return node->parent->left == node || node->parent->right == node;
 }

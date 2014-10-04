@@ -304,6 +304,7 @@ protected:
       Node ** parentSlot = NodeParentSlot(node);
       Node * parent = node->parent;
       (*parentSlot) = node->Rebalance();
+      // TODO: assign new parent here
       node = parent;
     }
   }
