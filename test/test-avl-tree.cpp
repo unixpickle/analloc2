@@ -11,6 +11,7 @@ void TestBalancedDeletions();
 void TestBasicRootUnbalancedInsertions();
 void TestBasicNonrootUnbalancedInsertions();
 void TestRandomInsertions();
+void TestBalancedTrivialDeletions();
 
 bool IsLeaf(const AvlNode<int> * node);
 bool IsFull(const AvlNode<int> * node);
@@ -29,11 +30,13 @@ int main() {
   assert(aligner.GetAllocCount() == 0);
   TestRandomInsertions();
   assert(aligner.GetAllocCount() == 0);
+  TestBalancedTrivialDeletions();
+  assert(aligner.GetAllocCount() == 0);
   return 0;
 }
 
 void TestBalancedInsertions() {
-  ScopedPass pass("AvlTree<int>::Add() [pre-balanced]");
+  ScopedPass pass("AvlTree<int>::Add() [balanced]");
   AvlTree<int> tree(aligner);
   
   assert(tree.Add(3));
@@ -63,7 +66,7 @@ void TestBalancedInsertions() {
 }
 
 void TestBalancedDeletions() {
-  ScopedPass pass("AvlTree<int>::Remove() [pre-balanced]");
+  ScopedPass pass("AvlTree<int>::Remove() [leafs only]");
   AvlTree<int> tree(aligner);
   
   assert(tree.Add(3));
@@ -387,6 +390,101 @@ void TestRandomInsertions() {
       assert(tree.GetRoot()->right->left->right->right->GetValue() == 14);
     }
   }
+}
+
+void TestBalancedTrivialDeletions() {
+  ScopedPass pass("AvlTree<int>::Remove() [balanced, trivial]");
+  AvlTree<int> tree(aligner);
+  
+  // Trivial deletions with no subnodes
+  tree.Add(2);
+  tree.Add(1);
+  tree.Add(3);
+  assert(aligner.GetAllocCount() == 3);
+  tree.Remove(3);
+  assert(aligner.GetAllocCount() == 2);
+  assert(tree.GetRoot() != nullptr);
+  assert(tree.GetRoot()->parent == nullptr);
+  assert(IsLeftOnly(tree.GetRoot()));
+  assert(IsLeaf(tree.GetRoot()->left));
+  assert(ValidateParent(tree.GetRoot()->left));
+  assert(tree.GetRoot()->GetValue() == 2);
+  assert(tree.GetRoot()->left->GetValue() == 1);
+  tree.Remove(1);
+  assert(aligner.GetAllocCount() == 1);
+  assert(tree.GetRoot() != nullptr);
+  assert(tree.GetRoot()->parent == nullptr);
+  assert(IsLeaf(tree.GetRoot()));
+  assert(tree.GetRoot()->GetValue() == 2);
+  tree.Remove(2);
+  assert(aligner.GetAllocCount() == 0);
+  assert(tree.GetRoot() == nullptr);
+  
+  // Rooted trivial case with right child.
+  tree.Add(2);
+  tree.Add(3);
+  tree.Remove(2);
+  assert(tree.GetRoot() != nullptr);
+  assert(tree.GetRoot()->parent == nullptr);
+  assert(IsLeaf(tree.GetRoot()));
+  assert(tree.GetRoot()->GetValue() == 3);
+  tree.Remove(3);
+  assert(aligner.GetAllocCount() == 0);
+  assert(tree.GetRoot() == nullptr);
+  
+  // Rooted trivial case with left child.
+  tree.Add(2);
+  tree.Add(1);
+  tree.Remove(2);
+  assert(tree.GetRoot() != nullptr);
+  assert(tree.GetRoot()->parent == nullptr);
+  assert(IsLeaf(tree.GetRoot()));
+  assert(tree.GetRoot()->GetValue() == 1);
+  tree.Remove(1);
+  assert(aligner.GetAllocCount() == 0);
+  assert(tree.GetRoot() == nullptr);
+  
+  // Unrooted trivial case with right child.
+  tree.Add(2);
+  tree.Add(1);
+  tree.Add(3);
+  tree.Add(4);
+  assert(aligner.GetAllocCount() == 4);
+  tree.Remove(3);
+  assert(aligner.GetAllocCount() == 3);
+  assert(tree.GetRoot() != nullptr);
+  assert(tree.GetRoot()->parent == nullptr);
+  assert(IsFull(tree.GetRoot()));
+  assert(IsLeaf(tree.GetRoot()->left));
+  assert(IsLeaf(tree.GetRoot()->right));
+  assert(ValidateParent(tree.GetRoot()->left));
+  assert(ValidateParent(tree.GetRoot()->right));
+  assert(tree.GetRoot()->GetValue() == 2);
+  assert(tree.GetRoot()->left->GetValue() == 1);
+  assert(tree.GetRoot()->right->GetValue() == 4);
+  tree.Clear();
+  assert(aligner.GetAllocCount() == 0);
+  
+  // Unrooted trivial case with left child.
+  tree.Add(2);
+  tree.Add(1);
+  tree.Add(4);
+  tree.Add(3);
+  assert(aligner.GetAllocCount() == 4);
+  tree.Remove(4);
+  assert(aligner.GetAllocCount() == 3);
+  assert(tree.GetRoot() != nullptr);
+  assert(tree.GetRoot()->parent == nullptr);
+  assert(IsFull(tree.GetRoot()));
+  assert(IsLeaf(tree.GetRoot()->left));
+  assert(IsLeaf(tree.GetRoot()->right));
+  assert(ValidateParent(tree.GetRoot()->left));
+  assert(ValidateParent(tree.GetRoot()->right));
+  assert(tree.GetRoot()->GetValue() == 2);
+  assert(tree.GetRoot()->left->GetValue() == 1);
+  assert(tree.GetRoot()->right->GetValue() == 3);
+  tree.Clear();
+  assert(aligner.GetAllocCount() == 0);
 }
 
 bool IsLeaf(const AvlNode<int> * node) {
