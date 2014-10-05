@@ -3,4 +3,4 @@
 #include "../src/free-list/free-list-aligner.hpp"
 #include "../src/generic/generic-translator.hpp"
 #include "../src/generic/generic-virtualizer.hpp"
-#include "../src/tree-free-list/avl-tree.hpp"
+#include "../src/free-tree/avl-tree.hpp"

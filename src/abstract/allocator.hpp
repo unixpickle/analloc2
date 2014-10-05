@@ -1,13 +1,15 @@
 #ifndef __ANALLOC2_ALLOCATOR_HPP__
 #define __ANALLOC2_ALLOCATOR_HPP__
 
+#include <ansa/nocopy>
+
 namespace analloc {
 
 /**
  * This is an allocator in its most basic form.
  */
 template <typename _AddressType, typename _SizeType = _AddressType>
-class Allocator {
+class Allocator : public ansa::NoCopy {
 public:
   /**
    * The type which can address any individual unit within this allocator.

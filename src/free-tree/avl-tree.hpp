@@ -3,6 +3,7 @@
 
 #include "dynamic-tree.hpp"
 #include "avl-node.hpp"
+#include <ansa/nocopy>
 
 namespace analloc {
 
@@ -11,10 +12,9 @@ namespace analloc {
  * but a relatively low search cost.
  */
 template <class T>
-class AvlTree : public DynamicTree<T> {
+class AvlTree : public DynamicTree<T>, public ansa::NoCopy {
 public:
   typedef DynamicTree<T> super;
-  
   typedef AvlNode<T> Node;
   
   /**
