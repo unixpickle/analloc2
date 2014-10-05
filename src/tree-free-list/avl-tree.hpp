@@ -267,24 +267,48 @@ protected:
       node->left->parent = node->parent;
       Rebalance(node->parent);
     } else {
-      // Find the rightmost subnode of the node's left child.
+      // Find the rightmost subnode of the node's left child (a.k.a. the 
+      // in-order predecessor of [node]).
       Node * rightmost = node->left;
       while (rightmost->right) {
         rightmost = rightmost->right;
       }
+      
       // Replace the rightmost node with it's left child (which might not exist
       // if the rightmost node is a leaf).
       (*NodeParentSlot(rightmost)) = rightmost->left;
       if (rightmost->left) {
+        assert(rightmost->left->left == nullptr);
+        assert(rightmost->left->right == nullptr);
         rightmost->left->parent = rightmost->parent;
       }
+
       // We will balance upwards from the parent of the rightmost node.
       Node * balanceStart = rightmost->parent;
-      // Replace the node to delete with the rightmost node.
+      if (balanceStart == node) {
+        // This case occurs when [rightmost] was the left child of [node].
+        balanceStart = rightmost;
+      }
+
+      // Replace [node] with its in-order predecessor.
       (*parentSlot) = rightmost;
       rightmost->parent = node->parent;
       rightmost->left = node->left;
       rightmost->right = node->right;
+      assert(rightmost->right != nullptr);
+      rightmost->right->parent = rightmost;
+      
+      // rightmost->left will be nullptr in the case where [rightmost]'s left
+      // child was nullptr and [rightmost] was the left child of [node].
+      if (rightmost->left) {
+        rightmost->left->parent = rightmost;
+      }
+      
+      // Before rebalancing, we set [rightmost]'s depth to [node]'s old depth
+      // so that [Rebalance] knows if subtrees above [rightmost] need to be
+      // rebalanced as well.
+      rightmost->depth = node->depth;
+      
       // Rebalance the old parent of the rightmost node.
       Rebalance(balanceStart);
     }
@@ -303,6 +327,7 @@ protected:
       Node ** parentSlot = NodeParentSlot(node);
       Node * parent = node->parent;
       (*parentSlot) = node->Rebalance();
+      assert(*parentSlot != nullptr);
       if ((*parentSlot)->depth == oldDepth) {
         break;
       }

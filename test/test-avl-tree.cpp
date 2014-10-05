@@ -13,6 +13,8 @@ void TestBasicNonrootUnbalancedInsertions();
 void TestRandomInsertions();
 void TestBalancedTrivialDeletions();
 void TestUnbalancedTrivialDeletions();
+void TestBalancedNontrivialDeletions();
+void TestRandomModifications();
 
 bool IsLeaf(const AvlNode<int> * node);
 bool IsFull(const AvlNode<int> * node);
@@ -20,6 +22,7 @@ bool IsLeftOnly(const AvlNode<int> * node);
 bool IsRightOnly(const AvlNode<int> * node);
 bool ValidateParent(const AvlNode<int> * node);
 bool ValidateRoot(const AvlNode<int> * node);
+bool ValidateBalance(const AvlNode<int> * node, int & depthOut);
 
 int main() {
   TestBalancedInsertions();
@@ -35,6 +38,10 @@ int main() {
   TestBalancedTrivialDeletions();
   assert(aligner.GetAllocCount() == 0);
   TestUnbalancedTrivialDeletions();
+  assert(aligner.GetAllocCount() == 0);
+  TestBalancedNontrivialDeletions();
+  assert(aligner.GetAllocCount() == 0);
+  TestRandomModifications();
   assert(aligner.GetAllocCount() == 0);
   return 0;
 }
@@ -405,7 +412,7 @@ void TestBalancedTrivialDeletions() {
   tree.Add(1);
   tree.Add(3);
   assert(aligner.GetAllocCount() == 3);
-  tree.Remove(3);
+  assert(tree.Remove(3));
   assert(aligner.GetAllocCount() == 2);
   assert(tree.GetRoot() != nullptr);
   assert(tree.GetRoot()->parent == nullptr);
@@ -414,37 +421,37 @@ void TestBalancedTrivialDeletions() {
   assert(ValidateParent(tree.GetRoot()->left));
   assert(tree.GetRoot()->GetValue() == 2);
   assert(tree.GetRoot()->left->GetValue() == 1);
-  tree.Remove(1);
+  assert(tree.Remove(1));
   assert(aligner.GetAllocCount() == 1);
   assert(tree.GetRoot() != nullptr);
   assert(tree.GetRoot()->parent == nullptr);
   assert(IsLeaf(tree.GetRoot()));
   assert(tree.GetRoot()->GetValue() == 2);
-  tree.Remove(2);
+  assert(tree.Remove(2));
   assert(aligner.GetAllocCount() == 0);
   assert(tree.GetRoot() == nullptr);
   
   // Rooted trivial case with right child.
   tree.Add(2);
   tree.Add(3);
-  tree.Remove(2);
+  assert(tree.Remove(2));
   assert(tree.GetRoot() != nullptr);
   assert(tree.GetRoot()->parent == nullptr);
   assert(IsLeaf(tree.GetRoot()));
   assert(tree.GetRoot()->GetValue() == 3);
-  tree.Remove(3);
+  assert(tree.Remove(3));
   assert(aligner.GetAllocCount() == 0);
   assert(tree.GetRoot() == nullptr);
   
   // Rooted trivial case with left child.
   tree.Add(2);
   tree.Add(1);
-  tree.Remove(2);
+  assert(tree.Remove(2));
   assert(tree.GetRoot() != nullptr);
   assert(tree.GetRoot()->parent == nullptr);
   assert(IsLeaf(tree.GetRoot()));
   assert(tree.GetRoot()->GetValue() == 1);
-  tree.Remove(1);
+  assert(tree.Remove(1));
   assert(aligner.GetAllocCount() == 0);
   assert(tree.GetRoot() == nullptr);
   
@@ -454,7 +461,7 @@ void TestBalancedTrivialDeletions() {
   tree.Add(3);
   tree.Add(4);
   assert(aligner.GetAllocCount() == 4);
-  tree.Remove(3);
+  assert(tree.Remove(3));
   assert(aligner.GetAllocCount() == 3);
   assert(tree.GetRoot() != nullptr);
   assert(tree.GetRoot()->parent == nullptr);
@@ -475,7 +482,7 @@ void TestBalancedTrivialDeletions() {
   tree.Add(4);
   tree.Add(3);
   assert(aligner.GetAllocCount() == 4);
-  tree.Remove(4);
+  assert(tree.Remove(4));
   assert(aligner.GetAllocCount() == 3);
   assert(tree.GetRoot() != nullptr);
   assert(tree.GetRoot()->parent == nullptr);
@@ -501,7 +508,7 @@ void TestUnbalancedTrivialDeletions() {
   tree.Add(4);
   tree.Add(3);
   assert(aligner.GetAllocCount() == 4);
-  tree.Remove(1);
+  assert(tree.Remove(1));
   assert(aligner.GetAllocCount() == 3);
   assert(ValidateRoot(tree.GetRoot()));
   assert(IsFull(tree.GetRoot()));
@@ -512,9 +519,457 @@ void TestUnbalancedTrivialDeletions() {
   assert(tree.GetRoot()->GetValue() == 3);
   assert(tree.GetRoot()->left->GetValue() == 2);
   assert(tree.GetRoot()->right->GetValue() == 4);
+  tree.Clear();
+  assert(aligner.GetAllocCount() == 0);
   
-  // TODO: Leaf deletion causing two rotations
-  assert(false);
+  // Leaf deletion causing a right-left rotation and then a right-right
+  // rotation
+  int addValues[] = {8, 3, 13, 2, 6, 11, 16, 1, 4, 7, 10, 12, 15, 18, 5, 9, 14,
+                     17, 19, 20};
+  for (size_t i = 0; i < sizeof(addValues) / sizeof(int); ++i) {
+    tree.Add(addValues[i]);
+  }
+  assert(aligner.GetAllocCount() == 20);
+  assert(tree.Remove(1));
+  assert(aligner.GetAllocCount() == 19);
+  assert(ValidateRoot(tree.GetRoot()));
+  assert(IsFull(tree.GetRoot()));
+  assert(IsFull(tree.GetRoot()->left));
+  assert(IsFull(tree.GetRoot()->right));
+  // Depth 2
+  assert(IsFull(tree.GetRoot()->left->left));
+  assert(IsFull(tree.GetRoot()->left->right));
+  assert(IsLeftOnly(tree.GetRoot()->right->left));
+  assert(IsFull(tree.GetRoot()->right->right));
+  // Depth 3
+  assert(IsLeftOnly(tree.GetRoot()->left->left->left));
+  assert(IsFull(tree.GetRoot()->left->left->right));
+  assert(IsLeftOnly(tree.GetRoot()->left->right->left));
+  assert(IsLeaf(tree.GetRoot()->left->right->right));
+  assert(IsLeaf(tree.GetRoot()->right->left->left));
+  assert(IsLeaf(tree.GetRoot()->right->right->left));
+  assert(IsRightOnly(tree.GetRoot()->right->right->right));
+  // Depth 4
+  assert(IsLeaf(tree.GetRoot()->left->left->left->left));
+  assert(IsLeaf(tree.GetRoot()->left->left->right->left));
+  assert(IsLeaf(tree.GetRoot()->left->left->right->right));
+  assert(IsLeaf(tree.GetRoot()->left->right->left->left));
+  assert(IsLeaf(tree.GetRoot()->right->right->right->right));
+  // Validate parents
+  assert(ValidateParent(tree.GetRoot()->left));
+  assert(ValidateParent(tree.GetRoot()->right));
+  assert(ValidateParent(tree.GetRoot()->left->left));
+  assert(ValidateParent(tree.GetRoot()->left->right));
+  assert(ValidateParent(tree.GetRoot()->right->left));
+  assert(ValidateParent(tree.GetRoot()->right->right));
+  assert(ValidateParent(tree.GetRoot()->left->left->left));
+  assert(ValidateParent(tree.GetRoot()->left->left->right));
+  assert(ValidateParent(tree.GetRoot()->left->right->left));
+  assert(ValidateParent(tree.GetRoot()->left->right->right));
+  assert(ValidateParent(tree.GetRoot()->right->left->left));
+  assert(ValidateParent(tree.GetRoot()->right->right->left));
+  assert(ValidateParent(tree.GetRoot()->right->right->right));
+  assert(ValidateParent(tree.GetRoot()->left->left->left->left));
+  assert(ValidateParent(tree.GetRoot()->left->left->right->left));
+  assert(ValidateParent(tree.GetRoot()->left->left->right->right));
+  assert(ValidateParent(tree.GetRoot()->left->right->left->left));
+  assert(ValidateParent(tree.GetRoot()->right->right->right->right));
+  // Validate values
+  assert(tree.GetRoot()->GetValue() == 13);
+  assert(tree.GetRoot()->left->GetValue() == 8);
+  assert(tree.GetRoot()->right->GetValue() == 16);
+  assert(tree.GetRoot()->left->left->GetValue() == 4);
+  assert(tree.GetRoot()->left->right->GetValue() == 11);
+  assert(tree.GetRoot()->right->left->GetValue() == 15);
+  assert(tree.GetRoot()->right->right->GetValue() == 18);
+  assert(tree.GetRoot()->left->left->left->GetValue() == 3);
+  assert(tree.GetRoot()->left->left->right->GetValue() == 6);
+  assert(tree.GetRoot()->left->right->left->GetValue() == 10);
+  assert(tree.GetRoot()->left->right->right->GetValue() == 12);
+  assert(tree.GetRoot()->right->left->left->GetValue() == 14);
+  assert(tree.GetRoot()->right->right->left->GetValue() == 17);
+  assert(tree.GetRoot()->right->right->right->GetValue() == 19);
+  assert(tree.GetRoot()->left->left->left->left->GetValue() == 2);
+  assert(tree.GetRoot()->left->left->right->left->GetValue() == 5);
+  assert(tree.GetRoot()->left->left->right->right->GetValue() == 7);
+  assert(tree.GetRoot()->left->right->left->left->GetValue() == 9);
+  assert(tree.GetRoot()->right->right->right->right->GetValue() == 20);
+  tree.Clear();
+  assert(aligner.GetAllocCount() == 0);
+  
+  // Leaf deletion causing root rebalance via right-right case which only
+  // occurs when a node is deleted in a special case.
+  int specialValues[] = {5, 2, 13, 1, 3, 9, 17, 4, 7, 11, 15, 19, 6, 8, 10, 12,
+                         14, 16, 18, 20};
+  for (size_t i = 0; i < sizeof(specialValues) / sizeof(int); ++i) {
+    tree.Add(specialValues[i]);
+  }
+  assert(aligner.GetAllocCount() == 20);
+  assert(tree.Remove(4));
+  assert(aligner.GetAllocCount() == 19);
+  assert(ValidateRoot(tree.GetRoot()));
+  assert(IsFull(tree.GetRoot()));
+  assert(IsFull(tree.GetRoot()->left));
+  assert(IsFull(tree.GetRoot()->right));
+  // Depth 2
+  assert(IsFull(tree.GetRoot()->left->left));
+  assert(IsFull(tree.GetRoot()->left->right));
+  assert(IsFull(tree.GetRoot()->right->left));
+  assert(IsFull(tree.GetRoot()->right->right));
+  // Depth 3
+  assert(IsLeaf(tree.GetRoot()->left->left->left));
+  assert(IsLeaf(tree.GetRoot()->left->left->right));
+  assert(IsFull(tree.GetRoot()->left->right->left));
+  assert(IsFull(tree.GetRoot()->left->right->right));
+  assert(IsLeaf(tree.GetRoot()->right->left->left));
+  assert(IsLeaf(tree.GetRoot()->right->left->right));
+  assert(IsLeaf(tree.GetRoot()->right->right->left));
+  assert(IsLeaf(tree.GetRoot()->right->right->right));
+  // Depth 4
+  assert(IsLeaf(tree.GetRoot()->left->right->left->left));
+  assert(IsLeaf(tree.GetRoot()->left->right->left->right));
+  assert(IsLeaf(tree.GetRoot()->left->right->right->left));
+  assert(IsLeaf(tree.GetRoot()->left->right->right->right));
+  // Validate parents
+  assert(ValidateParent(tree.GetRoot()->left));
+  assert(ValidateParent(tree.GetRoot()->right));
+  assert(ValidateParent(tree.GetRoot()->left->left));
+  assert(ValidateParent(tree.GetRoot()->left->right));
+  assert(ValidateParent(tree.GetRoot()->right->left));
+  assert(ValidateParent(tree.GetRoot()->right->right));
+  assert(ValidateParent(tree.GetRoot()->left->left->left));
+  assert(ValidateParent(tree.GetRoot()->left->left->right));
+  assert(ValidateParent(tree.GetRoot()->left->right->left));
+  assert(ValidateParent(tree.GetRoot()->left->right->right));
+  assert(ValidateParent(tree.GetRoot()->right->left->left));
+  assert(ValidateParent(tree.GetRoot()->right->left->right));
+  assert(ValidateParent(tree.GetRoot()->right->right->left));
+  assert(ValidateParent(tree.GetRoot()->right->right->right));
+  assert(ValidateParent(tree.GetRoot()->left->right->left->left));
+  assert(ValidateParent(tree.GetRoot()->left->right->left->right));
+  assert(ValidateParent(tree.GetRoot()->left->right->right->left));
+  assert(ValidateParent(tree.GetRoot()->left->right->right->right));
+  // Validate values
+  assert(tree.GetRoot()->GetValue() == 13);
+  assert(tree.GetRoot()->left->GetValue() == 5);
+  assert(tree.GetRoot()->right->GetValue() == 17);
+  assert(tree.GetRoot()->left->left->GetValue() == 2);
+  assert(tree.GetRoot()->left->right->GetValue() == 9);
+  assert(tree.GetRoot()->right->left->GetValue() == 15);
+  assert(tree.GetRoot()->right->right->GetValue() == 19);
+  assert(tree.GetRoot()->left->left->left->GetValue() == 1);
+  assert(tree.GetRoot()->left->left->right->GetValue() == 3);
+  assert(tree.GetRoot()->left->right->left->GetValue() == 7);
+  assert(tree.GetRoot()->left->right->right->GetValue() == 11);
+  assert(tree.GetRoot()->right->left->left->GetValue() == 14);
+  assert(tree.GetRoot()->right->left->right->GetValue() == 16);
+  assert(tree.GetRoot()->right->right->left->GetValue() == 18);
+  assert(tree.GetRoot()->right->right->right->GetValue() == 20);
+  assert(tree.GetRoot()->left->right->left->left->GetValue() == 6);
+  assert(tree.GetRoot()->left->right->left->right->GetValue() == 8);
+  assert(tree.GetRoot()->left->right->right->left->GetValue() == 10);
+  assert(tree.GetRoot()->left->right->right->right->GetValue() == 12);
+  tree.Clear();
+  assert(aligner.GetAllocCount() == 0);
+  
+  // Test the mirror of the above case
+  int specialValuesMirror[] = {16, 8, 19, 4, 12, 18, 20, 2, 6, 10, 14, 17, 1,
+                               3, 5, 7, 9, 11, 13, 15};
+  for (size_t i = 0; i < sizeof(specialValuesMirror) / sizeof(int); ++i) {
+    tree.Add(specialValuesMirror[i]);
+  }
+  assert(aligner.GetAllocCount() == 20);
+  assert(tree.Remove(17));
+  assert(aligner.GetAllocCount() == 19);
+  assert(ValidateRoot(tree.GetRoot()));
+  assert(IsFull(tree.GetRoot()));
+  assert(IsFull(tree.GetRoot()->right));
+  assert(IsFull(tree.GetRoot()->left));
+  // Depth 2
+  assert(IsFull(tree.GetRoot()->right->right));
+  assert(IsFull(tree.GetRoot()->right->left));
+  assert(IsFull(tree.GetRoot()->left->right));
+  assert(IsFull(tree.GetRoot()->left->left));
+  // Depth 3
+  assert(IsLeaf(tree.GetRoot()->right->right->right));
+  assert(IsLeaf(tree.GetRoot()->right->right->left));
+  assert(IsFull(tree.GetRoot()->right->left->right));
+  assert(IsFull(tree.GetRoot()->right->left->left));
+  assert(IsLeaf(tree.GetRoot()->left->right->right));
+  assert(IsLeaf(tree.GetRoot()->left->right->left));
+  assert(IsLeaf(tree.GetRoot()->left->left->right));
+  assert(IsLeaf(tree.GetRoot()->left->left->left));
+  // Depth 4
+  assert(IsLeaf(tree.GetRoot()->right->left->right->right));
+  assert(IsLeaf(tree.GetRoot()->right->left->right->left));
+  assert(IsLeaf(tree.GetRoot()->right->left->left->right));
+  assert(IsLeaf(tree.GetRoot()->right->left->left->left));
+  // Validate parents
+  assert(ValidateParent(tree.GetRoot()->right));
+  assert(ValidateParent(tree.GetRoot()->left));
+  assert(ValidateParent(tree.GetRoot()->right->right));
+  assert(ValidateParent(tree.GetRoot()->right->left));
+  assert(ValidateParent(tree.GetRoot()->left->right));
+  assert(ValidateParent(tree.GetRoot()->left->left));
+  assert(ValidateParent(tree.GetRoot()->right->right->right));
+  assert(ValidateParent(tree.GetRoot()->right->right->left));
+  assert(ValidateParent(tree.GetRoot()->right->left->right));
+  assert(ValidateParent(tree.GetRoot()->right->left->left));
+  assert(ValidateParent(tree.GetRoot()->left->right->right));
+  assert(ValidateParent(tree.GetRoot()->left->right->left));
+  assert(ValidateParent(tree.GetRoot()->left->left->right));
+  assert(ValidateParent(tree.GetRoot()->left->left->left));
+  assert(ValidateParent(tree.GetRoot()->right->left->right->right));
+  assert(ValidateParent(tree.GetRoot()->right->left->right->left));
+  assert(ValidateParent(tree.GetRoot()->right->left->left->right));
+  assert(ValidateParent(tree.GetRoot()->right->left->left->left));
+  // Validate values
+  assert(tree.GetRoot()->GetValue() == 8);
+  assert(tree.GetRoot()->left->GetValue() == 4);
+  assert(tree.GetRoot()->right->GetValue() == 16);
+  // Depth 2
+  assert(tree.GetRoot()->left->left->GetValue() == 2);
+  assert(tree.GetRoot()->left->right->GetValue() == 6);
+  assert(tree.GetRoot()->right->left->GetValue() == 12);
+  assert(tree.GetRoot()->right->right->GetValue() == 19);
+  // Depth 3
+  assert(tree.GetRoot()->left->left->left->GetValue() == 1);
+  assert(tree.GetRoot()->left->left->right->GetValue() == 3);
+  assert(tree.GetRoot()->left->right->left->GetValue() == 5);
+  assert(tree.GetRoot()->left->right->right->GetValue() == 7);
+  assert(tree.GetRoot()->right->left->left->GetValue() == 10);
+  assert(tree.GetRoot()->right->left->right->GetValue() == 14);
+  assert(tree.GetRoot()->right->right->left->GetValue() == 18);
+  assert(tree.GetRoot()->right->right->right->GetValue() == 20);
+  // Depth 4
+  assert(tree.GetRoot()->right->left->left->left->GetValue() == 9);
+  assert(tree.GetRoot()->right->left->left->right->GetValue() == 11);
+  assert(tree.GetRoot()->right->left->right->left->GetValue() == 13);
+  assert(tree.GetRoot()->right->left->right->right->GetValue() == 15);
+}
+
+void TestBalancedNontrivialDeletions() {
+  ScopedPass pass("AvlTree<int>::Remove() [balanced, non-trivial]");
+  AvlTree<int> tree(aligner);
+  
+  // No left subnode of in-order predecessor; removing root
+  tree.Add(4);
+  tree.Add(2);
+  tree.Add(6);
+  tree.Add(1);
+  tree.Add(3);
+  tree.Add(5);
+  tree.Add(7);
+  assert(aligner.GetAllocCount() == 7);
+  assert(tree.Remove(4));
+  assert(aligner.GetAllocCount() == 6);
+  assert(ValidateRoot(tree.GetRoot()));
+  assert(IsFull(tree.GetRoot()));
+  assert(IsLeftOnly(tree.GetRoot()->left));
+  assert(IsFull(tree.GetRoot()->right));
+  assert(IsLeaf(tree.GetRoot()->left->left));
+  assert(IsLeaf(tree.GetRoot()->right->left));
+  assert(IsLeaf(tree.GetRoot()->right->right));
+  // Validate parents
+  assert(ValidateParent(tree.GetRoot()->left));
+  assert(ValidateParent(tree.GetRoot()->right));
+  assert(ValidateParent(tree.GetRoot()->left->left));
+  assert(ValidateParent(tree.GetRoot()->right->left));
+  assert(ValidateParent(tree.GetRoot()->right->right));
+  // Validate values
+  assert(tree.GetRoot()->GetValue() == 3);
+  assert(tree.GetRoot()->left->GetValue() == 2);
+  assert(tree.GetRoot()->right->GetValue() == 6);
+  assert(tree.GetRoot()->left->left->GetValue() == 1);
+  assert(tree.GetRoot()->right->left->GetValue() == 5);
+  assert(tree.GetRoot()->right->right->GetValue() == 7);
+  tree.Clear();
+  assert(aligner.GetAllocCount() == 0);
+  
+  // No left subnode of in-order predecessor; removing child of root
+  tree.Add(4);
+  tree.Add(2);
+  tree.Add(6);
+  tree.Add(1);
+  tree.Add(3);
+  tree.Add(5);
+  tree.Add(7);
+  assert(aligner.GetAllocCount() == 7);
+  assert(tree.Remove(2));
+  assert(aligner.GetAllocCount() == 6);
+  assert(ValidateRoot(tree.GetRoot()));
+  assert(IsFull(tree.GetRoot()));
+  assert(IsRightOnly(tree.GetRoot()->left));
+  assert(IsFull(tree.GetRoot()->right));
+  assert(IsLeaf(tree.GetRoot()->left->right));
+  assert(IsLeaf(tree.GetRoot()->right->left));
+  assert(IsLeaf(tree.GetRoot()->right->right));
+  // Validate parents
+  assert(ValidateParent(tree.GetRoot()->left));
+  assert(ValidateParent(tree.GetRoot()->right));
+  assert(ValidateParent(tree.GetRoot()->left->right));
+  assert(ValidateParent(tree.GetRoot()->right->left));
+  assert(ValidateParent(tree.GetRoot()->right->right));
+  // Validate values
+  assert(tree.GetRoot()->GetValue() == 4);
+  assert(tree.GetRoot()->left->GetValue() == 1);
+  assert(tree.GetRoot()->right->GetValue() == 6);
+  assert(tree.GetRoot()->left->right->GetValue() == 3);
+  assert(tree.GetRoot()->right->left->GetValue() == 5);
+  assert(tree.GetRoot()->right->right->GetValue() == 7);
+  tree.Clear();
+  assert(aligner.GetAllocCount() == 0);
+  
+  // Non-null left subnode of in-order predecessor; removing root
+  tree.Add(5);
+  tree.Add(2);
+  tree.Add(7);
+  tree.Add(1);
+  tree.Add(4);
+  tree.Add(6);
+  tree.Add(8);
+  tree.Add(3);
+  assert(aligner.GetAllocCount() == 8);
+  assert(tree.Remove(5));
+  assert(aligner.GetAllocCount() == 7);
+  assert(ValidateRoot(tree.GetRoot()));
+  assert(IsFull(tree.GetRoot()));
+  assert(IsFull(tree.GetRoot()->left));
+  assert(IsFull(tree.GetRoot()->right));
+  assert(IsLeaf(tree.GetRoot()->left->left));
+  assert(IsLeaf(tree.GetRoot()->left->right));
+  assert(IsLeaf(tree.GetRoot()->right->left));
+  assert(IsLeaf(tree.GetRoot()->right->right));
+  // Validate parents
+  assert(ValidateParent(tree.GetRoot()->left));
+  assert(ValidateParent(tree.GetRoot()->right));
+  assert(ValidateParent(tree.GetRoot()->left->left));
+  assert(ValidateParent(tree.GetRoot()->left->right));
+  assert(ValidateParent(tree.GetRoot()->right->left));
+  assert(ValidateParent(tree.GetRoot()->right->right));
+  // Validate values
+  assert(tree.GetRoot()->GetValue() == 4);
+  assert(tree.GetRoot()->left->GetValue() == 2);
+  assert(tree.GetRoot()->right->GetValue() == 7);
+  assert(tree.GetRoot()->left->left->GetValue() == 1);
+  assert(tree.GetRoot()->left->right->GetValue() == 3);
+  assert(tree.GetRoot()->right->left->GetValue() == 6);
+  assert(tree.GetRoot()->right->right->GetValue() == 8);
+  tree.Clear();
+  assert(aligner.GetAllocCount() == 0);
+  
+  // Non-null left subnode of in-order predecessor; removing child of root
+  tree.Add(5);
+  tree.Add(3);
+  tree.Add(7);
+  tree.Add(1);
+  tree.Add(4);
+  tree.Add(6);
+  tree.Add(8);
+  tree.Add(2);
+  assert(aligner.GetAllocCount() == 8);
+  assert(tree.Remove(3));
+  assert(aligner.GetAllocCount() == 7);
+  assert(ValidateRoot(tree.GetRoot()));
+  assert(IsFull(tree.GetRoot()));
+  assert(IsFull(tree.GetRoot()->left));
+  assert(IsFull(tree.GetRoot()->right));
+  assert(IsLeaf(tree.GetRoot()->left->left));
+  assert(IsLeaf(tree.GetRoot()->left->right));
+  assert(IsLeaf(tree.GetRoot()->right->left));
+  assert(IsLeaf(tree.GetRoot()->right->right));
+  // Validate parents
+  assert(ValidateParent(tree.GetRoot()->left));
+  assert(ValidateParent(tree.GetRoot()->right));
+  assert(ValidateParent(tree.GetRoot()->left->left));
+  assert(ValidateParent(tree.GetRoot()->left->right));
+  assert(ValidateParent(tree.GetRoot()->right->left));
+  assert(ValidateParent(tree.GetRoot()->right->right));
+  // Validate values
+  assert(tree.GetRoot()->GetValue() == 5);
+  assert(tree.GetRoot()->left->GetValue() == 2);
+  assert(tree.GetRoot()->right->GetValue() == 7);
+  assert(tree.GetRoot()->left->left->GetValue() == 1);
+  assert(tree.GetRoot()->left->right->GetValue() == 4);
+  assert(tree.GetRoot()->right->left->GetValue() == 6);
+  assert(tree.GetRoot()->right->right->GetValue() == 8);
+  tree.Clear();
+  assert(aligner.GetAllocCount() == 0);
+}
+
+void TestRandomModifications() {
+  ScopedPass pass("AvlTree<int>::[Remove/Add]() [pre-randomized]");
+  AvlTree<int> tree(aligner);
+  
+  int modifications[] = {2, 1, 60, 78, 52, 47, 13, 19, 30, 9, 84, 23, 66, 97,
+      27, 25, 15, 37, 90, 65, 61, 35, 31, 18, 100, 39, 91, 12, 76, 92, -13,
+      -76, -12, -37, -66, -23, -2, -91, -65, -60, -97, -25, -15, -31, -18,
+      -35, -61, -30, -9, -27, -78, -1, -52, -84, -100, -90, -19, -92, -39,
+      -47, 44, 10, 31, 7, 99, 32, 70, 47, 89, 90, 18, 76, 82, 77, 2, 33, 37,
+      20, 16, 91, 69, 84, 93, 53, 6, 19, 59, 39, -37, -6, -32, -10, -91, -76,
+      -53, -19, -84, -77, -59, -99, -33, -44, -93, -39, -47, -89, -69, -16,
+      -70, -82, -20, -2, -31, -90, -7, 15, 64, 61, 25, 55, 53, 49, 17, 45, 46,
+      1, 20, 91, 78, 83, -46, -64, -15, -18, -25, -45, -83, -17, -91, -53,
+      -20, -61, -1, -78, 80, 98, 15, 100, 5, 90, 81, 39, 48, 76, 1, 94, -76,
+      -98, -94, -55, -15, -1, -100, -5, -81, -90, -39, -80, -49, 20, 71, 35,
+      86, 16, 44, 54, 68, 96, 63, 85, 95, 1, 84, 17, 73, 67, 39, 22, 94, 6, 7,
+      47, 53, 42, 81, 38, 12, 23, 59, 91, 18, 51, 56, 98, 92, 3, 25, 72, 32,
+      19, 4, 57, 76, 88, 74, 28, 52, 5, 97, -59, -94, -42, -63, -48, -72, -16,
+      -76, -74, -3, -73, -35, -17, -97, -25, -19, -98, -38, -68, -12, -18, 97,
+      76, 60, 17, 50, 78, 27, 2, 36, 14, 61, 24, 70, 55, 80, 94, 38, 46, 16,
+      65, 66, 35, 34, 64, 98, 83, 73, 77, 69, 41, 31, 59, 29, 90, 26, 18, 43,
+      79, 74, 42, 37, 49, 21, 9, 8, 58, 12, 25, 75, 72, 68, 33, 11, 10, 19,
+      30, 48, 13, 45, 3, 93, 15, 62, -23, -72, -67, -92, -24, -14, -20, -6,
+      -42, -5, -25, -97, -80, -49, -51, -11, -2, -85, -73, -52, -54, -43, -71,
+      -90, -53, -96, -9, -94, -60, -79, -30, -65, -19, -68, -4, -48, -57, -61,
+      -55, -69, -70, -44, -16, -3, -34, -74, -91, -64, -56, -75, -98, -26,
+      -32, -13, -45, -35, -50, -7, -29, -93, -77, -15, -58, -76, -8, -46, -83,
+      -39, -10, -31, -38, -81, -66, -22, -78, -21, -1, -33, -62, -88, -37,
+      -41, -47, -84, -27, -36, -86, -28, -95, -18, 49, 52, 46, 45, 72, 48, 10,
+      58, 95, 74, 6, 37, 94, 83, 70, 31, 21, 77, 67, 11, 92, 32, 60, 84, 65,
+      55, 97, 66, 86, 13, 96, 38, 40, 88, 91, 22, 2, 64, 28, 68, 54, 79, 19,
+      85, 7, 34, 15, 23, 57, 56, 80, 76, 26, 42, 39, 36, 61, 81, 29, 99, 90,
+      50, 44, 41, 27, 33, 25, 24, 30, 4, 53, 5, 78, 16, 35, 89, 47, 93, 1, 14,
+      87, 98, 82, 73, 63, 8, 71, 100, 3, 9, 51, 75, 43, 62, 20, 18, -34, -55,
+      -56, -67, -40, -63, -54, -75, -1, -20, -17, -96, -36, -27, -11, -14, -8,
+      -86, -68, -58, -51, -100, -59, -30, -76, -60, -43, -23, -91, -97, -44,
+      -32, -88, -15, -41, -99, -95, -61, -62, -98, -35, -19, -92, 44, 76, 36,
+      75, 17, 61, 41, 100, 88, 54, 32, 19, 55, 67, 56, 51, 60, 11, 97, 34, 23,
+      1, 15, 98, 43, 69, 95, 27, 8, 68, 91, 92, 58, 86, 30, 63, 40, 59, 14,
+      96, 20, 35, 99, -100, -91, -75, -11, -18, -89, -88, -16, -39, -78, -93,
+      -73, -63, -94, -33, -72, -61, -38, -48, -69, -82, -96, -41, -34, -7,
+      -43, -4, -37, -20, -80, -40, -25, -6, -64, -1, -99, -66, -86, -8, -49,
+      -50, -95, -22, -9, -12, -56, -52, -59, -44, -23, -17, -46, -47, -29, -2,
+      -26, -24, -87, -84, -15, -45, -74, -36, -58, -67, -85, -68, -81, -92,
+      -53, -19, -60, -30, -27, -35, -70, -83, -65, -55, -54, -14, -51, -32,
+      -77, -21, -76, -97, -3, -5, -71, 45, 35, 43, 56, 34, 26, 61, 27, 88, 6,
+      1, 62, 47, 71, 21, 4, 14, 54, 89, 82, 67, 29, 68, 2, 36, 91, 8, 7, 53,
+      38, 32, 20, 60, 84, 5, 63, 37, 80, 52, 44, 97, 93, 100, 95, 83, 33, 9,
+      66};
+  int inside[] = {10, 31, 13, 28, 79, 57, 42, 90, 98, 45, 35, 43, 56, 34, 26,
+                  61, 27, 88, 6, 1, 62, 47, 71, 21, 4, 14, 54, 89, 82, 67, 29,
+                  68, 2, 36, 91, 8, 7, 53, 38, 32, 20, 60, 84, 5, 63, 37, 80,
+                  52, 44, 97, 93, 100, 95, 83, 33, 9, 66};
+  int outside[] = {75, 11, 18, 16, 39, 78, 73, 94, 72, 48, 69, 96, 41, 40, 25,
+                   64, 99, 86, 49, 50, 22, 12, 59, 23, 17, 46, 24, 87, 15, 74,
+                   58, 85, 81, 92, 19, 30, 70, 65, 55, 51, 77, 76, 3};
+  for (size_t i = 0; i < sizeof(modifications) / sizeof(int); ++i) {
+    int val = modifications[i];
+    if (val > 0) {
+      assert(!tree.Contains(val));
+      assert(tree.Add(val));
+    } else {
+      assert(tree.Remove(-val));
+    }
+    int ignored;
+    assert(ValidateBalance(tree.GetRoot(), ignored));
+  }
+  for (size_t i = 0; i < sizeof(inside) / sizeof(int); ++i) {
+    assert(tree.Contains(inside[i]));
+  }
+  for (size_t i = 0; i < sizeof(outside) / sizeof(int); ++i) {
+    assert(!tree.Contains(outside[i]));
+  }
 }
 
 bool IsLeaf(const AvlNode<int> * node) {
@@ -544,4 +999,28 @@ bool ValidateParent(const AvlNode<int> * node) {
 
 bool ValidateRoot(const AvlNode<int> * node) {
   return node != nullptr && node->parent == nullptr;
+}
+
+bool ValidateBalance(const AvlNode<int> * node, int & depthOut) {
+  if (!node) {
+    depthOut = 0;
+    return true;
+  }
+  if (!ValidateParent(node)) {
+    return false;
+  }
+  int d1, d2;
+  bool res1 = ValidateBalance(node->left, d1);
+  bool res2 = ValidateBalance(node->right, d2);
+  if (!res1 || !res2) {
+    return false;
+  }
+  if (d1 - d2 > 1 || d2 - d1 > 1) {
+    return false;
+  }
+  depthOut = 1 + ansa::Max(d1, d2);
+  if (depthOut != node->depth + 1) {
+    return false;
+  }
+  return true;
 }

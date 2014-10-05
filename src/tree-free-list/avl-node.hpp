@@ -73,6 +73,14 @@ struct AvlNode {
   }
   
   /**
+   * Returns `true` if the left child's depth is greater than the right child's
+   * depth.
+   */
+  inline bool IsLeftHeavy() const {
+    return GetRightDepth() < GetLeftDepth();
+  }
+  
+  /**
    * Recompute the depth of this node using its two children. Returns `true` if
    * the depth changed.
    */
@@ -85,8 +93,8 @@ struct AvlNode {
   /**
    * Rebalance this node and return the node that should take its place.
    *
-   * If the node is too imbalanced to balance with a single operation, this
-   * method returns `nullptr`.
+   * This method asserts that the node is balanced enough to be rebalanced 
+   * completely with a single rotation.
    *
    * Upon success, the returned node may have a different depth than this node
    * originally had. This node's parent will not be affected in any way, so it
@@ -95,15 +103,17 @@ struct AvlNode {
    */
   AvlNode * Rebalance() {
     int imbalance = GetLeftDepth() - GetRightDepth();
+    assert(imbalance >= -2 && imbalance <= 2);
     if (imbalance == -2) {
-      // Right side is too heavy
-      if (!right->IsRightHeavy()) {
+      // Right-X case
+      if (right->IsLeftHeavy()) {
         // Reduce right-left case to right-right case
         right = RotateRight(right, right->left);
         assert(!RecomputeDepth());
       }
       return RotateLeft(this, right);
     } else if (imbalance == 2) {
+      // Left-X case
       if (left->IsRightHeavy()) {
         // Reduce left-right case to left-left case
         left = RotateLeft(left, left->right);
@@ -113,6 +123,7 @@ struct AvlNode {
     } else if (imbalance > -2 && imbalance < 2) {
       return this;
     } else {
+      // never should be reached
       return nullptr;
     }
   }
