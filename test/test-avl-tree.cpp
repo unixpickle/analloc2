@@ -15,6 +15,7 @@ void TestBalancedTrivialDeletions();
 void TestUnbalancedTrivialDeletions();
 void TestBalancedNontrivialDeletions();
 void TestRandomModifications();
+void TestFindMethods();
 
 bool IsLeaf(const AvlNode<int> * node);
 bool IsFull(const AvlNode<int> * node);
@@ -42,6 +43,8 @@ int main() {
   TestBalancedNontrivialDeletions();
   assert(aligner.GetAllocCount() == 0);
   TestRandomModifications();
+  assert(aligner.GetAllocCount() == 0);
+  TestFindMethods();
   assert(aligner.GetAllocCount() == 0);
   return 0;
 }
@@ -970,6 +973,39 @@ void TestRandomModifications() {
   for (size_t i = 0; i < sizeof(outside) / sizeof(int); ++i) {
     assert(!tree.Contains(outside[i]));
   }
+}
+
+void TestFindMethods() {
+  ScopedPass pass("AvlTree<int>::[Find*]()");
+  AvlTree<int> tree(aligner);
+  
+  tree.Add(10);
+  tree.Add(6);
+  tree.Add(16);
+  tree.Add(4);
+  tree.Add(8);
+  tree.Add(12);
+  tree.Add(18);
+  tree.Add(2);
+  tree.Add(14);
+  
+  int result;
+  assert(tree.FindGreaterThan(result, 15));
+  assert(result == 16);
+  assert(tree.FindGreaterThanOrEqualTo(result, 15));
+  assert(result == 16);
+  assert(tree.FindGreaterThan(result, 14));
+  assert(result == 16);
+  assert(tree.FindGreaterThanOrEqualTo(result, 14));
+  assert(result == 14);
+  assert(tree.FindLessThan(result, 7));
+  assert(result == 6);
+  assert(tree.FindLessThanOrEqualTo(result, 7));
+  assert(result == 6);
+  assert(tree.FindLessThan(result, 8));
+  assert(result == 6);
+  assert(tree.FindLessThanOrEqualTo(result, 8));
+  assert(result == 8);
 }
 
 bool IsLeaf(const AvlNode<int> * node) {

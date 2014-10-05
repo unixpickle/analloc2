@@ -174,18 +174,19 @@ protected:
   }
   
   /**
-   * Recursively find a value which is greater than (or equal to, if [equal] is
-   * `true`) a given [value].
+   * Recursively find a value which is greater than (or equal to, if
+   * [allowEqual] is `true`) a given [value].
    */
   Node * RecursivelySearchAbove(Node * current, const T & value,
-                                   bool equal) {
+                                bool allowEqual) {
     if (!current) return nullptr;
-    if (current->GetValue() < value) {
-      return RecursivelySearchAbove(current->right, value, equal);
-    } else if (equal && current->GetValue() == value) {
+    bool areEqual = (current->GetValue() == value);
+    if (current->GetValue() < value || (!allowEqual && areEqual)) {
+      return RecursivelySearchAbove(current->right, value, allowEqual);
+    } else if (allowEqual && areEqual) {
       return current;
     } else {
-      Node * res = RecursivelySearchAbove(current->left, value, equal);
+      Node * res = RecursivelySearchAbove(current->left, value, allowEqual);
       if (res) {
         return res;
       } else {
@@ -199,14 +200,15 @@ protected:
    * `true`) a given [value].
    */
   Node * RecursivelySearchBelow(Node * current, const T & value,
-                                   bool equal) {
+                                   bool allowEqual) {
     if (!current) return nullptr;
-    if (current->GetValue() > value) {
-      return RecursivelySearchBelow(current->left, value, equal);
-    } else if (equal && current->GetValue() == value) {
+    bool areEqual = (current->GetValue() == value);
+    if (current->GetValue() > value || (!allowEqual && areEqual)) {
+      return RecursivelySearchBelow(current->left, value, allowEqual);
+    } else if (allowEqual && areEqual) {
       return current;
     } else {
-      Node * res = RecursivelySearchBelow(current->right, value, equal);
+      Node * res = RecursivelySearchBelow(current->right, value, allowEqual);
       if (res) {
         return res;
       } else {
