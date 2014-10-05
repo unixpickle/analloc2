@@ -990,6 +990,8 @@ void TestFindMethods() {
   tree.Add(14);
   
   int result;
+  
+  // Values inside the dataset
   assert(tree.FindGreaterThan(result, 15));
   assert(result == 16);
   assert(tree.FindGreaterThanOrEqualTo(result, 15));
@@ -1006,6 +1008,30 @@ void TestFindMethods() {
   assert(result == 6);
   assert(tree.FindLessThanOrEqualTo(result, 8));
   assert(result == 8);
+  
+  // Values outside of the range of the dataset
+  assert(!tree.FindLessThan(result, 2));
+  assert(tree.FindLessThanOrEqualTo(result, 2));
+  assert(result == 2);
+  assert(!tree.FindLessThanOrEqualTo(result, 1));
+  assert(!tree.FindGreaterThan(result, 18));
+  assert(tree.FindGreaterThanOrEqualTo(result, 18));
+  assert(result == 18);
+  assert(!tree.FindGreaterThanOrEqualTo(result, 19));
+  
+  // Find and remove functionality
+  assert(tree.FindLessThanOrEqualTo(result, 6, true));
+  assert(result == 6);
+  assert(!tree.Contains(6));
+  assert(tree.FindLessThan(result, 5, true));
+  assert(result == 4);
+  assert(!tree.Contains(4));
+  assert(tree.FindGreaterThan(result, 1, true));
+  assert(result == 2);
+  assert(!tree.Contains(2));
+  assert(tree.FindGreaterThanOrEqualTo(result, 8, true));
+  assert(result == 8);
+  assert(!tree.Contains(8));
 }
 
 bool IsLeaf(const AvlNode<int> * node) {
