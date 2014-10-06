@@ -15,6 +15,20 @@ template <class T>
 class DynamicTree {
 public:
   /**
+   * An abstract search comparator for a binary search tree.
+   */
+  class SearchFunction {
+  public:
+    /**
+     * Returns 1 to indicate that the search should explore the left of the
+     * node of a certain [value]. Returns -1 to indicate that the search should
+     * explore the right of the node. Returns 0 to indicate that [value] is a
+     * valid search result and that the search is complete.
+     */
+    virtual int DirectionFromNode(const T & value) const = 0;
+  };
+  
+  /**
    * Create a new [DynamicTree] which will use a specified [allocator] to
    * allocate nodes.
    */
@@ -75,6 +89,18 @@ public:
    */
   virtual bool FindLessThanOrEqualTo(T & result, const T & value,
                                      bool remove = false) = 0;
+  
+  /**
+   * Find a node in the tree using an arbitrary search [function].
+   *
+   * If no value can be found, `false` is returned. Otherwise, `true` is
+   * returned. Upon success, [result] is set to the value which was found.
+   *
+   * If [remove] is specified as `true`, the node corresponding to the found
+   * value is removed from the tree before it is returned.
+   */
+  virtual bool Search(T & result, const SearchFunction & function,
+                      bool remove = false) = 0;
   
   /**
    * Check if this tree contains an exact value.

@@ -16,6 +16,7 @@ class AvlTree : public DynamicTree<T>, public ansa::NoCopy {
 public:
   typedef DynamicTree<T> super;
   typedef AvlNode<T> Node;
+  using typename super::SearchFunction;
   
   /**
    * Create a new, empty AVL tree.
@@ -51,6 +52,26 @@ public:
                                      bool remove = false) {
     return InternalFind(RecursivelySearchBelow(root, value, true),
                         result, remove);
+  }
+  
+  virtual bool Search(T & result, const SearchFunction & function,
+                      bool remove = false) {
+    Node * node = root;
+    while (node) {
+      int comparison = function.DirectionFromNode(node->GetValue());
+      if (comparison == 0) {
+        result = node->GetValue();
+        if (remove) {
+          RemoveNode(node);
+        }
+        return true;
+      } else if (comparison == -1) {
+        node = node->left;
+      } else {
+        node = node->right;
+      }
+    }
+    return false;
   }
   
   /**

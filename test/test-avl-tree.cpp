@@ -16,6 +16,7 @@ void TestUnbalancedTrivialDeletions();
 void TestBalancedNontrivialDeletions();
 void TestRandomModifications();
 void TestFindMethods();
+void TestSearchFunction();
 
 bool IsLeaf(const AvlNode<int> * node);
 bool IsFull(const AvlNode<int> * node);
@@ -45,6 +46,8 @@ int main() {
   TestRandomModifications();
   assert(aligner.GetAllocCount() == 0);
   TestFindMethods();
+  assert(aligner.GetAllocCount() == 0);
+  TestSearchFunction();
   assert(aligner.GetAllocCount() == 0);
   return 0;
 }
@@ -1032,6 +1035,71 @@ void TestFindMethods() {
   assert(tree.FindGreaterThanOrEqualTo(result, 8, true));
   assert(result == 8);
   assert(!tree.Contains(8));
+}
+
+void TestSearchFunction() {
+  ScopedPass pass("AvlTree<int>::Search()");
+  AvlTree<int> tree(aligner);
+  
+  struct SearchFunc : public AvlTree<int>::SearchFunction {
+    virtual int DirectionFromNode(const int & test) const {
+      if (value > test) return 1;
+      else if (value < test) return -1;
+      else return 0;
+    }
+    
+    int value;
+  };
+  
+  tree.Add(10);
+  tree.Add(6);
+  tree.Add(16);
+  tree.Add(4);
+  tree.Add(8);
+  tree.Add(12);
+  tree.Add(18);
+  tree.Add(2);
+  tree.Add(14);
+  
+  SearchFunc func;
+  int result;
+  
+  // Basic searches
+  func.value = 2;
+  assert(tree.Search(result, func));
+  assert(result == 2);
+  func.value = 1;
+  assert(!tree.Search(result, func));
+  func.value = 18;
+  assert(tree.Search(result, func));
+  assert(result == 18);
+  func.value = 19;
+  assert(!tree.Search(result, func));
+  func.value = 10;
+  assert(tree.Search(result, func));
+  assert(result == 10);
+  func.value = 9;
+  assert(!tree.Search(result, func));
+  
+  // Deleting searches
+  func.value = 2;
+  assert(tree.Search(result, func, true));
+  assert(result == 2);
+  assert(!tree.Contains(2));
+  assert(!tree.Search(result, func, true));
+  assert(!tree.Search(result, func));
+  func.value = 18;
+  assert(tree.Search(result, func, true));
+  assert(result == 18);
+  assert(!tree.Contains(18));
+  assert(!tree.Search(result, func, true));
+  assert(!tree.Search(result, func));
+  func.value = 10;
+  assert(tree.Search(result, func, true));
+  assert(result == 10);
+  assert(!tree.Contains(10));
+  assert(!tree.Search(result, func, true));
+  assert(!tree.Search(result, func));
 }
 
 bool IsLeaf(const AvlNode<int> * node) {
