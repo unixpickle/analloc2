@@ -7,7 +7,7 @@ using namespace analloc;
 void TestFullRegion();
 void TestPartialRegion();
 void TestJoins();
-void HandleFailure(FreeListAllocator<uint16_t, uint8_t> *);
+bool HandleFailure(FreeListAllocator<uint16_t, uint8_t> *);
 
 int main() {
   TestFullRegion();
@@ -120,7 +120,7 @@ void TestJoins() {
   assert(!allocator.Alloc(addr, 1));
 }
 
-void HandleFailure(FreeListAllocator<uint16_t, uint8_t> *) {
+bool HandleFailure(FreeListAllocator<uint16_t, uint8_t> *) {
   std::cerr << "allocation failure!" << std::endl;
   abort();
 }

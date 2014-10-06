@@ -10,7 +10,7 @@
 using namespace analloc;
 
 uint64_t ProfileFreeListEnd(size_t length, size_t iters);
-void HandleFailure(FreeListAllocator<size_t> *);
+bool HandleFailure(FreeListAllocator<size_t> *);
 
 int main() {
   for (size_t i = 0; i < 5; ++i) {
@@ -38,7 +38,7 @@ uint64_t ProfileFreeListEnd(size_t length, size_t iterations) {
   return (Nanotime() - start) / iterations;
 }
 
-void HandleFailure(FreeListAllocator<size_t> *) {
+bool HandleFailure(FreeListAllocator<size_t> *) {
   std::cerr << "allocation failure!" << std::endl;
   abort();
 }

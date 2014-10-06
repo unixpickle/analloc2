@@ -4,7 +4,7 @@
 
 using namespace analloc;
 
-void HandleFailure(FreeListAllocator<uint16_t, uint8_t> *);
+bool HandleFailure(FreeListAllocator<uint16_t, uint8_t> *);
 
 int main() {
   ScopedPass pass("FreeListAligner");
@@ -57,7 +57,7 @@ int main() {
   return 0;
 }
 
-void HandleFailure(FreeListAllocator<uint16_t, uint8_t> *) {
+bool HandleFailure(FreeListAllocator<uint16_t, uint8_t> *) {
   std::cerr << "allocation failure!" << std::endl;
   abort();
 }

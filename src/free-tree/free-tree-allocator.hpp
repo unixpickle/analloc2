@@ -80,8 +80,10 @@ public:
    * The function signature of a callback which a [FreeTreeAllocator] will call
    * when a free region cannot be recorded because memory could not be
    * obtained for its node in a tree.
+   *
+   * If this returns `true`, the caller will re-attempt the allocation.
    */
-  typedef void (* FailureHandler)(FreeTreeAllocator<AddressType, SizeType> *);
+  typedef bool (* FailureHandler)(FreeTreeAllocator<AddressType, SizeType> *);
   
   FreeTreeAllocator(VirtualAllocator & allocator, FailureHandler handler)
       : sizedTree(allocator), addressedTree(allocator),

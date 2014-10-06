@@ -20,8 +20,10 @@ public:
    * The function signature of a callback which a [FreeListAllocator] will call
    * when a free region cannot be recorded because memory could not be
    * obtained.
+   *
+   * If this function returns true, the caller will re-attempt the allocation.
    */
-  typedef void (* FailureHandler)(FreeListAllocator<AddressType, SizeType> *);
+  typedef bool (* FailureHandler)(FreeListAllocator<AddressType, SizeType> *);
   
   /**
    * Create a new [FreeListAllocator] with no free memory regions.
@@ -111,9 +113,10 @@ protected:
   
   void InsertAfter(FreeRegion * before, AddressType addr, SizeType size) {
     uintptr_t ptr;
-    if (!allocator.Alloc(ptr, sizeof(FreeRegion))) {
-      failureHandler(this);
-      return;
+    while (!allocator.Alloc(ptr, sizeof(FreeRegion))) {
+      if (!failureHandler(this)) {
+        return;
+      }
     }
     FreeRegion * insert = (FreeRegion *)ptr;
     insert->start = addr;
