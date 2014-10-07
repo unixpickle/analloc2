@@ -15,12 +15,20 @@ uint64_t ProfileSequentialAdds(int count);
 uint64_t ProfileSequentialRemoves(int count);
 uint64_t ProfileFindGreater(int depth);
 
+void GenerateUniformTree(AvlTree<int> & tree, int depth);
+
 int main() {
   // TODO: check the maximum depth we can do on this platform
-  for (int depth = 2; depth <= 20; depth += 2) {
+  for (int depth = 10; depth <= 20; depth += 2) {
     assert(aligner.GetAllocCount() == 0);
     std::cout << "AvlTree<int>::Contains() [depth = " << depth << "] ... "
       << std::flush << ProfileContains(depth) << " nanos" << std::endl;
+  }
+  for (int depth = 10; depth <= 20; depth += 2) {
+    assert(aligner.GetAllocCount() == 0);
+    std::cout << "AvlTree<int>::FindGreaterThan() [depth = " << depth
+      << "] ... " << std::flush << ProfileFindGreater(depth) << " nanos"
+      << std::endl;
   }
   for (int factor = 0; factor < 4; ++factor) {
     int count = 0x800 << factor;
@@ -33,18 +41,8 @@ int main() {
 }
 
 uint64_t ProfileContains(int depth) {
-  assert((1L << depth) < ansa::NumericInfo<int>::max);
   AvlTree<int> tree(aligner);
-  
-  // Generate a completely balanced AVL tree of the given depth.
-  for (int i = 0; i < depth; ++i) {
-    int start = 1 << (depth - (i + 1));
-    int inc = 2 * start;
-    for (int j = 0; j < (1 << i); ++j) {
-      tree.Add(start + (j * inc));
-    }
-  }
-  assert(tree.GetRoot()->depth + 1 == depth);
+  GenerateUniformTree(tree, depth);
   
   // Search for the bottom element in the tree a lot of times
   uint64_t start = Nanotime();
@@ -96,4 +94,29 @@ uint64_t ProfileSequentialRemoves(int count) {
 
 uint64_t ProfileFindGreater(int depth) {
   AvlTree<int> tree(aligner);
+  GenerateUniformTree(tree, depth);
+  
+  // Calculate the leftmost leaf's value
+  int leafValue = 1 << (depth - 1);
+  const int iterations = 5000000;
+  uint64_t start = Nanotime();
+  for (int i = 0; i < iterations; ++i) {
+    int value;
+    __asm__ __volatile("" : : "r" (tree.FindGreaterThan(value, leafValue)));
+    assert(value == leafValue + 1);
+  }
+  return (Nanotime() - start) / iterations;
+}
+
+void GenerateUniformTree(AvlTree<int> & tree, int depth) {
+  // Generate a completely balanced AVL tree of the specified depth.
+  assert((1L << (depth + 1)) <= ansa::NumericInfo<int>::max);
+  for (int i = 0; i < depth; ++i) {
+    int start = 1 << (depth - (i + 1));
+    int inc = 2 * start;
+    for (int j = 0; j < (1 << i); ++j) {
+      tree.Add(start + (j * inc));
+    }
+  }
+  assert(tree.GetRoot()->depth + 1 == depth);
 }
