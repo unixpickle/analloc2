@@ -20,9 +20,9 @@ On a dataset in which only the last bit is free, the algorithm scans about *7 bi
 
 The allocation time is **O**(*n*), where *n* is the number of free regions which must be scanned before a large enough free region is found.
 
-My benchmarks showed that it takes roughly *9 clockcycles for each free region to be traversed*.
+My benchmarks showed that it takes roughly *5 clockcycles for each free region to be traversed*.
 
-NOTE: The performance benchmark for this allocator uses the standard POSIX `malloc()` and `free()` functions for region allocation/deallocation. The benchmarks take long enough to run that the running time of these functions tends not to affect the performance of the overall implementation.
+NOTE: The performance benchmark for this allocator uses a high-performance single-sized allocator to allocate free regions. This way, the performance of the standard UNIX malloc() and free() will not affect the results of the benchmark.
 
 # TODO
 

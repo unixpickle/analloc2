@@ -1,13 +1,21 @@
-// NOTE: this test ought to be taken with a grain of salt, given that the
-// malloc() and free() functions may take up a significant amount of the
-// benchmark.
-
 #include <iostream>
 #include <analloc2>
 #include "nanotime.hpp"
 #include "posix-virtual-aligner.hpp"
+#include "stack-allocator.hpp"
 
 using namespace analloc;
+
+PosixVirtualAligner aligner;
+
+/**
+ * Used for computing the block size to provide from the [StackAllocator].
+ */
+struct EquivalentRegionStruct {
+  void * ptr1, * ptr2;
+  uintptr_t field1;
+  size_t field2;
+};
 
 uint64_t ProfileFreeListEnd(size_t length, size_t iters);
 bool HandleFailure(FreeListAllocator<size_t> *);
@@ -21,8 +29,8 @@ int main() {
 }
 
 uint64_t ProfileFreeListEnd(size_t length, size_t iterations) {
-  PosixVirtualAligner aligner;
-  FreeListAllocator<size_t> allocator(aligner, HandleFailure);
+  StackAllocator<sizeof(EquivalentRegionStruct)> stack(length + 1, aligner);
+  FreeListAllocator<size_t> allocator(stack, HandleFailure);
   
   // Carve out [length] regions of size 1, and then one final region of size 2.
   for (size_t i = 0; i < length; ++i) {

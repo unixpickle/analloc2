@@ -9,6 +9,8 @@ void TestPartialRegion();
 void TestJoins();
 bool HandleFailure(FreeListAllocator<uint16_t, uint8_t> *);
 
+PosixVirtualAligner aligner;
+
 int main() {
   TestFullRegion();
   TestPartialRegion();
@@ -18,8 +20,6 @@ int main() {
 
 void TestFullRegion() {
   ScopedPass pass("FreeListAllocator [full-region]");
-  
-  PosixVirtualAligner aligner;
   FreeListAllocator<uint16_t, uint8_t> allocator(aligner, HandleFailure);
   uint16_t addr;
   
@@ -41,8 +41,6 @@ void TestFullRegion() {
 
 void TestPartialRegion() {
   ScopedPass pass("FreeListAllocator [partial]");
-  
-  PosixVirtualAligner aligner;
   FreeListAllocator<uint16_t, uint8_t> allocator(aligner, HandleFailure);
   uint16_t addr;
   
@@ -73,7 +71,6 @@ void TestPartialRegion() {
 void TestJoins() {
   ScopedPass pass("FreeListAllocator [joins]");
   
-  PosixVirtualAligner aligner;
   FreeListAllocator<uint16_t, uint8_t> allocator(aligner, HandleFailure);
   uint16_t addr;
   
