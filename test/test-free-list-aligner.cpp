@@ -54,6 +54,8 @@ int main() {
   assert(addr == 0x20);
   assert(!aligner.Alloc(addr, 1));
   
+  assert(posixAligner.GetAllocCount() == 0);
+  
   return 0;
 }
 

@@ -15,6 +15,7 @@ int main() {
   TestFullRegion();
   TestPartialRegion();
   TestJoins();
+  assert(aligner.GetAllocCount() == 0);
   return 0;
 }
 
@@ -66,6 +67,11 @@ void TestPartialRegion() {
   assert(allocator.Alloc(addr, 0x7));
   assert(addr == 0x129);
   assert(!allocator.Alloc(addr, 1));
+  
+  // Deallocate a couple regions so that the main() function can test if the
+  // destructor properly frees regions.
+  allocator.Dealloc(0x100, 1);
+  allocator.Dealloc(0x102, 1);
 }
 
 void TestJoins() {

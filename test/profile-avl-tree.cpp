@@ -13,6 +13,7 @@ PosixVirtualAligner aligner;
 uint64_t ProfileContains(int depth);
 uint64_t ProfileSequentialAdds(int count);
 uint64_t ProfileSequentialRemoves(int count);
+uint64_t ProfileFindGreater(int depth);
 
 int main() {
   // TODO: check the maximum depth we can do on this platform
@@ -91,4 +92,8 @@ uint64_t ProfileSequentialRemoves(int count) {
     total += Nanotime() - start;
   }
   return total / iterations;
+}
+
+uint64_t ProfileFindGreater(int depth) {
+  AvlTree<int> tree(aligner);
 }
