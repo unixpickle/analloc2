@@ -15,6 +15,7 @@ uint64_t ProfileSequentialAdds(int count);
 uint64_t ProfileSequentialRemoves(int count);
 uint64_t ProfileFindGreater(int depth);
 uint64_t ProfileFindLess(int depth);
+uint64_t ProfileClear(int depth);
 
 void GenerateUniformTree(AvlTree<int> & tree, int depth);
 
@@ -40,6 +41,10 @@ int main() {
       << std::flush << ProfileSequentialAdds(count) << std::endl;
     std::cout << "AvlTree<int>::Remove() [sequential, " << count << "] ... "
       << std::flush << ProfileSequentialRemoves(count) << std::endl;
+  }
+  for (int depth = 10; depth < 15; ++depth) {
+    std::cout << "AvlTree<int>::Clear() ... " << std::flush
+      << ProfileClear(depth) << std::endl;
   }
   return 0;
 }
@@ -126,6 +131,22 @@ uint64_t ProfileFindLess(int depth) {
     assert(value == leafValue - 1);
   }
   return (Nanotime() - start) / iterations;
+}
+
+uint64_t ProfileClear(int depth) {
+  StackAllocator<sizeof(AvlTree<int>::Node)> stack(1 << depth, aligner);
+  AvlTree<int> tree(stack);
+  GenerateUniformTree(tree, depth);
+  
+  const int iterations = 100;
+  uint64_t total = 0;
+  for (int i = 0; i < iterations; ++i) {
+    uint64_t now = Nanotime();
+    tree.Clear();
+    total += Nanotime() - now;
+    GenerateUniformTree(tree, depth);
+  }
+  return total / iterations;
 }
 
 void GenerateUniformTree(AvlTree<int> & tree, int depth) {
