@@ -1,8 +1,7 @@
 #ifndef __ANALLOC2_AVL_TREE_HPP__
 #define __ANALLOC2_AVL_TREE_HPP__
 
-#include "dynamic-tree.hpp"
-#include "avl-node.hpp"
+#include "dynamic-binary-tree.hpp"
 #include <ansa/nocopy>
 
 namespace analloc {
@@ -12,11 +11,26 @@ namespace analloc {
  * but a relatively low search cost.
  */
 template <class T>
-class AvlTree : public DynamicTree<T>, public ansa::NoCopy {
+class AvlTree : public DynamicBinaryTree<T>, public ansa::NoCopy {
 public:
-  typedef DynamicTree<T> super;
-  typedef AvlNode<T> Node;
-  using typename super::SearchFunction;
+  typedef DynamicBinaryTree<T> super;
+  
+  class Node : public super::Node {
+  public:
+    Node(const T & val) : super::Node(val) {}
+    
+    virtual super::Node * GetLeft() {
+      return static_cast<super::Node>(left);
+    }
+    
+    virtual super::Node * GetRight() {
+      return static_cast<super::Node>(right);
+    }
+    
+    Node * left = NULL;
+    Node * right = NULL;
+    int depth = 0;
+  };
   
   /**
    * Create a new, empty AVL tree.
@@ -27,72 +41,21 @@ public:
    * Deallocate the AVL tree and all of its nodes.
    */
   virtual ~AvlTree() {
-    RecursivelyDeallocNode(root);
-  }
-  
-  virtual bool FindGreaterThan(T & result, const T & value,
-                               bool remove = false) {
-    return InternalFind(RecursivelySearchAbove(root, value, false),
-                        result, remove);
-  }
-  
-  virtual bool FindGreaterThanOrEqualTo(T & result, const T & value,
-                                        bool remove = false) {
-    return InternalFind(RecursivelySearchAbove(root, value, true),
-                        result, remove);
-  }
-  
-  virtual bool FindLessThan(T & result, const T & value,
-                            bool remove = false) {
-    return InternalFind(RecursivelySearchBelow(root, value, false),
-                        result, remove);
-  }
-  
-  virtual bool FindLessThanOrEqualTo(T & result, const T & value,
-                                     bool remove = false) {
-    return InternalFind(RecursivelySearchBelow(root, value, true),
-                        result, remove);
-  }
-  
-  virtual bool Search(T & result, const SearchFunction & function,
-                      bool remove = false) {
-    Node * node = root;
-    while (node) {
-      int comparison = function.DirectionFromNode(node->GetValue());
-      if (comparison == 0) {
-        result = node->GetValue();
-        if (remove) {
-          RemoveNode(node);
-        }
-        return true;
-      } else if (comparison == -1) {
-        node = node->left;
-      } else {
-        node = node->right;
-      }
-    }
-    return false;
+    Clear();
   }
   
   /**
-   * Returns `true` if the tree contains a given [value]. This runs in
-   * O(log(n)) time.
+   * Returns the "mutable" root node.
    */
-  virtual bool Contains(const T & value) {
-    return FindEqual(value) != nullptr;
+  virtual super::Node * GetRoot() {
+    return static_cast<super::Node>(root);
   }
   
   /**
-   * Remove a value from the tree. This runs in O(log(n)) time.
+   * Returns an immutable root node with more information.
    */
-  virtual bool Remove(const T & value) {
-    Node * node = FindEqual(value);
-    if (!node) {
-      return false;
-    } else {
-      RemoveNode(node);
-      return true;
-    }
+  const Node * GetImmutableRoot() const {
+    return root;
   }
   
   /**
@@ -106,30 +69,8 @@ public:
     if (!root) {
       root = node;
       return true;
-    }
-    
-    // Find a leaf node which is as close to this node as possible
-    Node * current = root;
-    while (true) {
-      if (value > current->GetValue()) {
-        if (current->right) {
-          current = current->right;
-        } else {
-          current->right = node;
-          node->parent = current;
-          Rebalance(current);
-          return true;
-        }
-      } else {
-        if (current->left) {
-          current = current->left;
-        } else {
-          current->left = node;
-          node->parent = current;
-          Rebalance(current);
-          return true;
-        }
-      }
+    } else {
+      return AddTo(root, node);
     }
   }
   
@@ -143,13 +84,6 @@ public:
   }
   
   /**
-   * Returns the root node of the tree, or `nullptr` if the tree is empty.
-   */
-  inline const Node * GetRoot() {
-    return root;
-  }
-  
-  /**
    * Get the depth of the tree.
    *
    * An empty tree has a depth of 0. Otherwise, the depth is one more than the
@@ -157,7 +91,7 @@ public:
    */
   inline int GetDepth() {
     if (!root) return 0;
-    return root->GetDepth() + 1;
+    return root->depth + 1;
   }
   
 protected:
@@ -194,81 +128,32 @@ protected:
     DeallocNode(node);
   }
   
-  /**
-   * Recursively find a value which is greater than (or equal to, if
-   * [allowEqual] is `true`) a given [value].
-   */
-  Node * RecursivelySearchAbove(Node * current, const T & value,
-                                bool allowEqual) {
-    if (!current) return nullptr;
-    bool areEqual = (current->GetValue() == value);
-    if (current->GetValue() < value || (!allowEqual && areEqual)) {
-      return RecursivelySearchAbove(current->right, value, allowEqual);
-    } else if (allowEqual && areEqual) {
-      return current;
-    } else {
-      Node * res = RecursivelySearchAbove(current->left, value, allowEqual);
-      if (res) {
-        return res;
+  bool AddTo(Node * parent, Node * leaf) {
+    if (leaf->GetValue() < parent->GetValue()) {
+      Node * subnode = parent->left;
+      if (!subnode) {
+        parent->left = leaf;
+        // TODO: update depth
+        return false;
       } else {
-        return current;
+        if (AddTo(parent, leaf)) {
+          return true;
+        }
+        // TODO: here, rebalance
       }
-    }
-  }
-  
-  /**
-   * Recursively find a value which is less than (or equal to, if [equal] is
-   * `true`) a given [value].
-   */
-  Node * RecursivelySearchBelow(Node * current, const T & value,
-                                   bool allowEqual) {
-    if (!current) return nullptr;
-    bool areEqual = (current->GetValue() == value);
-    if (current->GetValue() > value || (!allowEqual && areEqual)) {
-      return RecursivelySearchBelow(current->left, value, allowEqual);
-    } else if (allowEqual && areEqual) {
-      return current;
     } else {
-      Node * res = RecursivelySearchBelow(current->right, value, allowEqual);
-      if (res) {
-        return res;
+      Node * subnode = parent->right;
+      if (!subnode) {
+        parent->right = leaf;
+        // TODO: update depth
+        return false;
       } else {
-        return current;
+        if (AddTo(parent, leaf)) {
+          return true;
+        }
+        // TODO: here, rebalance
       }
     }
-  }
-  
-  /**
-   * The internal mechanism behind all of the find methods. This is used to
-   * save a few lines of code in each of the four methods.
-   */
-  inline bool InternalFind(Node * node, T & output, bool remove) {
-    if (!node) {
-      return false;
-    } else {
-      output = node->GetValue();
-      if (remove) {
-        RemoveNode(node);
-      }
-      return true;
-    }
-  }
-  
-  /**
-   * Find a node in the tree which contains a given [value].
-   */
-  Node * FindEqual(const T & value) {
-    Node * node = root;
-    while (node) {
-      if (node->GetValue() == value) {
-        return node;
-      } else if (node->GetValue() < value) {
-        node = node->right;
-      } else {
-        node = node->left;
-      }
-    }
-    return nullptr;
   }
   
   /**

@@ -55,6 +55,7 @@ public:
   
   virtual bool SearchBest(T * result, const BestQuery & query,
                           bool remove = false) {
+    // TODO: respect `remove` argument
     return SearchBestFrom(GetRoot(), result, query, remove);
   }
   

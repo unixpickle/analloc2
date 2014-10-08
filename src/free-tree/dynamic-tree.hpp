@@ -90,18 +90,32 @@ public:
   virtual bool SearchBest(T * result, const BestQuery & query,
                           bool remove = false) = 0;
   
+  /**
+   * Searches for the lowest value in this tree which is greater than [value].
+   */
   virtual bool SearchGT(T * result, const T & value, bool remove = false) {
     SearchBest(result, ComparatorBestQuery(value, true, false), remove);
   }
 
+  /**
+   * Searches for the lowest value in this tree which is greater than or equal
+   * to [value].
+   */
   virtual bool SearchGE(T * result, const T & value, bool remove = false) {
     SearchBest(result, ComparatorBestQuery(value, true, true), remove);
   }
 
+  /**
+   * Searches for the greatest value in this tree which is less than [value].
+   */
   virtual bool SearchLT(T * result, const T & value, bool remove = false) {
     SearchBest(result, ComparatorBestQuery(value, false, false), remove);
   }
 
+  /**
+   * Searches for the greatest value in this tree which is less than or equal
+   * to [value].
+   */
   virtual bool SearchLE(T * result, const T & value, bool remove = false) {
     SearchBest(result, ComparatorBestQuery(value, false, true), remove);
   }
