@@ -14,6 +14,7 @@ uint64_t ProfileContains(int depth);
 uint64_t ProfileSequentialAdds(int count);
 uint64_t ProfileSequentialRemoves(int count);
 uint64_t ProfileFindGreater(int depth);
+uint64_t ProfileFindLess(int depth);
 
 void GenerateUniformTree(AvlTree<int> & tree, int depth);
 
@@ -28,6 +29,9 @@ int main() {
     assert(aligner.GetAllocCount() == 0);
     std::cout << "AvlTree<int>::FindGreaterThan() [depth = " << depth
       << "] ... " << std::flush << ProfileFindGreater(depth) << " nanos"
+      << std::endl;
+    std::cout << "AvlTree<int>::FindLessThan() [depth = " << depth
+      << "] ... " << std::flush << ProfileFindLess(depth) << " nanos"
       << std::endl;
   }
   for (int factor = 0; factor < 4; ++factor) {
@@ -104,6 +108,22 @@ uint64_t ProfileFindGreater(int depth) {
     int value;
     __asm__ __volatile("" : : "r" (tree.FindGreaterThan(value, leafValue)));
     assert(value == leafValue + 1);
+  }
+  return (Nanotime() - start) / iterations;
+}
+
+uint64_t ProfileFindLess(int depth) {
+  AvlTree<int> tree(aligner);
+  GenerateUniformTree(tree, depth);
+  
+  // Calculate the rightmost leaf's value
+  int leafValue = (1 << depth) - 1;
+  const int iterations = 5000000;
+  uint64_t start = Nanotime();
+  for (int i = 0; i < iterations; ++i) {
+    int value;
+    __asm__ __volatile("" : : "r" (tree.FindLessThan(value, leafValue)));
+    assert(value == leafValue - 1);
   }
   return (Nanotime() - start) / iterations;
 }
