@@ -15,17 +15,48 @@ template <class T>
 class DynamicTree {
 public:
   /**
-   * An abstract search comparator for a binary search tree.
+   * An abstract "comparator" used for querying elements in the tree.
    */
-  class SearchFunction {
+  class Query {
+  public:
+    enum Direction {
+      DirectionFound,
+      DirectionLeft,
+      DirectionRight
+    }
+    
+    /**
+     * A method which the tree calls for each node in the tree it searches.
+     *
+     * If this method returns [DirectionFound], the tree will stop the search
+     * and yield [value] as the result.
+     *
+     * If this method returns [DirectionLeft], the tree will continue its
+     * search with the left child of the current node. Conversely, if it
+     * returns [DirectionRight], the tree will search to the right of the node.
+     *
+     * It should be noted that nodes on the "left" are lower and nodes on the
+     * "right" are higher.
+     */
+    virtual Direction Next(const T & value) const = 0;
+  };
+  
+  /**
+   * An abstract subclass of [Query] which adds the abstraction of "acceptable"
+   * values, so that the "best" result can be found out of several
+   * possibilities.
+   */
+  class BestQuery : public Query {
   public:
     /**
-     * Returns 1 to indicate that the search should explore the left of the
-     * node of a certain [value]. Returns -1 to indicate that the search should
-     * explore the right of the node. Returns 0 to indicate that [value] is a
-     * valid search result and that the search is complete.
+     * Return `true` if and only if [value] is an acceptable result.
      */
-    virtual int DirectionFromNode(const T & value) const = 0;
+    virtual bool Accepts(const T & value) const = 0;
+    
+    /**
+     * Return the "better" of the two values [value1] and [value2].
+     */
+    virtual const T & Better(const T & value1, const T & value2) const = 0;
   };
   
   /**
@@ -41,73 +72,48 @@ public:
   virtual ~DynamicTree() {}
   
   /**
-   * Find the lowest value in this tree which is greater than [value].
-   *
-   * If the tree does not contain such a value, `false` is returned. Otherwise,
-   * `true` is returned and [result] is set to the value which was found.
-   *
-   * If [remove] is explicitly specified as `true`, the value will be removed
-   * from the tree before it is returned.
-   */
-  virtual bool FindGreaterThan(T & result, const T & value,
-                               bool remove = false) = 0;
-  
-  /**
-   * Find the lowest value in this tree which is greater than or equal to
-   * [value].
-   *
-   * If the tree does not contain such a value, `false` is returned. Otherwise,
-   * `true` is returned and [result] is set to the value which was found.
-   *
-   * If [remove] is explicitly specified as `true`, the value will be removed
-   * from the tree before it is returned.
-   */
-  virtual bool FindGreaterThanOrEqualTo(T & result, const T & value,
-                                        bool remove = false) = 0;
-  
-  /**
-   * Find the highest value in this tree which is less than [value].
-   *
-   * If the tree does not contain such a value, `false` is returned. Otherwise,
-   * `true` is returned and [result] is set to the value which was found.
-   *
-   * If [remove] is explicitly specified as `true`, the value will be removed
-   * from the tree before it is returned.
-   */
-  virtual bool FindLessThan(T & result, const T & value,
-                            bool remove = false) = 0;
-  
-  /**
-   * Find the highest value in this tree which is less than or equal to 
-   * [value].
-   *
-   * If the tree does not contain such a value, `false` is returned. Otherwise,
-   * `true` is returned and [result] is set to the value which was found.
-   *
-   * If [remove] is explicitly specified as `true`, the value will be removed
-   * from the tree before it is returned.
-   */
-  virtual bool FindLessThanOrEqualTo(T & result, const T & value,
-                                     bool remove = false) = 0;
-  
-  /**
-   * Find a node in the tree using an arbitrary search [function].
+   * Find a node in the tree using an arbitrary search [query].
    *
    * If no value can be found, `false` is returned. Otherwise, `true` is
-   * returned. Upon success, [result] is set to the value which was found.
+   * returned. Upon success, [result] is set to the value which was found. If
+   * [result] is `nullptr`, the actual value which was found will be ignored.
    *
    * If [remove] is specified as `true`, the node corresponding to the found
    * value is removed from the tree before it is returned.
    */
-  virtual bool Search(T & result, const SearchFunction & function,
+  virtual bool Search(T * result, const Query & query,
                       bool remove = false) = 0;
+  
+  /**
+   * Like [Search], but finds the best available result using a [BestQuery].
+   */
+  virtual bool SearchBest(T * result, const BestQuery & query,
+                          bool remove = false) = 0;
+  
+  virtual bool SearchGT(T * result, const T & value, bool remove = false) {
+    SearchBest(result, ComparatorBestQuery(value, true, false), remove);
+  }
+
+  virtual bool SearchGE(T * result, const T & value, bool remove = false) {
+    SearchBest(result, ComparatorBestQuery(value, true, true), remove);
+  }
+
+  virtual bool SearchLT(T * result, const T & value, bool remove = false) {
+    SearchBest(result, ComparatorBestQuery(value, false, false), remove);
+  }
+
+  virtual bool SearchLE(T * result, const T & value, bool remove = false) {
+    SearchBest(result, ComparatorBestQuery(value, false, true), remove);
+  }
   
   /**
    * Check if this tree contains an exact value.
    *
    * If [value] is found in the tree, `true` is returned.
    */
-  virtual bool Contains(const T & value) = 0;
+  virtual bool Contains(const T & value) {
+    return Search(nullptr, ValueQuery(value));
+  }
   
   /**
    * Remove a [value] from the tree.
@@ -115,7 +121,9 @@ public:
    * If the value is found and removed, `true` is returned. Otherwise, `false`
    * is returned.
    */
-  virtual bool Remove(const T & value) = 0;
+  virtual bool Remove(const T & value) {
+    return Search(nullptr, ValueQuery(value), true);
+  }
   
   /**
    * Add a given [value] to the tree.
@@ -137,6 +145,78 @@ public:
   inline VirtualAllocator & GetAllocator() {
     return allocator;
   }
+  
+  /**
+   * A concrete [Query] which matches a specified value.
+   */
+  class ValueQuery : public Query {
+  public:
+    ValueQuery(const T & _match) : match(_match) {}
+    
+    virtual Direction Next(const T & value) const {
+      if (value == match) return DirectionFound;
+      else if (match > value) return DirectionRight;
+      else return DirectionLeft;
+    }
+    
+    T match;
+  };
+  
+  /**
+   * A concrete [BestQuery] which matches values close to a specified value.
+   */
+  class ComparatorBestQuery : public Query {
+  public:
+    /**
+     * Create a comparator which matches either above or below a given value.
+     * 
+     * If [_above] is `true`, all values above [_match] will be acceptable.
+     * Otherwise, all values below [_match] will be acceptable.
+     *
+     * If and only if [_equal] is `true`, [_match] will be acceptable.
+     */
+    ComparatorBestQuery(const T & _match, bool _above, bool _equal)
+      : match(_match), above(_above), equal(_equal) {}
+    
+    virtual bool Accepts(const T & value) const {
+      if (equal && (value == match)) return true;
+      if (above) {
+        return value > match;
+      } else {
+        return value < match;
+      }
+    }
+    
+    virtual const T & Better(const T & value1, const T & value2) const {
+      assert(Accepts(value1));
+      assert(Accepts(value2));
+      if (above) {
+        return value1 < value2 ? value1 : value2;
+      } else {
+        return value1 > value2 ? value1 : value2;
+      }
+    }
+    
+    virtual Direction Next(const T & value) const {
+      if (value == match) {
+        if (equal) {
+          return DirectionFound;
+        } else if (above) {
+          return DirectionRight;
+        } else {
+          return DirectionLeft;
+        }
+      } else if (match > value) {
+        return DirectionRight;
+      } else {
+        return DirectionLeft;
+      }
+    }
+    
+    T match;
+    bool above;
+    bool equal;
+  };
   
 private:
   VirtualAllocator & allocator;
