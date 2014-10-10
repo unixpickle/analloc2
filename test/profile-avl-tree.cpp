@@ -13,8 +13,8 @@ PosixVirtualAligner aligner;
 uint64_t ProfileContains(int depth);
 uint64_t ProfileSequentialAdds(int count);
 uint64_t ProfileSequentialRemoves(int count);
-uint64_t ProfileFindGreater(int depth);
-uint64_t ProfileFindLess(int depth);
+uint64_t ProfileFindGT(int depth);
+uint64_t ProfileFindLT(int depth);
 uint64_t ProfileClear(int depth);
 
 void GenerateUniformTree(AvlTree<int> & tree, int depth);
@@ -28,11 +28,11 @@ int main() {
   }
   for (int depth = 10; depth <= 20; depth += 2) {
     assert(aligner.GetAllocCount() == 0);
-    std::cout << "AvlTree<int>::FindGreaterThan() [depth = " << depth
-      << "] ... " << std::flush << ProfileFindGreater(depth) << " nanos"
+    std::cout << "AvlTree<int>::FindGT() [depth = " << depth
+      << "] ... " << std::flush << ProfileFindGT(depth) << " nanos"
       << std::endl;
-    std::cout << "AvlTree<int>::FindLessThan() [depth = " << depth
-      << "] ... " << std::flush << ProfileFindLess(depth) << " nanos"
+    std::cout << "AvlTree<int>::FindLT() [depth = " << depth
+      << "] ... " << std::flush << ProfileFindLT(depth) << " nanos"
       << std::endl;
   }
   for (int factor = 0; factor < 4; ++factor) {
@@ -101,7 +101,7 @@ uint64_t ProfileSequentialRemoves(int count) {
   return total / iterations;
 }
 
-uint64_t ProfileFindGreater(int depth) {
+uint64_t ProfileFindGT(int depth) {
   AvlTree<int> tree(aligner);
   GenerateUniformTree(tree, depth);
   
@@ -111,13 +111,13 @@ uint64_t ProfileFindGreater(int depth) {
   uint64_t start = Nanotime();
   for (int i = 0; i < iterations; ++i) {
     int value;
-    __asm__ __volatile("" : : "r" (tree.FindGreaterThan(value, leafValue)));
+    __asm__ __volatile("" : : "r" (tree.FindGT(value, leafValue)));
     assert(value == leafValue + 1);
   }
   return (Nanotime() - start) / iterations;
 }
 
-uint64_t ProfileFindLess(int depth) {
+uint64_t ProfileFindLT(int depth) {
   AvlTree<int> tree(aligner);
   GenerateUniformTree(tree, depth);
   
@@ -127,7 +127,7 @@ uint64_t ProfileFindLess(int depth) {
   uint64_t start = Nanotime();
   for (int i = 0; i < iterations; ++i) {
     int value;
-    __asm__ __volatile("" : : "r" (tree.FindLessThan(value, leafValue)));
+    __asm__ __volatile("" : : "r" (tree.FindLT(value, leafValue)));
     assert(value == leafValue - 1);
   }
   return (Nanotime() - start) / iterations;
