@@ -1,7 +1,7 @@
 #ifndef __ANALLOC2_AVL_TREE_HPP__
 #define __ANALLOC2_AVL_TREE_HPP__
 
-#include "dynamic-binary-tree.hpp"
+#include "avl-node.hpp"
 #include <ansa/nocopy>
 
 namespace analloc {
@@ -14,23 +14,7 @@ template <class T>
 class AvlTree : public DynamicBinaryTree<T>, public ansa::NoCopy {
 public:
   typedef DynamicBinaryTree<T> super;
-  
-  class Node : public super::Node {
-  public:
-    Node(const T & val) : super::Node(val) {}
-    
-    virtual super::Node * GetLeft() {
-      return static_cast<super::Node>(left);
-    }
-    
-    virtual super::Node * GetRight() {
-      return static_cast<super::Node>(right);
-    }
-    
-    Node * left = NULL;
-    Node * right = NULL;
-    int depth = 0;
-  };
+  typedef AvlNode<T> Node;
   
   /**
    * Create a new, empty AVL tree.
@@ -45,21 +29,21 @@ public:
   }
   
   /**
-   * Returns the "mutable" root node.
+   * Returns the "mutable" root node which lacks depth information.
    */
   virtual super::Node * GetRoot() {
     return static_cast<super::Node>(root);
   }
   
   /**
-   * Returns an immutable root node with more information.
+   * Returns an "immutable" root node which includes depth information.
    */
-  const Node * GetImmutableRoot() const {
+  const Node * GetAvlRoot() const {
     return root;
   }
   
   /**
-   * Add a value to the tree. This runs in O(log(n)) time.
+   * Add a [value] to the tree. This runs in O(log(n)) time.
    */
   virtual bool Add(const T & value) {
     Node * node = AllocNode(value);
@@ -70,8 +54,20 @@ public:
       root = node;
       return true;
     } else {
-      return AddTo(root, node);
+      if (!AddTo(root, node)) {
+        root = root->Rebalance();
+      }
+      return true;
     }
+  }
+  
+  /**
+   * Remove a [value] from the tree.
+   */
+  virtual bool Remove(const T & value) {
+    bool found;
+    root = RemoveFrom(root, value, found);
+    return found;
   }
   
   /**
@@ -90,8 +86,7 @@ public:
    * depth of the root node.
    */
   inline int GetDepth() {
-    if (!root) return 0;
-    return root->depth + 1;
+    return root ? root->depth + 1 : 0;
   }
   
 protected:
@@ -128,136 +123,106 @@ protected:
     DeallocNode(node);
   }
   
+  /**
+   * Add a [leaf] somewhere underneath a [parent].
+   *
+   * If a tree rotation took place which rebalanced the tree, `true` is
+   * returned. Otherwise, `false` is returned to indicate that the caller
+   * should attempt to rebalance its node.
+   */
   bool AddTo(Node * parent, Node * leaf) {
     if (leaf->GetValue() < parent->GetValue()) {
       Node * subnode = parent->left;
       if (!subnode) {
         parent->left = leaf;
-        // TODO: update depth
+        parent->RecomputeDepth();
         return false;
       } else {
-        if (AddTo(parent, leaf)) {
+        if (AddTo(subnode, leaf)) {
           return true;
+        } else {
+          Node * old = subnode;
+          parent->left = subnode->Rebalance();
+          return parent->left != old;
         }
-        // TODO: here, rebalance
       }
     } else {
       Node * subnode = parent->right;
       if (!subnode) {
         parent->right = leaf;
-        // TODO: update depth
+        parent->RecomputeDepth();
         return false;
       } else {
         if (AddTo(parent, leaf)) {
           return true;
+        } else {
+          Node * old = subnode;
+          parent->right = subnode->Rebalance();
+          return parent->right != old;
         }
-        // TODO: here, rebalance
       }
     }
   }
   
   /**
-   * Remove a [node] from the tree and deallocate it.
-   */
-  void RemoveNode(Node * node) {
-    assert(node != nullptr);
-    Node ** parentSlot = NodeParentSlot(node);
-    if (!node->left) {
-      // Trivial case #1: replace the node with it's right child.
-      (*parentSlot) = node->right;
-      if (node->right) {
-        node->right->parent = node->parent;
-      }
-      Rebalance(node->parent);
-    } else if (!node->right) {
-      // Trivial case #2: replace the node with it's left child.
-      (*parentSlot) = node->left;
-      node->left->parent = node->parent;
-      Rebalance(node->parent);
-    } else {
-      // Find the rightmost subnode of the node's left child (a.k.a. the 
-      // in-order predecessor of [node]).
-      Node * rightmost = node->left;
-      while (rightmost->right) {
-        rightmost = rightmost->right;
-      }
-      
-      // Replace the rightmost node with it's left child (which might not exist
-      // if the rightmost node is a leaf).
-      (*NodeParentSlot(rightmost)) = rightmost->left;
-      if (rightmost->left) {
-        assert(rightmost->left->left == nullptr);
-        assert(rightmost->left->right == nullptr);
-        rightmost->left->parent = rightmost->parent;
-      }
-
-      // We will balance upwards from the parent of the rightmost node.
-      Node * balanceStart = rightmost->parent;
-      if (balanceStart == node) {
-        // This case occurs when [rightmost] was the left child of [node].
-        balanceStart = rightmost;
-      }
-
-      // Replace [node] with its in-order predecessor.
-      (*parentSlot) = rightmost;
-      rightmost->parent = node->parent;
-      rightmost->left = node->left;
-      rightmost->right = node->right;
-      assert(rightmost->right != nullptr);
-      rightmost->right->parent = rightmost;
-      
-      // rightmost->left will be nullptr in the case where [rightmost]'s left
-      // child was nullptr and [rightmost] was the left child of [node].
-      if (rightmost->left) {
-        rightmost->left->parent = rightmost;
-      }
-      
-      // Before rebalancing, we set [rightmost]'s depth to [node]'s old depth
-      // so that [Rebalance] knows if subtrees above [rightmost] need to be
-      // rebalanced as well.
-      rightmost->depth = node->depth;
-      
-      // Rebalance the old parent of the rightmost node.
-      Rebalance(balanceStart);
-    }
-    // Deallocate the node which was removed.
-    DeallocNode(node);
-  }
-  
-  /**
-   * Rebalance a given [node] and all its ancestors. If an ancestor's depth is
-   * not changed, the balancing process can be safely halted.
-   */
-  void Rebalance(Node * node) {
-    while (node) {
-      int oldDepth = node->depth;
-      node->RecomputeDepth();
-      Node ** parentSlot = NodeParentSlot(node);
-      Node * parent = node->parent;
-      (*parentSlot) = node->Rebalance();
-      assert(*parentSlot != nullptr);
-      if ((*parentSlot)->depth == oldDepth) {
-        break;
-      }
-      node = parent;
-    }
-  }
-  
-  /**
-   * Returns a pointer to the field which points to a given [node].
+   * Remove a leaf with a given [value] from a [parent] node. The parent node
+   * itself might contain the leaf value.
    *
-   * Doing `(*NodeParentSlot(node)) = someNode` essentially replaces [node]
-   * with a new node (in this case called [someNode]).
+   * The returned node should take the place of [parent] in the tree.
    */
-  Node ** NodeParentSlot(Node * node) {
-    if (!node->parent) {
-      return &root;
+  Node * RemoveFrom(Node * parent, const T & value, bool & found) {
+    if (!parent) {
+      found = false;
+      return nullptr;
+    }
+    if (parent->value > value) {
+      // TODO: see if an extra check makes this faster
+      parent->left = RemoveFrom(parent->left, value, found);
+      parent->RecomputeDepth();
+      return parent->Rebalance();
+    } else if (parent->value < value) {
+      // TODO: see if an extra check makes this faster
+      parent->right = RemoveFrom(parent->right, value, found);
+      parent->RecomputeDepth();
+      return parent->Rebalance();
     } else {
-      if (node == node->parent->right) {
-        return &node->parent->right;
-      } else {
-        return &node->parent->left;
-      }
+      Node * result = RemoveSubroutine(parent);
+      DeallocNode(parent);
+      return result;
+    }
+  }
+  
+  /**
+   * "Remove" a node without deallocating it.
+   *
+   * Returns the new node which should take [node]'s place.
+   */
+  Node * RemoveSubroutine(Node * node) {
+    if (!node->left) {
+      // Replace node with its right child
+      return node->right;
+    } else if (!node->right) {
+      // Replace node with its left child
+      return node->left;
+    } else {
+      // Replace node with its in-order predecessor
+      Node * predecessor;
+      Node * result = RemoveInOrderPredecessor(node->left, predecessor);
+      predecessor->left = result;
+      predecessor->right = node->right;
+      predecessor->RecomputeDepth();
+      return predecessor->Rebalance();
+    }
+  }
+  
+  Node * RemoveInOrderPredecessor(Node * parent, Node *& predecessor) {
+    if (!parent->right) {
+      predecessor = parent;
+      return parent->left;
+    } else {
+      parent->right = RemoveInOrderPredecessor(parent->right);
+      parent->RecomputeDepth();
+      return parent->Rebalance();
     }
   }
 };

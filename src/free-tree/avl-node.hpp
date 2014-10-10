@@ -1,105 +1,83 @@
 #ifndef __ANALLOC2_AVL_NODE_HPP__
 #define __ANALLOC2_AVL_NODE_HPP__
 
+#include "dynamic-binary-tree.hpp"
 #include <ansa/math>
 #include <cstddef>
 
 namespace analloc {
 
-template <class T>
-class AvlTree;
-
 /**
- * A node which is appropriate for use in an AVL tree.
+ * A node which tracks its depth as well as its children.
  */
 template <class T>
-struct AvlNode {
-  /**
-   * The parent of this node.
-   */
-  AvlNode * parent = nullptr;
+struct AvlNode : public DynamicBinaryTree<T>::Node {
+  typedef DynamicBinaryTree<T>::Node super;
   
-  /**
-   * The left child of this node.
-   */
   AvlNode * left = nullptr;
-  
-  /**
-   * The right child of this node.
-   */
   AvlNode * right = nullptr;
-  
-  /**
-   * The depth of this node. A depth of 0 indicates a node with no children.
-   */
   int depth = 0;
   
-  /**
-   * Create a new [AvlNode] with a given value [val].
-   */
-  AvlNode(const T & val) : value(val) {}
+  AvlNode(const T & val) : super(val) {}
+  
+  virtual super * GetLeft() {
+    return static_cast<super *>(left);
+  }
+  
+  virtual super * GetRight() {
+    return static_cast<super *>(right);
+  }
+  
+  virtual const super * GetLeft() const {
+    return static_cast<const super *>(left);
+  }
+  
+  virtual const super * GetRight() const {
+    return static_cast<const super *>(right);
+  }
   
   /**
-   * Get the read-only value contained by this node.
-   */
-  inline const T & GetValue() const {
-    return value;
-  }
- 
-  /**
-   * One more than the depth of the left subnode of this node, or zero if no
-   * left subnode exists.
+   * Returns 0 if there is no left child. Otherwise, returns one more than the
+   * depth of the left child.
    */
   inline int GetLeftDepth() const {
-    if (!left) return 0;
-    return left->depth + 1;
+    return left ? left->depth + 1 : 0;
   }
- 
+  
   /**
-   * One more than the depth of the right subnode of this node, or zero if no
-   * right subnode exists.
+   * Returns 0 if there is no right child. Otherwise, returns one more than the
+   * depth of the right child.
    */
   inline int GetRightDepth() const {
-    if (!right) return 0;
-    return right->depth + 1;
+    return right ? right->depth + 1 : 0;
   }
- 
+  
   /**
-   * Returns `true` if the right child's depth is greater than the left child's
-   * depth.
+   * Returns `true` if and only if the left depth is less than the right one.
    */
   inline bool IsRightHeavy() const {
     return GetLeftDepth() < GetRightDepth();
   }
   
   /**
-   * Returns `true` if the left child's depth is greater than the right child's
-   * depth.
+   * Returns `true` if and only if the right depth is less than the left one.
    */
   inline bool IsLeftHeavy() const {
     return GetRightDepth() < GetLeftDepth();
   }
   
   /**
-   * Recompute the depth of this node using its two children. Returns `true` if
-   * the depth changed.
+   * Reset this node's [depth] based on [GetLeftDepth] and [GetRightDepth].
    */
-  inline bool RecomputeDepth() {
-    int oldDepth = depth;
+  inline void RecomputeDepth() {
     depth = ansa::Max(GetLeftDepth(), GetRightDepth());
-    return oldDepth != depth;
   }
   
   /**
-   * Rebalance this node and return the node that should take its place.
+   * Perform a single AVL rebalance operation on this node and return the node
+   * which ought to take its place.
    *
-   * This method asserts that the node is balanced enough to be rebalanced 
-   * completely with a single rotation.
-   *
-   * Upon success, the returned node may have a different depth than this node
-   * originally had. This node's parent will not be affected in any way, so it
-   * is the caller's responsibility to set the returned [AvlNode] in the
-   * parent's corresponding field and to recalculate the parent's depth.
+   * This operation automatically recomputes the depths of every node involved.
    */
   AvlNode * Rebalance() {
     int imbalance = GetLeftDepth() - GetRightDepth();
@@ -109,7 +87,6 @@ struct AvlNode {
       if (right->IsLeftHeavy()) {
         // Reduce right-left case to right-right case
         right = RotateRight(right, right->left);
-        assert(!RecomputeDepth());
       }
       return RotateLeft(this, right);
     } else if (imbalance == 2) {
@@ -117,48 +94,58 @@ struct AvlNode {
       if (left->IsRightHeavy()) {
         // Reduce left-right case to left-left case
         left = RotateLeft(left, left->right);
-        assert(!RecomputeDepth());
       }
       return RotateRight(this, left);
-    } else if (imbalance > -2 && imbalance < 2) {
-      return this;
     } else {
-      // never should be reached
-      return nullptr;
+      return this;
     }
   }
   
-protected:
+  /**
+   * Changes a sub-tree that looks like this:
+   *
+   *     O
+   *      \
+   *       1
+   *
+   * To one that looks like this:
+   *
+   *     1
+   *    /
+   *   0
+   *
+   */
   static AvlNode * RotateLeft(AvlNode * parent, AvlNode * child) {
     assert(parent->right == child);
-    child->parent = parent->parent;
-    parent->parent = child;
     parent->right = child->left;
-    if (parent->right) {
-      parent->right->parent = parent;
-    }
     child->left = parent;
     parent->RecomputeDepth();
     child->RecomputeDepth();
     return child;
   }
   
+  /**
+   * Changes a sub-tree that looks like this:
+   *
+   *     1
+   *    /
+   *   0
+   *
+   * To one that looks like this:
+   *
+   *     O
+   *      \
+   *       1
+   *
+   */
   static AvlNode * RotateRight(AvlNode * parent, AvlNode * child) {
     assert(parent->left == child);
-    child->parent = parent->parent;
-    parent->parent = child;
     parent->left = child->right;
-    if (parent->left) {
-      parent->left->parent = parent;
-    }
     child->right = parent;
     parent->RecomputeDepth();
     child->RecomputeDepth();
     return child;
   }
-  
-private:
-  T value;
 };
 
 }

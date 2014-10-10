@@ -132,12 +132,9 @@ public:
   /**
    * Remove a [value] from the tree.
    *
-   * If the value is found and removed, `true` is returned. Otherwise, `false`
-   * is returned.
+   * Returns `true` if and only if [value] is found and removed.
    */
-  virtual bool Remove(const T & value) {
-    return Search(nullptr, ValueQuery(value), true);
-  }
+  virtual bool Remove(const T & value);
   
   /**
    * Add a given [value] to the tree.

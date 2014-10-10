@@ -41,7 +41,7 @@ public:
           (*result) = node->GetValue();
         }
         if (remove) {
-          RemoveNode(node);
+          Remove(node->GetValue());
         }
         return true;
       } else if (direction == Query::DirectionLeft) {
@@ -55,41 +55,58 @@ public:
   
   virtual bool SearchBest(T * result, const BestQuery & query,
                           bool remove = false) {
-    // TODO: respect `remove` argument
-    return SearchBestFrom(GetRoot(), result, query, remove);
+    if (remove) {
+      T theValue;
+      if (!SearchBest(GetRoot(), &theValue, query)) {
+        return false;
+      }
+      if (result) {
+        (*result) = theValue;
+      }
+      Remove(theValue);
+    } else {
+      return SearchBestFrom(GetRoot(), result, query);
+    }
   }
   
 protected:
   virtual bool SearchBestFrom(Node * node, T * result,
-                              const BestQuery & query, bool remove = false) {
+                              const BestQuery & query) {
     if (!node) {
       return false;
     }
+    // Check which direction to branch off in for the search
     Query::Direction direction = query.Next(node->GetValue());
     if (direction == Query::DirectionFound) {
+      // If the node was found, no more branching necessary.
       if (node) {
         (*node) = node->GetValue();
       }
       return true;
     } else {
+      // Figure out the next node to visit for the search
       Node * next;
       if (direction == Query::DirectionLeft) {
         next = node->GetLeft();
       } else {
         next = node->GetRight();
       }
+      // If [node] contains an acceptable value, we might end up using it
       if (query.Accepts(node->GetValue())) {
         if (!result) {
+          // If they were just trying to see if the tree contains an acceptable
+          // value, there's no need to search more.
           return true;
         }
-        if (SearchBestFrom(result, query, remove, next)) {
+        if (SearchBestFrom(next, result, query)) {
           (*result) = query.Better(*result, node->GetValue());
         } else {
           (*result) = node->GetValue();
         }
         return true;
       } else {
-        return SearchBestFrom(result, query, remove, next);
+        // Use whatever best value is found in the subnode
+        return SearchBestFrom(next, result, query);
       }
     }
   }
