@@ -995,44 +995,44 @@ void TestFindMethods() {
   int result;
   
   // Values inside the dataset
-  assert(tree.FindGreaterThan(result, 15));
+  assert(tree.FindGT(result, 15));
   assert(result == 16);
-  assert(tree.FindGreaterThanOrEqualTo(result, 15));
+  assert(tree.FindGE(result, 15));
   assert(result == 16);
-  assert(tree.FindGreaterThan(result, 14));
+  assert(tree.FindGT(result, 14));
   assert(result == 16);
-  assert(tree.FindGreaterThanOrEqualTo(result, 14));
+  assert(tree.FindGE(result, 14));
   assert(result == 14);
-  assert(tree.FindLessThan(result, 7));
+  assert(tree.FindLT(result, 7));
   assert(result == 6);
-  assert(tree.FindLessThanOrEqualTo(result, 7));
+  assert(tree.FindLE(result, 7));
   assert(result == 6);
-  assert(tree.FindLessThan(result, 8));
+  assert(tree.FindLT(result, 8));
   assert(result == 6);
-  assert(tree.FindLessThanOrEqualTo(result, 8));
+  assert(tree.FindLE(result, 8));
   assert(result == 8);
   
   // Values outside of the range of the dataset
-  assert(!tree.FindLessThan(result, 2));
-  assert(tree.FindLessThanOrEqualTo(result, 2));
+  assert(!tree.FindLT(result, 2));
+  assert(tree.FindLE(result, 2));
   assert(result == 2);
-  assert(!tree.FindLessThanOrEqualTo(result, 1));
-  assert(!tree.FindGreaterThan(result, 18));
-  assert(tree.FindGreaterThanOrEqualTo(result, 18));
+  assert(!tree.FindLE(result, 1));
+  assert(!tree.FindGT(result, 18));
+  assert(tree.FindGE(result, 18));
   assert(result == 18);
-  assert(!tree.FindGreaterThanOrEqualTo(result, 19));
+  assert(!tree.FindGE(result, 19));
   
   // Find and remove functionality
-  assert(tree.FindLessThanOrEqualTo(result, 6, true));
+  assert(tree.FindLE(result, 6, true));
   assert(result == 6);
   assert(!tree.Contains(6));
-  assert(tree.FindLessThan(result, 5, true));
+  assert(tree.FindLT(result, 5, true));
   assert(result == 4);
   assert(!tree.Contains(4));
-  assert(tree.FindGreaterThan(result, 1, true));
+  assert(tree.FindGT(result, 1, true));
   assert(result == 2);
   assert(!tree.Contains(2));
-  assert(tree.FindGreaterThanOrEqualTo(result, 8, true));
+  assert(tree.FindGE(result, 8, true));
   assert(result == 8);
   assert(!tree.Contains(8));
 }
@@ -1041,7 +1041,7 @@ void TestSearchFunction() {
   ScopedPass pass("AvlTree<int>::Search()");
   AvlTree<int> tree(aligner);
   
-  struct SearchFunc : public AvlTree<int>::SearchFunction {
+  struct SearchFunc : public AvlTree<int>::Query {
     virtual int DirectionFromNode(const int & test) const {
       if (value > test) return 1;
       else if (value < test) return -1;

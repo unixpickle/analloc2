@@ -17,12 +17,12 @@ public:
   /**
    * An abstract search comparator for a binary search tree.
    */
-  class SearchFunction {
+  class Query {
   public:
     /**
-     * Returns 1 to indicate that the search should explore the left of the
+     * Returns 1 to indicate that the search should explore the right of the
      * node of a certain [value]. Returns -1 to indicate that the search should
-     * explore the right of the node. Returns 0 to indicate that [value] is a
+     * explore the left of the node. Returns 0 to indicate that [value] is a
      * valid search result and that the search is complete.
      */
     virtual int DirectionFromNode(const T & value) const = 0;
@@ -49,8 +49,7 @@ public:
    * If [remove] is explicitly specified as `true`, the value will be removed
    * from the tree before it is returned.
    */
-  virtual bool FindGreaterThan(T & result, const T & value,
-                               bool remove = false) = 0;
+  virtual bool FindGT(T & result, const T & value, bool remove = false) = 0;
   
   /**
    * Find the lowest value in this tree which is greater than or equal to
@@ -62,8 +61,7 @@ public:
    * If [remove] is explicitly specified as `true`, the value will be removed
    * from the tree before it is returned.
    */
-  virtual bool FindGreaterThanOrEqualTo(T & result, const T & value,
-                                        bool remove = false) = 0;
+  virtual bool FindGE(T & result, const T & value, bool remove = false) = 0;
   
   /**
    * Find the highest value in this tree which is less than [value].
@@ -74,8 +72,7 @@ public:
    * If [remove] is explicitly specified as `true`, the value will be removed
    * from the tree before it is returned.
    */
-  virtual bool FindLessThan(T & result, const T & value,
-                            bool remove = false) = 0;
+  virtual bool FindLT(T & result, const T & value, bool remove = false) = 0;
   
   /**
    * Find the highest value in this tree which is less than or equal to 
@@ -87,8 +84,7 @@ public:
    * If [remove] is explicitly specified as `true`, the value will be removed
    * from the tree before it is returned.
    */
-  virtual bool FindLessThanOrEqualTo(T & result, const T & value,
-                                     bool remove = false) = 0;
+  virtual bool FindLE(T & result, const T & value, bool remove = false) = 0;
   
   /**
    * Find a node in the tree using an arbitrary search [function].
@@ -99,7 +95,7 @@ public:
    * If [remove] is specified as `true`, the node corresponding to the found
    * value is removed from the tree before it is returned.
    */
-  virtual bool Search(T & result, const SearchFunction & function,
+  virtual bool Search(T & result, const Query & function,
                       bool remove = false) = 0;
   
   /**

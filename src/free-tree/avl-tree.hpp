@@ -16,7 +16,7 @@ class AvlTree : public DynamicTree<T>, public ansa::NoCopy {
 public:
   typedef DynamicTree<T> super;
   typedef AvlNode<T> Node;
-  using typename super::SearchFunction;
+  using typename super::Query;
   
   /**
    * Create a new, empty AVL tree.
@@ -30,31 +30,27 @@ public:
     RecursivelyDeallocNode(root);
   }
   
-  virtual bool FindGreaterThan(T & result, const T & value,
-                               bool remove = false) {
+  virtual bool FindGT(T & result, const T & value, bool remove = false) {
     return InternalFind(RecursivelySearchAbove(root, value, false),
                         result, remove);
   }
   
-  virtual bool FindGreaterThanOrEqualTo(T & result, const T & value,
-                                        bool remove = false) {
+  virtual bool FindGE(T & result, const T & value, bool remove = false) {
     return InternalFind(RecursivelySearchAbove(root, value, true),
                         result, remove);
   }
   
-  virtual bool FindLessThan(T & result, const T & value,
-                            bool remove = false) {
+  virtual bool FindLT(T & result, const T & value, bool remove = false) {
     return InternalFind(RecursivelySearchBelow(root, value, false),
                         result, remove);
   }
   
-  virtual bool FindLessThanOrEqualTo(T & result, const T & value,
-                                     bool remove = false) {
+  virtual bool FindLE(T & result, const T & value, bool remove = false) {
     return InternalFind(RecursivelySearchBelow(root, value, true),
                         result, remove);
   }
   
-  virtual bool Search(T & result, const SearchFunction & function,
+  virtual bool Search(T & result, const Query & function,
                       bool remove = false) {
     Node * node = root;
     while (node) {
