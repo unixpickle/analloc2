@@ -6,23 +6,9 @@ I want to create a multi-purpose allocator, not just for memory but for any nume
 
 I am currently rewriting the allocator for version 1.0.0. When this rewrite is complete, I will add documentation to this project.
 
-# Performance Benchmarks
+# Benchmarks
 
-Running my benchmarks has given me a decent set of results on a 2.6 GHz Intel Core i7. In no way do I claim that my allocators will always perform this well, but these benchmarks do give a good ballpark estimate.
-
-## Bitmap Allocator
-
-The allocation time is **O**(*n*), where *n* is the number of bits which must be read before a set of free bits are found.
-
-On a dataset in which only the last bit is free, the algorithm scans about *7 bits per clockcycle*.
-
-## Free-list Allocator
-
-The allocation time is **O**(*n*), where *n* is the number of free regions which must be scanned before a large enough free region is found.
-
-My benchmarks showed that it takes roughly *5 clockcycles for each free region to be traversed*.
-
-NOTE: The performance benchmark for this allocator uses a high-performance single-sized allocator to allocate free regions. This way, the performance of the standard UNIX malloc() and free() will not affect the results of the benchmark.
+See [BENCHMARKS.md](BENCHMARKS.md).
 
 # TODO
 
