@@ -7,22 +7,27 @@
 using namespace analloc;
 
 PosixVirtualAligner aligner;
-static const size_t RegionSize = sizeof(FreeListAllocator<size_t>::FreeRegion);
 
-uint64_t ProfileFreeListEnd(size_t length, size_t iters);
-bool HandleFailure(FreeListAllocator<size_t> *);
+template <template <class T> class Tree, template <class T> class Node>
+uint64_t ProfileFreeTreeEnd(size_t length, size_t iters);
+
+template <class T>
+bool HandleFailure(T *);
 
 int main() {
   for (size_t i = 0; i < 13; ++i) {
     size_t len = 1 << i;
-    std::cout << "FreeListAllocator (" << len << " regions)..."
-      << std::flush << " " << ProfileFreeListEnd(len, 100000) << std::endl;
+    std::cout << "FreeTreeAllocator<AvlTree> (" << len << " regions) ... "
+      << std::flush
+      << ProfileFreeTreeEnd<AvlTree, AvlNode>(len, 100000) << std::endl;
   }
 }
 
-uint64_t ProfileFreeListEnd(size_t length, size_t iterations) {
-  StackAllocator<RegionSize> stack(length + 1, aligner);
-  FreeListAllocator<size_t> allocator(stack, HandleFailure);
+template <template <class T> class Tree, template <class T> class Node>
+uint64_t ProfileFreeTreeEnd(size_t length, size_t iterations) {
+  typedef Node<typename FreeTreeAllocator<Tree, size_t>::FreeRegion> Region;
+  StackAllocator<sizeof(Region)> stack((length + 1) * 2, aligner);
+  FreeTreeAllocator<Tree, size_t> allocator(stack, HandleFailure);
   
   // Carve out [length] regions of size 1, and then one final region of size 2.
   for (size_t i = 0; i < length; ++i) {
@@ -38,7 +43,8 @@ uint64_t ProfileFreeListEnd(size_t length, size_t iterations) {
   return (Nanotime() - start) / iterations;
 }
 
-bool HandleFailure(FreeListAllocator<size_t> *) {
+template <class T>
+bool HandleFailure(T *) {
   std::cerr << "allocation failure!" << std::endl;
   abort();
 }

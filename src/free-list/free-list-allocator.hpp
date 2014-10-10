@@ -100,13 +100,13 @@ public:
     }
   }
   
-protected:
   struct FreeRegion {
     FreeRegion * next, * last;
     AddressType start;
     SizeType size;
   };
-  
+
+protected:  
   FreeRegion * firstRegion = nullptr;
   VirtualAllocator & allocator;
   FailureHandler failureHandler;

@@ -38,20 +38,7 @@ public:
       // The free region has some excess; put it back in the trees.
       sized.size -= size;
       sized.address += size;
-      addressed = sized;
-      while (!sizedTree.Add(sized)) {
-        if (!failureHandler(this)) {
-          return false;
-        }
-      }
-      while (!addressedTree.Add(addressed)) {
-        if (!failureHandler(this)) {
-          // It is possible to maintain allocator consistency here (albeit
-          // leaking some address space).
-          sizedTree.Remove(sized);
-          return false;
-        }
-      }
+      return AddRegion(sized);
     }
     return true;
   }
@@ -75,28 +62,20 @@ public:
       addressedTree.Remove(after);
       sizedTree.Remove(SizedRegion(before));
       sizedTree.Remove(SizedRegion(after));
-      AddressedRegion newRegion(before.address, before.size + size +
-                                after.size);
-      addressedTree.Add(newRegion);
-      sizedTree.Add(SizedRegion(newRegion));
+      AddRegion(FreeRegion(before.address, before.size + size + after.size));
     } else if (hasBefore) {
       // Remove the previous region and join it with the freed region
       addressedTree.Remove(before);
       sizedTree.Remove(SizedRegion(before));
-      AddressedRegion newRegion(before.address, before.size + size);
-      addressedTree.Add(newRegion);
-      sizedTree.Add(SizedRegion(newRegion));
+      AddRegion(FreeRegion(before.address, before.size + size));
     } else if (hasAfter) {
       // Remove the next region and join it with the freed region
       addressedTree.Remove(after);
       sizedTree.Remove(SizedRegion(after));
-      AddressedRegion newRegion(address, after.size + size);
-      addressedTree.Add(newRegion);
-      sizedTree.Add(SizedRegion(newRegion));
+      AddRegion(FreeRegion(address, after.size + size));
     } else {
       // Simple case: insert the free region
-      addressedTree.Add(AddressedRegion(address, size));
-      sizedTree.Add(SizedRegion(address, size));
+      AddRegion(FreeRegion(address, size));
     }
   }
   
@@ -200,6 +179,22 @@ protected:
   Tree<SizedRegion> sizedTree;
   Tree<AddressedRegion> addressedTree;
   FailureHandler failureHandler;
+  
+  bool AddRegion(FreeRegion region) {
+    while (!addressedTree.Add(AddressedRegion(region))) {
+      if (!failureHandler(this)) {
+        return false;
+      }
+    }
+    while (!sizedTree.Add(SizedRegion(region))) {
+      if (!failureHandler(this)) {
+        // Avoid having inconsistent trees (although the region will leak).
+        addressedTree.Remove(AddressedRegion(region));
+        return false;
+      }
+    }
+    return true;
+  }
 };
 
 }
