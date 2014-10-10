@@ -20,4 +20,6 @@ NOTE: The performance benchmark for this allocator uses a high-performance singl
 
 This allocator uses two binary search trees to manage regions of free memory in **O**(*log(n)*) time, where *n* is the number of free regions in the allocator.
 
-The current test uses the free-tree allocator in conjunction with my native AVL-tree implementation. This benchmarked showed that that, in the best case,  an allocation and deallocation operation together take *32 more clockcycles per factor of 2 in the number of free regions*. This means that doubling the number of free regions increases the combined Alloc and Dealloc time by roughly 32 clockcycles.
+The current test uses the free-tree allocator in conjunction with my native AVL-tree implementation. This benchmark tested the best case collective time of an allocation and deallocation operation. It showed that each level of depth in the tree results in roughly *32 more clockcycles*. This means that doubling the number of free regions increases the combined Alloc and Dealloc time by roughly 32 clockcycles.
+
+At a later date, I hope to write benchmarks which test "bad" cases (i.e. when the tree needs to be rebalanced).
