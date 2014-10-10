@@ -1,3 +1,7 @@
+# NOTE:
+
+This branch was my attempt to make the tree interface nicer. My attempt failed. The tree interface is nicer, but it is also slow compared to the old implementation.
+
 # Another Allocator?
 
 I want to create a multi-purpose allocator, not just for memory but for any numerically-addressed resource! This could be file descriptors, I/O ports, physical memory, or something I haven't even conceived of yet.
