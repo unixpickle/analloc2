@@ -4,6 +4,8 @@
 #include "avl-node.hpp"
 #include <ansa/nocopy>
 
+#include <iostream> // TODO: delete this
+
 namespace analloc {
 
 /**
@@ -32,7 +34,7 @@ public:
    * Returns the "mutable" root node which lacks depth information.
    */
   virtual typename super::Node * GetRoot() {
-    return static_cast<typename super::Node>(root);
+    return static_cast<typename super::Node *>(root);
   }
   
   /**
@@ -52,13 +54,10 @@ public:
     // Trivial insertion case: the tree was empty
     if (!root) {
       root = node;
-      return true;
     } else {
-      if (!AddTo(root, node)) {
-        root = root->Rebalance();
-      }
-      return true;
+      root = AddTo(root, node);
     }
+    return true;
   }
   
   /**
@@ -126,47 +125,37 @@ protected:
   /**
    * Add a [leaf] somewhere underneath a [parent].
    *
-   * If a tree rotation took place which rebalanced the tree, `true` is
-   * returned. Otherwise, `false` is returned to indicate that the caller
-   * should attempt to rebalance its node.
+   * Returns a balanced node to put in the place of [parent].
    */
-  bool AddTo(Node * parent, Node * leaf) {
+  Node * AddTo(Node * parent, Node * leaf) {
     if (leaf->GetValue() < parent->GetValue()) {
       Node * subnode = parent->left;
       if (!subnode) {
         parent->left = leaf;
         parent->RecomputeDepth();
-        return false;
+        return parent;
       } else {
-        if (AddTo(subnode, leaf)) {
-          return true;
-        } else {
-          Node * old = subnode;
-          parent->left = subnode->Rebalance();
-          return parent->left != old;
-        }
+        parent->left = AddTo(subnode, leaf);
+        parent->RecomputeDepth();
+        return parent->Rebalance();
       }
     } else {
       Node * subnode = parent->right;
       if (!subnode) {
         parent->right = leaf;
         parent->RecomputeDepth();
-        return false;
+        return parent;
       } else {
-        if (AddTo(parent, leaf)) {
-          return true;
-        } else {
-          Node * old = subnode;
-          parent->right = subnode->Rebalance();
-          return parent->right != old;
-        }
+        parent->right = AddTo(subnode, leaf);
+        parent->RecomputeDepth();
+        return parent->Rebalance();
       }
     }
   }
   
   /**
    * Remove a leaf with a given [value] from a [parent] node. The parent node
-   * itself might contain the leaf value.
+   * itself might have the value in question.
    *
    * The returned node should take the place of [parent] in the tree.
    */
@@ -175,17 +164,18 @@ protected:
       found = false;
       return nullptr;
     }
-    if (parent->value > value) {
+    if (parent->GetValue() > value) {
       // TODO: see if an extra check makes this faster
       parent->left = RemoveFrom(parent->left, value, found);
       parent->RecomputeDepth();
       return parent->Rebalance();
-    } else if (parent->value < value) {
+    } else if (parent->GetValue() < value) {
       // TODO: see if an extra check makes this faster
       parent->right = RemoveFrom(parent->right, value, found);
       parent->RecomputeDepth();
       return parent->Rebalance();
     } else {
+      found = true;
       Node * result = RemoveSubroutine(parent);
       DeallocNode(parent);
       return result;
@@ -220,7 +210,7 @@ protected:
       predecessor = parent;
       return parent->left;
     } else {
-      parent->right = RemoveInOrderPredecessor(parent->right);
+      parent->right = RemoveInOrderPredecessor(parent->right, predecessor);
       parent->RecomputeDepth();
       return parent->Rebalance();
     }

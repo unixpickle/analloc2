@@ -15,7 +15,7 @@ void TestBalancedTrivialDeletions();
 void TestUnbalancedTrivialDeletions();
 void TestBalancedNontrivialDeletions();
 void TestRandomModifications();
-void TestFindMethods();
+void TestComparisonSearchMethods();
 void TestSearchFunction();
 
 bool IsLeaf(const AvlNode<int> * node);
@@ -45,7 +45,7 @@ int main() {
   assert(aligner.GetAllocCount() == 0);
   TestRandomModifications();
   assert(aligner.GetAllocCount() == 0);
-  TestFindMethods();
+  TestComparisonSearchMethods();
   assert(aligner.GetAllocCount() == 0);
   TestSearchFunction();
   assert(aligner.GetAllocCount() == 0);
@@ -210,7 +210,6 @@ void TestBasicRootUnbalancedInsertions() {
     assert(IsFull(tree.GetAvlRoot()));
     assert(IsLeaf(tree.GetAvlRoot()->left));
     assert(IsLeaf(tree.GetAvlRoot()->right));
-    assert(tree.GetAvlRoot()->parent == nullptr);
     assert(ValidateParent(tree.GetAvlRoot()->left));
     assert(ValidateParent(tree.GetAvlRoot()->right));
     assert(tree.GetAvlRoot()->left->GetValue() == 1);
@@ -259,7 +258,6 @@ void TestBasicNonrootUnbalancedInsertions() {
       assert(aligner.GetAllocCount() == 5);
       AvlNode<int> * rotated;
       assert(tree.GetAvlRoot() != nullptr);
-      assert(tree.GetAvlRoot()->parent == nullptr);
       assert(IsFull(tree.GetAvlRoot()));
       assert(ValidateParent(tree.GetAvlRoot()->right));
       if (j == 0) {
@@ -297,7 +295,6 @@ void TestRandomInsertions() {
     assert(aligner.GetAllocCount() == (size_t)i + 1);
     if (i == 5) {
       assert(tree.GetAvlRoot() != nullptr);
-      assert(tree.GetAvlRoot()->parent == nullptr);
       assert(IsFull(tree.GetAvlRoot()));
       assert(IsFull(tree.GetAvlRoot()->left));
       assert(IsRightOnly(tree.GetAvlRoot()->right));
@@ -317,7 +314,6 @@ void TestRandomInsertions() {
       assert(tree.GetAvlRoot()->right->right->GetValue() == 15);
     } else if (i == 9) {
       assert(tree.GetAvlRoot() != nullptr);
-      assert(tree.GetAvlRoot()->parent == nullptr);
       assert(IsFull(tree.GetAvlRoot()));
       assert(IsFull(tree.GetAvlRoot()->left));
       assert(IsFull(tree.GetAvlRoot()->right));
@@ -349,7 +345,6 @@ void TestRandomInsertions() {
       assert(tree.GetAvlRoot()->left->right->right->GetValue() == 10);
     } else if (i == 16) {
       assert(tree.GetAvlRoot() != nullptr);
-      assert(tree.GetAvlRoot()->parent == nullptr);
       assert(IsFull(tree.GetAvlRoot()));
       assert(IsFull(tree.GetAvlRoot()->left));
       assert(IsFull(tree.GetAvlRoot()->right));
@@ -421,7 +416,6 @@ void TestBalancedTrivialDeletions() {
   assert(tree.Remove(3));
   assert(aligner.GetAllocCount() == 2);
   assert(tree.GetAvlRoot() != nullptr);
-  assert(tree.GetAvlRoot()->parent == nullptr);
   assert(IsLeftOnly(tree.GetAvlRoot()));
   assert(IsLeaf(tree.GetAvlRoot()->left));
   assert(ValidateParent(tree.GetAvlRoot()->left));
@@ -430,7 +424,6 @@ void TestBalancedTrivialDeletions() {
   assert(tree.Remove(1));
   assert(aligner.GetAllocCount() == 1);
   assert(tree.GetAvlRoot() != nullptr);
-  assert(tree.GetAvlRoot()->parent == nullptr);
   assert(IsLeaf(tree.GetAvlRoot()));
   assert(tree.GetAvlRoot()->GetValue() == 2);
   assert(tree.Remove(2));
@@ -442,7 +435,6 @@ void TestBalancedTrivialDeletions() {
   tree.Add(3);
   assert(tree.Remove(2));
   assert(tree.GetAvlRoot() != nullptr);
-  assert(tree.GetAvlRoot()->parent == nullptr);
   assert(IsLeaf(tree.GetAvlRoot()));
   assert(tree.GetAvlRoot()->GetValue() == 3);
   assert(tree.Remove(3));
@@ -454,7 +446,6 @@ void TestBalancedTrivialDeletions() {
   tree.Add(1);
   assert(tree.Remove(2));
   assert(tree.GetAvlRoot() != nullptr);
-  assert(tree.GetAvlRoot()->parent == nullptr);
   assert(IsLeaf(tree.GetAvlRoot()));
   assert(tree.GetAvlRoot()->GetValue() == 1);
   assert(tree.Remove(1));
@@ -470,7 +461,6 @@ void TestBalancedTrivialDeletions() {
   assert(tree.Remove(3));
   assert(aligner.GetAllocCount() == 3);
   assert(tree.GetAvlRoot() != nullptr);
-  assert(tree.GetAvlRoot()->parent == nullptr);
   assert(IsFull(tree.GetAvlRoot()));
   assert(IsLeaf(tree.GetAvlRoot()->left));
   assert(IsLeaf(tree.GetAvlRoot()->right));
@@ -491,7 +481,6 @@ void TestBalancedTrivialDeletions() {
   assert(tree.Remove(4));
   assert(aligner.GetAllocCount() == 3);
   assert(tree.GetAvlRoot() != nullptr);
-  assert(tree.GetAvlRoot()->parent == nullptr);
   assert(IsFull(tree.GetAvlRoot()));
   assert(IsLeaf(tree.GetAvlRoot()->left));
   assert(IsLeaf(tree.GetAvlRoot()->right));
@@ -978,8 +967,8 @@ void TestRandomModifications() {
   }
 }
 
-void TestFindMethods() {
-  ScopedPass pass("AvlTree<int>::[Find*]()");
+void TestComparisonSearchMethods() {
+  ScopedPass pass("AvlTree<int>::Search[GT/LT/GE/LE]()");
   AvlTree<int> tree(aligner);
   
   tree.Add(10);
@@ -995,44 +984,44 @@ void TestFindMethods() {
   int result;
   
   // Values inside the dataset
-  assert(tree.FindGreaterThan(result, 15));
+  assert(tree.SearchGT(&result, 15));
   assert(result == 16);
-  assert(tree.FindGreaterThanOrEqualTo(result, 15));
+  assert(tree.SearchGE(&result, 15));
   assert(result == 16);
-  assert(tree.FindGreaterThan(result, 14));
+  assert(tree.SearchGT(&result, 14));
   assert(result == 16);
-  assert(tree.FindGreaterThanOrEqualTo(result, 14));
+  assert(tree.SearchGE(&result, 14));
   assert(result == 14);
-  assert(tree.FindLessThan(result, 7));
+  assert(tree.SearchLT(&result, 7));
   assert(result == 6);
-  assert(tree.FindLessThanOrEqualTo(result, 7));
+  assert(tree.SearchLE(&result, 7));
   assert(result == 6);
-  assert(tree.FindLessThan(result, 8));
+  assert(tree.SearchLT(&result, 8));
   assert(result == 6);
-  assert(tree.FindLessThanOrEqualTo(result, 8));
+  assert(tree.SearchLE(&result, 8));
   assert(result == 8);
   
   // Values outside of the range of the dataset
-  assert(!tree.FindLessThan(result, 2));
-  assert(tree.FindLessThanOrEqualTo(result, 2));
+  assert(!tree.SearchLT(&result, 2));
+  assert(tree.SearchLE(&result, 2));
   assert(result == 2);
-  assert(!tree.FindLessThanOrEqualTo(result, 1));
-  assert(!tree.FindGreaterThan(result, 18));
-  assert(tree.FindGreaterThanOrEqualTo(result, 18));
+  assert(!tree.SearchLE(&result, 1));
+  assert(!tree.SearchGT(&result, 18));
+  assert(tree.SearchGE(&result, 18));
   assert(result == 18);
-  assert(!tree.FindGreaterThanOrEqualTo(result, 19));
+  assert(!tree.SearchGE(&result, 19));
   
   // Find and remove functionality
-  assert(tree.FindLessThanOrEqualTo(result, 6, true));
+  assert(tree.SearchLE(&result, 6, true));
   assert(result == 6);
   assert(!tree.Contains(6));
-  assert(tree.FindLessThan(result, 5, true));
+  assert(tree.SearchLT(&result, 5, true));
   assert(result == 4);
   assert(!tree.Contains(4));
-  assert(tree.FindGreaterThan(result, 1, true));
+  assert(tree.SearchGT(&result, 1, true));
   assert(result == 2);
   assert(!tree.Contains(2));
-  assert(tree.FindGreaterThanOrEqualTo(result, 8, true));
+  assert(tree.SearchGE(&result, 8, true));
   assert(result == 8);
   assert(!tree.Contains(8));
 }
@@ -1041,11 +1030,11 @@ void TestSearchFunction() {
   ScopedPass pass("AvlTree<int>::Search()");
   AvlTree<int> tree(aligner);
   
-  struct SearchFunc : public AvlTree<int>::SearchFunction {
-    virtual int DirectionFromNode(const int & test) const {
-      if (value > test) return 1;
-      else if (value < test) return -1;
-      else return 0;
+  struct SearchFunc : public AvlTree<int>::Query {
+    virtual AvlTree<int>::Direction Next(const int & test) const {
+      if (value > test) return AvlTree<int>::DirectionRight;
+      else if (value < test) return AvlTree<int>::DirectionLeft;
+      else return AvlTree<int>::DirectionFound;
     }
     
     int value;
@@ -1066,40 +1055,40 @@ void TestSearchFunction() {
   
   // Basic searches
   func.value = 2;
-  assert(tree.Search(result, func));
+  assert(tree.Search(&result, func));
   assert(result == 2);
   func.value = 1;
-  assert(!tree.Search(result, func));
+  assert(!tree.Search(&result, func));
   func.value = 18;
-  assert(tree.Search(result, func));
+  assert(tree.Search(&result, func));
   assert(result == 18);
   func.value = 19;
-  assert(!tree.Search(result, func));
+  assert(!tree.Search(&result, func));
   func.value = 10;
-  assert(tree.Search(result, func));
+  assert(tree.Search(&result, func));
   assert(result == 10);
   func.value = 9;
-  assert(!tree.Search(result, func));
+  assert(!tree.Search(&result, func));
   
   // Deleting searches
   func.value = 2;
-  assert(tree.Search(result, func, true));
+  assert(tree.Search(&result, func, true));
   assert(result == 2);
   assert(!tree.Contains(2));
-  assert(!tree.Search(result, func, true));
-  assert(!tree.Search(result, func));
+  assert(!tree.Search(&result, func, true));
+  assert(!tree.Search(&result, func));
   func.value = 18;
-  assert(tree.Search(result, func, true));
+  assert(tree.Search(&result, func, true));
   assert(result == 18);
   assert(!tree.Contains(18));
-  assert(!tree.Search(result, func, true));
-  assert(!tree.Search(result, func));
+  assert(!tree.Search(&result, func, true));
+  assert(!tree.Search(&result, func));
   func.value = 10;
-  assert(tree.Search(result, func, true));
+  assert(tree.Search(&result, func, true));
   assert(result == 10);
   assert(!tree.Contains(10));
-  assert(!tree.Search(result, func, true));
-  assert(!tree.Search(result, func));
+  assert(!tree.Search(&result, func, true));
+  assert(!tree.Search(&result, func));
 }
 
 bool IsLeaf(const AvlNode<int> * node) {
@@ -1122,13 +1111,17 @@ bool IsRightOnly(const AvlNode<int> * node) {
   return node->left == nullptr && node->right != nullptr;
 }
 
-bool ValidateParent(const AvlNode<int> * node) {
-  if (!node->parent) return true;
-  return node->parent->left == node || node->parent->right == node;
+bool ValidateParent(const AvlNode<int> *) {
+  // In the future, if the AVL tree uses a parent pointer, this should
+  // validate the parent pointer.
+  return true;
+  
+  //if (!node->parent) return true;
+  //return node->parent->left == node || node->parent->right == node;
 }
 
 bool ValidateRoot(const AvlNode<int> * node) {
-  return node != nullptr && node->parent == nullptr;
+  return node != nullptr;// && node->parent == nullptr;
 }
 
 bool ValidateBalance(const AvlNode<int> * node, int & depthOut) {

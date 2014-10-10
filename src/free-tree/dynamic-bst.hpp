@@ -20,7 +20,7 @@ public:
   };
   
   /**
-   * Create a new [DynamicTree] which will use a specified [allocator] to
+   * Create a new [DynamicBst] which will use a specified [allocator] to
    * allocate nodes.
    */
   DynamicBst(VirtualAllocator & _allocator) : allocator(_allocator) {}
@@ -45,7 +45,7 @@ public:
    *
    * Returns `true` if and only if [value] is found and removed.
    */
-  virtual bool Remove(const T & value);
+  virtual bool Remove(const T & value) = 0;
   
   /**
    * Add a given [value] to the tree.
@@ -111,13 +111,14 @@ public:
                           bool remove = false) {
     if (remove) {
       T theValue;
-      if (!SearchBest(GetRoot(), &theValue, query)) {
+      if (!SearchBestFrom(GetRoot(), &theValue, query)) {
         return false;
       }
       if (result) {
         (*result) = theValue;
       }
       Remove(theValue);
+      return true;
     } else {
       return SearchBestFrom(GetRoot(), result, query);
     }
@@ -127,7 +128,7 @@ public:
    * Searches for the lowest value in this tree which is greater than [value].
    */
   virtual bool SearchGT(T * result, const T & value, bool remove = false) {
-    SearchBest(result, ComparatorBestQuery(value, true, false), remove);
+    return SearchBest(result, ComparatorBestQuery(value, true, false), remove);
   }
   
   /**
@@ -135,14 +136,15 @@ public:
    * to [value].
    */
   virtual bool SearchGE(T * result, const T & value, bool remove = false) {
-    SearchBest(result, ComparatorBestQuery(value, true, true), remove);
+    return SearchBest(result, ComparatorBestQuery(value, true, true), remove);
   }
   
   /**
    * Searches for the greatest value in this tree which is less than [value].
    */
   virtual bool SearchLT(T * result, const T & value, bool remove = false) {
-    SearchBest(result, ComparatorBestQuery(value, false, false), remove);
+    return SearchBest(result, ComparatorBestQuery(value, false, false),
+                      remove);
   }
   
   /**
@@ -150,7 +152,7 @@ public:
    * to [value].
    */
   virtual bool SearchLE(T * result, const T & value, bool remove = false) {
-    SearchBest(result, ComparatorBestQuery(value, false, true), remove);
+    return SearchBest(result, ComparatorBestQuery(value, false, true), remove);
   }
   
   class Node {
@@ -293,8 +295,8 @@ protected:
     Direction direction = query.Next(node->GetValue());
     if (direction == DirectionFound) {
       // If the node was found, no more branching necessary.
-      if (node) {
-        (*node) = node->GetValue();
+      if (result) {
+        (*result) = node->GetValue();
       }
       return true;
     } else {
