@@ -1,7 +1,7 @@
 #ifndef __ANALLOC2_AVL_NODE_HPP__
 #define __ANALLOC2_AVL_NODE_HPP__
 
-#include "dynamic-binary-tree.hpp"
+#include "dynamic-bst.hpp"
 #include <ansa/math>
 #include <cstddef>
 
@@ -11,8 +11,8 @@ namespace analloc {
  * A node which tracks its depth as well as its children.
  */
 template <class T>
-struct AvlNode : public DynamicBinaryTree<T>::Node {
-  typedef DynamicBinaryTree<T>::Node super;
+struct AvlNode : public DynamicBst<T>::Node {
+  typedef typename DynamicBst<T>::Node super;
   
   AvlNode * left = nullptr;
   AvlNode * right = nullptr;

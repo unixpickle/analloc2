@@ -11,9 +11,9 @@ namespace analloc {
  * but a relatively low search cost.
  */
 template <class T>
-class AvlTree : public DynamicBinaryTree<T>, public ansa::NoCopy {
+class AvlTree : public DynamicBst<T>, public ansa::NoCopy {
 public:
-  typedef DynamicBinaryTree<T> super;
+  typedef DynamicBst<T> super;
   typedef AvlNode<T> Node;
   
   /**
@@ -31,8 +31,8 @@ public:
   /**
    * Returns the "mutable" root node which lacks depth information.
    */
-  virtual super::Node * GetRoot() {
-    return static_cast<super::Node>(root);
+  virtual typename super::Node * GetRoot() {
+    return static_cast<typename super::Node>(root);
   }
   
   /**
