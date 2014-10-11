@@ -142,8 +142,8 @@ public:
   /**
    * Enumerate over the elements in the tree from least to greatest order.
    */
-  virtual void Enumerate(EnumerateCallback & callback) {
-    EnumerateFromNode(root, callback);
+  virtual bool Enumerate(EnumerateCallback & callback) {
+    return EnumerateFromNode(root, callback);
   }
   
   /**

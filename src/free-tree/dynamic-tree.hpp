@@ -141,8 +141,13 @@ public:
   
   /**
    * Enumerate over all the values in the tree in least-to-greatest order.
+   *
+   * Returns `false` if [callback] ever returned `false` from its Yield method.
+   *
+   * Note: this method might return `false` even if every value is enumerated,
+   * since the [callback] might return `false` on the last element.
    */
-  virtual void Enumerate(EnumerateCallback & callback) = 0;
+  virtual bool Enumerate(EnumerateCallback & callback) = 0;
   
   /**
    * Returns the allocator which this tree uses to allocate nodes.

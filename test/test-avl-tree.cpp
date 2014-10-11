@@ -1122,14 +1122,15 @@ void TestEnumerator() {
   
   struct StoppingEnumerator : public RollingEnumerator {
     bool stopped = false;
+    int cutoff;
     
     virtual bool Yield(const int & value) {
       assert(!stopped);
-      if (idx == 20) {
-        stopped = true;
+      RollingEnumerator::Yield(value);
+      if (idx == cutoff) {
         return false;
       } else {
-        return RollingEnumerator::Yield(value);
+        return true;
       }
     }
   };
@@ -1148,15 +1149,23 @@ void TestEnumerator() {
   }
   RollingEnumerator enum1;
   StoppingEnumerator enum2;
-  tree.Enumerate(enum1);
+  StoppingEnumerator enum3;
+  enum2.cutoff = 20;
+  enum3.cutoff = 100;
+  assert(tree.Enumerate(enum1));
   assert(enum1.idx == 100);
   for (int i = 0; i < 100; ++i) {
     assert(enum1.values[i] == i + 1);
   }
-  tree.Enumerate(enum2);
+  assert(!tree.Enumerate(enum2));
   assert(enum2.idx == 20);
   for (int i = 0; i < 20; ++i) {
     assert(enum2.values[i] == i + 1);
+  }
+  assert(!tree.Enumerate(enum3));
+  assert(enum3.idx == 100);
+  for (int i = 0; i < 100; ++i) {
+    assert(enum3.values[i] == i + 1);
   }
 }
 
