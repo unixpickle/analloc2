@@ -17,6 +17,7 @@ void TestBalancedNontrivialDeletions();
 void TestRandomModifications();
 void TestFindMethods();
 void TestSearchFunction();
+void TestEnumerator();
 
 bool IsLeaf(const AvlNode<int> * node);
 bool IsFull(const AvlNode<int> * node);
@@ -49,6 +50,11 @@ int main() {
   assert(aligner.GetAllocCount() == 0);
   TestSearchFunction();
   assert(aligner.GetAllocCount() == 0);
+  TestEnumerator();
+  assert(aligner.GetAllocCount() == 0);
+  
+  // TODO: test AVL tree with multiple occurances of the same value
+  
   return 0;
 }
 
@@ -1100,6 +1106,58 @@ void TestSearchFunction() {
   assert(!tree.Contains(10));
   assert(!tree.Search(result, func, true));
   assert(!tree.Search(result, func));
+}
+
+void TestEnumerator() {
+  struct RollingEnumerator : public AvlTree<int>::EnumerateCallback {
+    int values[100];
+    int idx = 0;
+    
+    virtual bool Yield(const int & value) {
+      assert(idx < 100);
+      values[idx++] = value;
+      return true;
+    }
+  };
+  
+  struct StoppingEnumerator : public RollingEnumerator {
+    bool stopped = false;
+    
+    virtual bool Yield(const int & value) {
+      assert(!stopped);
+      if (idx == 20) {
+        stopped = true;
+        return false;
+      } else {
+        return RollingEnumerator::Yield(value);
+      }
+    }
+  };
+  
+  ScopedPass pass("AvlTree<int>::Enumerate()");
+  AvlTree<int> tree(aligner);
+  
+  int numbers[] = {97, 28, 70, 100, 12, 89, 62, 67, 16, 61, 36, 45, 87, 78,
+      74, 95, 80, 53, 6, 65, 40, 50, 92, 47, 64, 76, 96, 99, 29, 46, 30, 94,
+      84, 71, 54, 31, 73, 33, 69, 43, 72, 18, 63, 83, 3, 52, 90, 13, 68, 34,
+      32, 9, 55, 15, 35, 17, 86, 91, 81, 38, 75, 37, 77, 41, 60, 79, 8, 4,
+      20, 58, 57, 93, 21, 2, 88, 27, 19, 25, 7, 48, 26, 5, 85, 39, 23, 14, 1,
+      10, 11, 98, 49, 24, 82, 42, 66, 51, 59, 22, 56, 44};
+  for (int i = 0; i < 100; ++i) {
+    tree.Add(numbers[i]);
+  }
+  RollingEnumerator enum1;
+  StoppingEnumerator enum2;
+  tree.Enumerate(enum1);
+  assert(enum1.idx == 100);
+  for (int i = 0; i < 100; ++i) {
+    assert(enum1.values[i] == i + 1);
+  }
+  tree.Enumerate(enum2);
+  assert(enum2.idx == 20);
+  for (int i = 0; i < 20; ++i) {
+    assert(enum2.values[i] == i + 1);
+  }
 }
 
 bool IsLeaf(const AvlNode<int> * node) {

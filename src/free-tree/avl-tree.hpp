@@ -17,6 +17,7 @@ public:
   typedef DynamicTree<T> super;
   typedef AvlNode<T> Node;
   using typename super::Query;
+  using typename super::EnumerateCallback;
   
   /**
    * Create a new, empty AVL tree.
@@ -136,6 +137,13 @@ public:
   virtual void Clear() {
     RecursivelyDeallocNode(root);
     root = nullptr;
+  }
+  
+  /**
+   * Enumerate over the elements in the tree from least to greatest order.
+   */
+  virtual void Enumerate(EnumerateCallback & callback) {
+    EnumerateFromNode(root, callback);
   }
   
   /**
@@ -370,6 +378,13 @@ protected:
         return &node->parent->left;
       }
     }
+  }
+  
+  bool EnumerateFromNode(Node * node, EnumerateCallback & callback) {
+    if (!node) return true;
+    if (!EnumerateFromNode(node->left, callback)) return false;
+    if (!callback.Yield(node->GetValue())) return false;
+    return EnumerateFromNode(node->right, callback);
   }
 };
 

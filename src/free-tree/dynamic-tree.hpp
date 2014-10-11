@@ -29,6 +29,18 @@ public:
   };
   
   /**
+   * A callback which is used by the [Enumerate] function.
+   */
+  class EnumerateCallback {
+  public:
+    /**
+     * Return `true` to continue the enumeration. Return `false` to end the
+     * enumeration.
+     */
+    virtual bool Yield(const T & value) = 0;
+  };
+  
+  /**
    * Create a new [DynamicTree] which will use a specified [allocator] to
    * allocate nodes.
    */
@@ -126,6 +138,11 @@ public:
    * Remove all nodes from this tree.
    */
   virtual void Clear() = 0;
+  
+  /**
+   * Enumerate over all the values in the tree in least-to-greatest order.
+   */
+  virtual void Enumerate(EnumerateCallback & callback) = 0;
   
   /**
    * Returns the allocator which this tree uses to allocate nodes.
