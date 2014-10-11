@@ -4,4 +4,4 @@
 #include "../src/generic/generic-translator.hpp"
 #include "../src/generic/generic-virtualizer.hpp"
 #include "../src/free-tree/avl-tree.hpp"
-#include "../src/free-tree/free-tree-allocator.hpp"
+#include "../src/free-tree/free-tree-aligner.hpp"
