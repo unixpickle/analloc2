@@ -1,5 +1,5 @@
-#ifndef __ANALLOC2_GENERIC_VIRTUALIZER_HPP__
-#define __ANALLOC2_GENERIC_VIRTUALIZER_HPP__
+#ifndef __ANALLOC2_ALLOCATOR_VIRTUALIZER_HPP__
+#define __ANALLOC2_ALLOCATOR_VIRTUALIZER_HPP__
 
 #include "../abstract/virtual-allocator.hpp"
 #include <ansa/cstring>
@@ -7,21 +7,28 @@
 namespace analloc {
 
 /**
- * Provides a simple wrapper around an [Allocator] providing full
- * [VirtualAllocator] functionality using a small memory header.
+ * A simple wrapper for an [Allocator] which provides full [VirtualAllocator]
+ * functionality.
+ *
+ * The [AllocatorVirtualizer] achieves its goal through the use of a small
+ * memory header which prefixes every allocated region of memory. You may
+ * specify the optional [HeaderPadding] template argument to add bytes to the
+ * end of the header struct.
  */
 template <class T, size_t HeaderPadding = 0>
-class GenericVirtualizer : public T,
-                           public virtual VirtualAllocator {
-protected:
+class AllocatorVirtualizer : public T,
+                             public virtual VirtualAllocator {
+public:
+  /**
+   * The header structure which precedes all returned regions of memory.
+   */
   struct Header {
     size_t size;
     uint8_t padding[HeaderPadding];
   };
-
-public:
+  
   template <typename... Args>
-  GenericVirtualizer(Args... args) : T(args...) {}
+  AllocatorVirtualizer(Args... args) : T(args...) {}
   
   virtual bool Alloc(uintptr_t & out, size_t size) {
     // We need size + sizeof(Header) bytes in order to store the header
@@ -39,15 +46,25 @@ public:
   
   virtual void Dealloc(uintptr_t pointer, size_t size) {
     // Assert that the [size] is correct
-    assert(((Header *)(pointer - sizeof(Header)))->size == size);
+    assert(RegionHeader(pointer)->size == size);
+    
     // Deallocate the original pointer by subtracting sizeof(Header) to the
     // address and adding it to the length.
     T::Dealloc(pointer - sizeof(Header), size + sizeof(Header));
   }
   
+  /**
+   * Allocate a new region of memory of [size] bytes, copy over the memory from
+   * [address], deallocate [address], and return the new memory buffer through
+   * the [address] argument.
+   *
+   * Some allocators may be able to improve on this algorithm. For instance,
+   * the current region of memory may be directly expandable; in this case,
+   * there is no need for a copy operation.
+   */
   virtual bool Realloc(uintptr_t & address, size_t size) {
     // Get the information for the current buffer.
-    Header * oldHeader = (Header *)(address - sizeof(Header));
+    Header * oldHeader = RegionHeader(address);
     size_t oldSize = oldHeader->size;
     
     // Attempt to allocate a new buffer using this classes [Alloc] method.
@@ -72,9 +89,14 @@ public:
   
   virtual void Free(uintptr_t pointer) {
     // Get the buffer's header.
-    Header * header = (Header *)(pointer - sizeof(Header));
+    Header * header = RegionHeader(pointer);
     // Free the entire buffer, including the header.
     T::Dealloc(pointer - sizeof(Header), header->size + sizeof(Header));
+  }
+  
+protected:
+  inline Header * RegionHeader(uintptr_t pointer) {
+    return (Header *)(pointer - sizeof(Header));
   }
 };
 
