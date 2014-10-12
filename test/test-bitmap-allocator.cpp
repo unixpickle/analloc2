@@ -31,26 +31,25 @@ void TestStepAllocation() {
   ScopedPass pass("BitmapAllocator<", NumericInfo<T>::name,
                   ", uint8_t> [step]");
   // a 256-bit bitmap allocator
-  uint8_t addr = 0;
+  uint16_t addr = 0;
   T cells[256 / (sizeof(T) * 8)];
-  BitmapAllocator<T, uint8_t> allocator(cells, 0x100);
+  BitmapAllocator<T, uint16_t> allocator(cells, 0x100);
   for (int i = 0; i < 256; ++i) {
     assert(allocator.Alloc(addr, 1));
-    assert(addr == (uint8_t)i);
+    assert(addr == (uint16_t)i);
   }
   assert(!allocator.Alloc(addr, 1));
   for (int i = 0; i < 256; ++i) {
-    allocator.Dealloc((uint8_t)i, 1);
+    allocator.Dealloc((uint16_t)i, 1);
   }
   for (int i = 0; i < 128; ++i) {
-    uint8_t addr = 0;
     assert(allocator.Alloc(addr, 2));
-    assert(addr == (uint8_t)(i * 2));
+    assert(addr == (uint16_t)(i * 2));
   }
   assert(!allocator.Alloc(addr, 2));
   assert(!allocator.Alloc(addr, 1));
   for (int i = 0; i < 128; ++i) {
-    allocator.Dealloc((uint8_t)(i * 2), 2);
+    allocator.Dealloc((uint16_t)(i * 2), 2);
   }
 }
 

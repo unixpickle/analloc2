@@ -22,7 +22,7 @@ namespace analloc {
  * addresses so that the address space need not begin at `nullptr`.
  */
 template <class T>
-class AllocatorTransformer : public T {
+class AllocatorTransformer : public virtual T {
 public:
   using typename T::AddressType;
   using typename T::SizeType;
@@ -53,7 +53,7 @@ public:
     if (!T::Alloc(output, ScaleSize(size))) {
       return false;
     }
-    output = (output * scale) + offset;
+    output = OutputAddress(output);
     return true;
   }
   
@@ -98,6 +98,13 @@ protected:
     SizeType scaledSize = size / scale;
     if (size % scale) ++scaledSize;
     return scaledSize;
+  }
+  
+  /**
+   * Translate an address from the subclass to an output address.
+   */
+  inline AddressType OutputAddress(AddressType address) {
+    return (address * scale) + offset;
   }
 };
 

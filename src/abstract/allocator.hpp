@@ -2,6 +2,7 @@
 #define __ANALLOC2_ALLOCATOR_HPP__
 
 #include <ansa/nocopy>
+#include <ansa/numeric-info>
 
 namespace analloc {
 
@@ -11,6 +12,10 @@ namespace analloc {
 template <typename _AddressType, typename _SizeType = _AddressType>
 class Allocator : public ansa::NoCopy {
 public:
+  static_assert(ansa::NumericInfo<_AddressType>::max >= 
+                ansa::NumericInfo<_SizeType>::max,
+                "AddressType must be greater or equal to SizeType in size.");
+  
   /**
    * The type which can address any individual unit within this allocator.
    *

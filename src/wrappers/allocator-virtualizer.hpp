@@ -16,7 +16,7 @@ namespace analloc {
  * end of the header struct.
  */
 template <class T, size_t HeaderPadding = 0>
-class AllocatorVirtualizer : public T,
+class AllocatorVirtualizer : public virtual T,
                              public virtual VirtualAllocator {
 public:
   /**
