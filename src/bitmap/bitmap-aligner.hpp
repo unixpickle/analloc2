@@ -22,8 +22,9 @@ public:
       return this->Alloc(addressOut, size);
     }
     AddressType index = 0;
-    while (NextFreeAligned(index, align)) {
-      if (this->Reserve(index, size, &index)) {
+    while (NextFreeAligned(index, size - 1, align)) {
+      if (this->Reserve(index + 1, size - 1, &index)) {
+        this->SetBit(index, true);
         addressOut = index;
         return true;
       }
@@ -32,14 +33,14 @@ public:
   }
   
 protected:
-  bool NextFreeAligned(AddressType & idx, AddressType align) {
-    for (AddressType i = idx; i < this->GetBitCount(); ++i) {
+  bool NextFreeAligned(AddressType & idx, SizeType afterSize,
+                       AddressType align) {
+    for (AddressType i = idx; i < this->GetBitCount() - afterSize; ++i) {
       // Skip to the next aligned region
       AddressType misalignment = (AddressType)i % align;
       if (misalignment) {
         AddressType add = align - misalignment - 1;
-        if (i + add + 1 < i) {
-          // Integer wrap-around
+        if (ansa::AddWraps<AddressType>(i, add)) {
           return false;
         }
         i += add;
@@ -49,8 +50,9 @@ protected:
         return true;
       } else {
         // Attempt to skip the entire unit
-        if (!(i % this->UnitBitCount) && i + this->UnitBitCount <=
-            this->GetBitCount()) {
+        if (!(i % this->UnitBitCount)
+            && i + this->UnitBitCount <= this->GetBitCount()
+            && !ansa::AddWraps<AddressType>(i, this->UnitBitCount)) {
           if (!~(this->UnitAt(i / this->UnitBitCount))) {
             i += this->UnitBitCount - 1;
           }

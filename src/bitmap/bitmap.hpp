@@ -3,14 +3,14 @@
 
 #include <cstddef>
 #include <cassert>
-#include <ansa/numeric-info>
+#include <ansa/math>
 
 namespace analloc {
 
 template <typename Unit = unsigned int, typename IndexType = size_t>
 class Bitmap {
 public:
-  static constexpr int UnitBitCount = ansa::NumericInfo<Unit>::bitCount;
+  static constexpr IndexType UnitBitCount = ansa::NumericInfo<Unit>::bitCount;
   
   Bitmap() : units(nullptr) {
   }
@@ -53,19 +53,21 @@ public:
   }
   
   template <typename ValueType>
-  void SetBits(IndexType idx, int len, ValueType value) {
-    assert(idx + len <= bitCount && idx + len >= idx);
-    for (int i = 0; i < len; ++i) {
+  void SetBits(IndexType idx, IndexType len, ValueType value) {
+    assert(!ansa::AddWraps<IndexType>(idx, len));
+    assert(idx + len <= bitCount);
+    for (IndexType i = 0; i < len; ++i) {
       bool flag = (value & ((ValueType)1 << i)) ? 1 : 0;
       SetBit(idx + len - (i + 1), flag);
     }
   }
   
   template <typename ValueType>
-  ValueType GetBits(IndexType idx, int len) {
-    assert(idx + len <= bitCount && idx + len >= idx);
+  ValueType GetBits(IndexType idx, IndexType len) {
+    assert(!ansa::AddWraps<IndexType>(idx, len));
+    assert(idx + len <= bitCount);
     ValueType result = 0;
-    for (int i = 0; i < len; ++i) {
+    for (IndexType i = 0; i < len; ++i) {
       ValueType flag = (ValueType)(GetBit(idx + i) ? 1 : 0);
       result |= flag << (len - (i + 1));
     }

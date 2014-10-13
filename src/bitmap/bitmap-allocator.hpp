@@ -27,12 +27,18 @@ public:
   }
   
   virtual bool Alloc(AddressType & addressOut, SizeType size) {
-    if (!size) {
-      return Alloc(addressOut, 1);
+    // Special cases
+    if (size > this->GetBitCount()) {
+      return false;
+    } else if (!size) {
+      addressOut = 0;
+      return true;
     }
+    // Keep attempting to find free regions
     AddressType index = 0;
-    while (NextFree(index)) {
-      if (Reserve(index, size, &index)) {
+    while (NextFree(index, size - 1)) {
+      if (Reserve(index + 1, size - 1, &index)) {
+        this->SetBit(index, true);
         addressOut = index;
         return true;
       }
@@ -41,20 +47,21 @@ public:
   }
   
   virtual void Dealloc(AddressType address, SizeType size) {
-    assert(address < this->GetBitCount() && address + size
-           <= this->GetBitCount() && address + size >= address);
+    assert(!ansa::AddWraps<AddressType>(address, size));
+    assert(address + size <= this->GetBitCount());
     for (AddressType i = address; i < address + size; ++i) {
       this->SetBit(i, false);
     }
   }
   
 protected:
-  bool NextFree(AddressType & idx) {
-    for (AddressType i = idx; i < this->GetBitCount(); ++i) {
+  bool NextFree(AddressType & idx, SizeType afterSize) {
+    for (AddressType i = idx; i < this->GetBitCount() - afterSize; ++i) {
       if (this->GetBit(i)) {
         // Skip this entire unit if we can
-        if (!(i % this->UnitBitCount) && i + this->UnitBitCount <=
-            this->GetBitCount()) {
+        if (!(i % this->UnitBitCount)
+            && i + this->UnitBitCount <= this->GetBitCount()
+            && !ansa::AddWraps<AddressType>(i, this->UnitBitCount)) {
           if (!~(this->UnitAt(i / this->UnitBitCount))) {
             i += this->UnitBitCount - 1;
           }
@@ -68,6 +75,8 @@ protected:
   }
   
   bool Reserve(AddressType idx, SizeType size, AddressType * firstUsed) {
+    assert(!ansa::AddWraps<AddressType>(idx, size));
+    assert(idx + size <= this->GetBitCount());
     // Make sure that the next [size] cells are free.
     for (SizeType i = 0; i < size; ++i) {
       if (this->GetBit(idx + i)) {
