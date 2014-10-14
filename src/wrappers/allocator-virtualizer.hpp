@@ -11,11 +11,11 @@ namespace analloc {
  * functionality.
  *
  * The [AllocatorVirtualizer] achieves its goal through the use of a small
- * memory header which prefixes every allocated region of memory. You may
- * specify the optional [HeaderPadding] template argument to add bytes to the
- * end of the header struct.
+ * memory header which prefixes every allocated region of memory. The header is
+ * simply a [size] field at the moment, but may be expanded in the future to
+ * include caller information or performance statistics.
  */
-template <class T, size_t HeaderPadding = 0>
+template <class T>
 class AllocatorVirtualizer : public T,
                              public virtual VirtualAllocator {
 public:
@@ -24,23 +24,24 @@ public:
    */
   struct Header {
     size_t size;
-    uint8_t padding[HeaderPadding];
   };
   
   template <typename... Args>
-  AllocatorVirtualizer(Args... args) : T(args...) {}
+  AllocatorVirtualizer(size_t headerAlignment, Args... args) : T(args...) {
+    headerSize = ansa::Align(sizeof(Header), headerAlignment);
+  }
   
   virtual bool Alloc(uintptr_t & out, size_t size) {
     // We need size + sizeof(Header) bytes in order to store the header
     uintptr_t buffer;
-    if (!T::Alloc(buffer, size + sizeof(Header))) {
+    if (!T::Alloc(buffer, size + headerSize)) {
       return false;
     }
     // Set the size in the header
     Header * header = (Header *)buffer;
     header->size = size;
     // Return the part of the buffer after the header
-    out = buffer + sizeof(Header);
+    out = buffer + headerSize;
     return true;
   }
   
@@ -50,7 +51,7 @@ public:
     
     // Deallocate the original pointer by subtracting sizeof(Header) to the
     // address and adding it to the length.
-    T::Dealloc(pointer - sizeof(Header), size + sizeof(Header));
+    T::Dealloc(pointer - headerSize, size + headerSize);
   }
   
   /**
@@ -95,8 +96,10 @@ public:
   }
   
 protected:
+  size_t headerSize;
+  
   inline Header * RegionHeader(uintptr_t pointer) {
-    return (Header *)(pointer - sizeof(Header));
+    return (Header *)(pointer - headerSize);
   }
 };
 
