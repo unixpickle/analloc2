@@ -18,8 +18,9 @@ public:
   typedef AllocatorTransformer<BitmapAllocator<Unit, AddressType, SizeType> >
       super;
   
-  template <typename... Args>
-  TransformedBitmapAllocator(Args... args) : super(args...) {
+  TransformedBitmapAllocator(SizeType _scale, AddressType _offset, Unit * ptr,
+                             AddressType bc)
+      : super(_scale, _offset, ptr, bc) {
     // Make sure that no integer wrap-around will occur
     assert(!ansa::MulWraps<AddressType>(this->GetBitCount(), this->scale));
     assert(!ansa::AddWraps<AddressType>(this->GetBitCount() * this->scale,

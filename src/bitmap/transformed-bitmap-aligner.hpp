@@ -23,13 +23,14 @@ public:
   /**
    * This is restricted compared to [TransformedBitmapAllocator].
    * 
-   * The scale ought to be a power of two, and the offset ought to be aligned
-   * by the scale.
+   * The [_scale] ought to be a power of two, and the [_offset] ought to be
+   * aligned by the [_scale].
    */
   template <typename... Args>
-  TransformedBitmapAligner(Args... args) : super(args...) {
-    assert(ansa::IsPowerOf2(this->scale));
-    assert(ansa::IsAligned(this->offset, this->scale));
+  TransformedBitmapAligner(SizeType _scale, AddressType _offset, Unit * ptr,
+                           AddressType bc) : super(_scale, _offset, ptr, bc) {
+    assert(ansa::IsPowerOf2(_scale));
+    assert(ansa::IsAligned(_offset, _scale));
   }
   
   virtual bool Align(AddressType & addressOut, AddressType unscaledAlign,
