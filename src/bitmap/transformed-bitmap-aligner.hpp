@@ -1,21 +1,30 @@
 #ifndef __ANALLOC2_TRANSFORMED_BITMAP_ALIGNER_HPP__
 #define __ANALLOC2_TRANSFORMED_BITMAP_ALIGNER_HPP__
 
+#include "../abstract/aligner.hpp"
 #include "transformed-bitmap-allocator.hpp"
 #include <ansa/math>
 #include <cassert>
 
 namespace analloc {
 
+/**
+ * This class is intended to be used as a mixin for any
+ * [TransformedBitmapAllocator] subclass. It adds aligner functionality to a
+ * transformed bitmap allocator.
+ */
 template <typename Unit, typename AddressType, typename SizeType = AddressType>
 class TransformedBitmapAligner
-    : public TransformedBitmapAllocator<Unit, AddressType, SizeType> {
+    : public virtual TransformedBitmapAllocator<Unit, AddressType, SizeType>,
+      public virtual Aligner<AddressType, SizeType> {
 public:
   typedef TransformedBitmapAllocator<Unit, AddressType, SizeType> super;
   
   /**
-   * This is restricted compared to its superclass. The scale ought to be a
-   * power of two, and the offset ought to be aligned by the scale.
+   * This is restricted compared to [TransformedBitmapAllocator].
+   * 
+   * The scale ought to be a power of two, and the offset ought to be aligned
+   * by the scale.
    */
   template <typename... Args>
   TransformedBitmapAligner(Args... args) : super(args...) {
@@ -31,57 +40,11 @@ public:
       // In this case, the alignment is less than the minimum unit size anyway.
       return this->Alloc(addressOut, unscaledSize);
     }
-    // Search the bitmap for a large enough free region
-    SizeType freeSoFar = 0;
-    size_t startIdx = 0;
-    for (size_t i = 0; i < this->GetBitCount(); ++i) {
-      if (!freeSoFar) {
-        // Skip to the next aligned region
-        AddressType offsetAddr = this->OutputAddress((AddressType)i);
-        AddressType misalignment = offsetAddr % align;
-        if (misalignment) {
-          AddressType add = align - misalignment - 1;
-          if ((size_t)(i + add) < i) {
-            // The case where AddressType is larger than size_t and the
-            // alignment causes the addresses to be pushed past the size_t
-            // range.
-            return false;
-          }
-          i += (size_t)add;
-          continue;
-        }
-      }
-      if (this->GetBit(i)) {
-        // This cell is not free, so freeSoFar gets reset.
-        freeSoFar = 0;
-        
-        if (align < this->UnitBitCount) {
-          // Skip the entire unit if we are at the beginning of it and it
-          // doesn't pass this bitmap's allowed bit range (i.e. the bitmap ends
-          // mid-unit).
-          if (!(i % this->UnitBitCount) && i + this->UnitBitCount <=
-              this->GetBitCount()) {
-            if (!~(this->units[i / this->UnitBitCount])) {
-              i += this->UnitBitCount - 1;
-            }
-          }
-        }
-        
-        continue;
-      }
-      if (freeSoFar) {
-        ++freeSoFar;
-      } else {
-        // This is the beginning of the new region
-        freeSoFar = 1;
-        startIdx = i;
-      }
-      if (freeSoFar == size) {
-        // We have found a free region, now we must mark it as allocated.
-        for (size_t j = startIdx; j <= i; ++j) {
-          this->SetBit(j, true);
-        }
-        addressOut = OutputAddress((AddressType)startIdx);
+    AddressType index = 0;
+    while (NextFreeAligned(index, size - 1, align)) {
+      if (this->Reserve(index + 1, size - 1, &index)) {
+        this->SetBit(index, true);
+        addressOut = this->OutputAddress(index);
         return true;
       }
     }
@@ -90,8 +53,43 @@ public:
   
 protected:
   inline AddressType ScaleAlign(AddressType align) {
-    return this->align % this->scale ? this->align / this->scale
-        : (this->align / this->scale) + 1;
+    AddressType scaledAlign = align / this->scale;
+    if (align % this->scale) ++scaledAlign;
+    return scaledAlign;
+  }
+  
+  bool NextFreeAligned(AddressType & idx, SizeType afterSize,
+                       AddressType align) {
+    // This is the offset of this allocator in terms of cells in the bitmap,
+    // rather than in terms of the scaled output units.
+    AddressType cellOffset = this->offset / this->scale;
+    
+    for (AddressType i = idx; i < this->GetBitCount() - afterSize; ++i) {
+      // Skip to the next aligned region
+      assert(!ansa::AddWraps<AddressType>(i, cellOffset));
+      AddressType misalignment = (AddressType)(i + cellOffset) % align;
+      if (misalignment) {
+        AddressType add = align - misalignment - 1;
+        if (ansa::AddWraps<AddressType>(i, add)) {
+          return false;
+        }
+        i += add;
+        continue;
+      } else if (!this->GetBit(i)) {
+        idx = i;
+        return true;
+      } else {
+        // Attempt to skip the entire unit
+        if (!(i % this->UnitBitCount)
+            && i + this->UnitBitCount <= this->GetBitCount()
+            && !ansa::AddWraps<AddressType>(i, this->UnitBitCount)) {
+          if (!~(this->UnitAt(i / this->UnitBitCount))) {
+            i += this->UnitBitCount - 1;
+          }
+        }
+      }
+    }
+    return false;
   }
 };
 

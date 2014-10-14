@@ -12,9 +12,6 @@ class Bitmap {
 public:
   static constexpr IndexType UnitBitCount = ansa::NumericInfo<Unit>::bitCount;
   
-  Bitmap() : units(nullptr) {
-  }
-  
   Bitmap(Unit * ptr, IndexType bc) : units(ptr), bitCount(bc) {
     assert(bc / ansa::NumericInfo<Unit>::bitCount <
            ansa::NumericInfo<size_t>::max);

@@ -12,14 +12,19 @@ namespace analloc {
  */
 template <typename Unit, typename AddressType, typename SizeType = AddressType>
 class TransformedBitmapAllocator
-    : public virtual AllocatorTransformer<BitmapAllocator<Unit, AddressType,
-                                                          SizeType> > {
+    : public AllocatorTransformer<BitmapAllocator<Unit, AddressType,
+                                                  SizeType> > {
 public:
   typedef AllocatorTransformer<BitmapAllocator<Unit, AddressType, SizeType> >
       super;
   
   template <typename... Args>
-  TransformedBitmapAllocator(Args... args) : super(args...) {}
+  TransformedBitmapAllocator(Args... args) : super(args...) {
+    // Make sure that no integer wrap-around will occur
+    assert(!ansa::MulWraps<AddressType>(this->GetBitCount(), this->scale));
+    assert(!ansa::AddWraps<AddressType>(this->GetBitCount() * this->scale,
+                                        this->offset));
+  }
 };
 
 }

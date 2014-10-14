@@ -22,7 +22,7 @@ namespace analloc {
  * addresses so that the address space need not begin at `nullptr`.
  */
 template <class T>
-class AllocatorTransformer : public virtual T {
+class AllocatorTransformer : public T {
 public:
   using typename T::AddressType;
   using typename T::SizeType;
