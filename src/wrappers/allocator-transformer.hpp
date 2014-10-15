@@ -38,7 +38,9 @@ public:
    */
   template <typename... Args>
   AllocatorTransformer(SizeType _scale, AddressType _offset, Args... args)
-      : T(args...), scale(_scale), offset(_offset) {}
+      : T(args...), scale(_scale), offset(_offset) {
+    assert(scale != 0);
+  }
   
   /**
    * Allocate address space from the superclass and transform the resultant
