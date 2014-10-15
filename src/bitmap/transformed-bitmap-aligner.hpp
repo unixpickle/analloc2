@@ -8,14 +8,9 @@
 
 namespace analloc {
 
-/**
- * This class is intended to be used as a mixin for any
- * [TransformedBitmapAllocator] subclass. It adds aligner functionality to a
- * transformed bitmap allocator.
- */
 template <typename Unit, typename AddressType, typename SizeType = AddressType>
 class TransformedBitmapAligner
-    : public virtual TransformedBitmapAllocator<Unit, AddressType, SizeType>,
+    : public TransformedBitmapAllocator<Unit, AddressType, SizeType>,
       public virtual Aligner<AddressType, SizeType> {
 public:
   typedef TransformedBitmapAllocator<Unit, AddressType, SizeType> super;

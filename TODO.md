@@ -1,7 +1,13 @@
 # TODO
 
-## Specific
+## Crucial
 
+ * Use `SizeType` for `IndexType` instead of `AddressType`
+ * Test `TransformedBitmapAligner`
+
+## Specific features
+
+ * Performance monitoring template argument for AVL tree
  * Add LastUsedAddress() to `BitmapAllocator` and `FreeListAllocator`.
  * Add RegionCount() to `FreeListAllocator`.
  * The free list allocator should be a singly-linked list.
