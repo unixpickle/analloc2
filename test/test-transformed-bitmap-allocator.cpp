@@ -28,6 +28,8 @@ void TestScaled() {
   
   uint16_t address;
   
+  assert(!allocator.Alloc(address, 49));
+  
   // Size <= 3
   assert(allocator.Alloc(address, 1));
   assert(address == 0);
@@ -83,6 +85,8 @@ void TestOffset() {
   
   uint16_t address;
   
+  assert(!allocator.Alloc(address, 0x11));
+  
   // Filling allocation
   assert(allocator.Alloc(address, 0x10));
   assert(address == 3);
@@ -104,5 +108,50 @@ void TestOffset() {
 
 void TestScaledOffset() {
   ScopedPass pass("TransformedBitmapAllocator<uint8_t, uint16_t>");
-  assert(false);
+  
+  // The bitmap will contain some extra bits so that we can be sure the
+  // allocator doesn't overrun any bytes.
+  uint32_t bitmap = 0xffffffff;
+  
+  // Create a bitmap allocator which is scaled by 3 units, translated by 5
+  // units, and contains 16 bits. Range of addresses: [5, 53)
+  TransformedBitmapAllocator<uint32_t, uint16_t> allocator(3, 5, &bitmap, 16);
+  assert(bitmap == 0xffff0000);
+  
+  uint16_t address;
+  
+  assert(!allocator.Alloc(address, 49));
+  
+  // Filling allocation
+  assert(allocator.Alloc(address, 48));
+  assert(address == 5);
+  assert(!allocator.Alloc(address, 1));
+  assert(bitmap == 0xffffffff);
+  allocator.Dealloc(5, 48);
+  assert(bitmap == 0xffff0000);
+  
+  // Two small allocations + large allocation
+  assert(allocator.Alloc(address, 1));
+  assert(address == 5);
+  assert(allocator.Alloc(address, 1));
+  assert(address == 8);
+  assert(!allocator.Alloc(address, 43));
+  assert(allocator.Alloc(address, 42));
+  assert(address == 11);
+  assert(bitmap == 0xffffffff);
+  allocator.Dealloc(5, 48);
+  assert(bitmap == 0xffff0000);
+  
+  // Fragmented allocations
+  assert(allocator.Alloc(address, 3));
+  assert(address == 5);
+  assert(allocator.Alloc(address, 3));
+  assert(address == 8);
+  assert(allocator.Alloc(address, 3));
+  assert(address == 11);
+  allocator.Dealloc(8, 3);
+  assert(allocator.Alloc(address, 1));
+  assert(address == 8);
+  allocator.Dealloc(5, 9);
+  assert(bitmap == 0xffff0000);
 }
