@@ -10,18 +10,18 @@ namespace analloc {
  * An allocator which runs with O(n) allocation time.
  */
 template <typename Unit, typename AddressType, typename SizeType = AddressType>
-class BitmapAllocator : protected Bitmap<Unit, AddressType>,
+class BitmapAllocator : protected Bitmap<Unit, SizeType>,
                         public virtual Allocator<AddressType, SizeType> {
 public:
-  BitmapAllocator(Unit * ptr, AddressType bc)
-      : Bitmap<Unit, AddressType>(ptr, bc) {
+  BitmapAllocator(Unit * ptr, SizeType bc)
+      : Bitmap<Unit, SizeType>(ptr, bc) {
     // Zero the buffer as efficiently as possible without overwriting any bits
     // that this bitmap doesn't own
-    AddressType fullUnits = bc / this->UnitBitCount;
-    for (AddressType i = 0; i < fullUnits; ++i) {
+    SizeType fullUnits = bc / this->UnitBitCount;
+    for (SizeType i = 0; i < fullUnits; ++i) {
       ptr[(size_t)i] = 0;
     }
-    for (AddressType i = fullUnits * this->UnitBitCount; i < bc; ++i) {
+    for (SizeType i = fullUnits * this->UnitBitCount; i < bc; ++i) {
       this->SetBit(i, 0);
     }
   }
@@ -35,11 +35,11 @@ public:
       return true;
     }
     // Keep attempting to find free regions
-    AddressType index = 0;
+    SizeType index = 0;
     while (NextFree(index, size - 1)) {
       if (Reserve(index + 1, size - 1, &index)) {
         this->SetBit(index, true);
-        addressOut = index;
+        addressOut = (AddressType)index;
         return true;
       }
     }
@@ -47,24 +47,23 @@ public:
   }
   
   virtual void Dealloc(AddressType address, SizeType size) {
-    assert(!ansa::AddWraps<AddressType>(address, size));
-    assert(address + size <= this->GetBitCount());
-    for (AddressType i = address; i < address + size; ++i) {
+    assert((SizeType)address == address);
+    assert(!ansa::AddWraps<SizeType>((SizeType)address, size));
+    assert((SizeType)address + size <= this->GetBitCount());
+    for (SizeType i = (SizeType)address; i < (SizeType)address + size; ++i) {
       this->SetBit(i, false);
     }
   }
   
 protected:
-  bool NextFree(AddressType & idx, SizeType afterSize) {
-    for (AddressType i = idx; i < this->GetBitCount() - afterSize; ++i) {
+  bool NextFree(SizeType & idx, SizeType afterSize) {
+    assert(afterSize <= this->GetBitCount());
+    for (SizeType i = idx; i < this->GetBitCount() - afterSize; ++i) {
       if (this->GetBit(i)) {
         // Skip this entire unit if we can
-        if (!(i % this->UnitBitCount)
-            && i + this->UnitBitCount <= this->GetBitCount()
-            && !ansa::AddWraps<AddressType>(i, this->UnitBitCount)) {
-          if (!~(this->UnitAt(i / this->UnitBitCount))) {
-            i += this->UnitBitCount - 1;
-          }
+        if (IsUnitAllocated(i)) {
+          // We subtract 1 from UnitBitCount for the ++i in the for-loop.
+          i += this->UnitBitCount - 1;
         }
       } else {
         idx = i;
@@ -74,8 +73,8 @@ protected:
     return false;
   }
   
-  bool Reserve(AddressType idx, SizeType size, AddressType * firstUsed) {
-    assert(!ansa::AddWraps<AddressType>(idx, size));
+  bool Reserve(SizeType idx, SizeType size, SizeType * firstUsed) {
+    assert(!ansa::AddWraps<SizeType>(idx, size));
     assert(idx + size <= this->GetBitCount());
     // Make sure that the next [size] cells are free.
     for (SizeType i = 0; i < size; ++i) {
@@ -91,6 +90,17 @@ protected:
       this->SetBit(idx + i, true);
     }
     return true;
+  }
+  
+  /**
+   * Returns `true` only if the entire unit starting with [idx] is allocated.
+   */
+  bool IsUnitAllocated(SizeType i) {
+    // I love short-circuit evaluation; don't you?
+    return !(i % this->UnitBitCount) &&
+           i + this->UnitBitCount <= this->GetBitCount() &&
+           !ansa::AddWraps<SizeType>(i, this->UnitBitCount) &&
+           !~(this->UnitAt(i / this->UnitBitCount));
   }
 };
 

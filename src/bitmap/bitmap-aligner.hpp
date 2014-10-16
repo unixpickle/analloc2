@@ -13,34 +13,45 @@ template <typename Unit, typename AddressType, typename SizeType = AddressType>
 class BitmapAligner : public BitmapAllocator<Unit, AddressType, SizeType>,
                       public virtual Aligner<AddressType, SizeType> {
 public:
-  BitmapAligner(Unit * ptr, AddressType bc)
+  BitmapAligner(Unit * ptr, SizeType bc)
       : BitmapAllocator<Unit, AddressType, SizeType>(ptr, bc) {}
   
   virtual bool Align(AddressType & addressOut, AddressType align,
                      SizeType size) {
-    if (align < 2 || !size) {
-      return this->Alloc(addressOut, size);
-    }
-    AddressType index = 0;
-    while (NextFreeAligned(index, size - 1, align)) {
-      if (this->Reserve(index + 1, size - 1, &index)) {
-        this->SetBit(index, true);
-        addressOut = index;
+    if (align >= this->GetBitCount()) {
+      // The alignment is too large for any return address other than `0`.
+      if (size > this->GetBitCount()) {
+        return false;
+      } else if (this->Reserve(0, size, nullptr)) {
+        addressOut = 0;
         return true;
+      } else {
+        return false;
       }
+    } else if (align < 2 || !size) {
+      return this->Alloc(addressOut, size);
+    } else {
+      SizeType index = 0;
+      while (NextFreeAligned(index, size - 1, (SizeType)align)) {
+        if (this->Reserve(index + 1, size - 1, &index)) {
+          this->SetBit(index, true);
+          addressOut = (AddressType)index;
+          return true;
+        }
+      }
+      return false;
     }
-    return false;
   }
   
 protected:
-  bool NextFreeAligned(AddressType & idx, SizeType afterSize,
-                       AddressType align) {
-    for (AddressType i = idx; i < this->GetBitCount() - afterSize; ++i) {
+  bool NextFreeAligned(SizeType & idx, SizeType afterSize, SizeType align) {
+    assert(afterSize <= this->GetBitCount());
+    for (SizeType i = idx; i < this->GetBitCount() - afterSize; ++i) {
       // Skip to the next aligned region
-      AddressType misalignment = (AddressType)i % align;
+      SizeType misalignment = (SizeType)i % align;
       if (misalignment) {
-        AddressType add = align - misalignment - 1;
-        if (ansa::AddWraps<AddressType>(i, add)) {
+        SizeType add = align - misalignment - 1;
+        if (ansa::AddWraps<SizeType>(i, add)) {
           return false;
         }
         i += add;
@@ -48,15 +59,8 @@ protected:
       } else if (!this->GetBit(i)) {
         idx = i;
         return true;
-      } else {
-        // Attempt to skip the entire unit
-        if (!(i % this->UnitBitCount)
-            && i + this->UnitBitCount <= this->GetBitCount()
-            && !ansa::AddWraps<AddressType>(i, this->UnitBitCount)) {
-          if (!~(this->UnitAt(i / this->UnitBitCount))) {
-            i += this->UnitBitCount - 1;
-          }
-        }
+      } else if (this->IsUnitAllocated(i)) {
+        i += this->UnitBitCount - 1;
       }
     }
     return false;

@@ -2,7 +2,6 @@
 
 ## Crucial
 
- * Use `SizeType` for `IndexType` instead of `AddressType`
  * Test `TransformedBitmapAligner`
 
 ## Specific features
