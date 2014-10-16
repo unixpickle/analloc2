@@ -3,22 +3,60 @@
 
 #include "transformed-bitmap-allocator.hpp"
 #include "../wrappers/allocator-virtualizer.hpp"
+#include <new>
 
 namespace analloc {
 
-template <typename Unit>
+template <typename Unit = unsigned int>
 class VirtualBitmapAllocator
     : public AllocatorVirtualizer<
           TransformedBitmapAllocator<Unit, uintptr_t, size_t>
       > {
 public:
-  typedef public AllocatorVirtualizer<
+  typedef AllocatorVirtualizer<
       TransformedBitmapAllocator<Unit, uintptr_t, size_t>
   > super;
   
-  VirtualBitmapAllocator(size_t _scale, uintptr_t _offset, Unit * ptr,
-                         uintptr_t bitCount)
-      : super(_scale, _offset, ptr, bitCount) {}
+  /**
+   * Create a [VirtualBitmapAllocator] which is embedded in a region of memory.
+   * 
+   * Returns `nullptr` if the allocator could not be created for whatever
+   * reason.
+   */
+  static VirtualBitmapAllocator * Place(uintptr_t region, size_t size,
+                                        size_t page = sizeof(uintptr_t)) {
+    size_t align = ansa::Align(sizeof(Unit), page);
+    
+    // Compute the number of bytes we have for the bitmap and buffers combined.
+    size_t structureSize = ansa::Align(sizeof(VirtualBitmapAllocator), align);
+    if (structureSize >= size) {
+      return nullptr;
+    }
+    size_t usableSize = ((size - structureSize) / page) * page;
+    
+    // If Unit were uint8_t, this would be the number of units to use. I did
+    // some math to find this. I solved: 8*page*ideal = usable - ideal
+    size_t idealBitmapSize = usableSize / (8 * page + 1);
+    
+    // Align the ideal bitmap size.
+    size_t bitmapSize = ansa::Align(idealBitmapSize, align);
+    
+    // Figure out how many pages we can really represent in the bitmap
+    if (bitmapSize > usableSize) {
+      return nullptr;
+    }
+    
+    void * ptr = (void *)region;
+    Unit * buffer = (Unit *)(region + structureSize);
+    uintptr_t offset = region + structureSize + bitmapSize;
+    size_t freeSize = usableSize - bitmapSize;
+    assert(!(freeSize % page));
+    return new(ptr) VirtualBitmapAllocator(page, offset, buffer, freeSize);
+  }
+  
+  VirtualBitmapAllocator(size_t pageSize, uintptr_t _offset,
+                         Unit * ptr, size_t size)
+      : super(pageSize, pageSize, _offset, ptr, size / pageSize) {}
 };
 
 }

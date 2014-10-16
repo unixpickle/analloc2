@@ -92,7 +92,7 @@ public:
     // Get the buffer's header.
     Header * header = RegionHeader(pointer);
     // Free the entire buffer, including the header.
-    T::Dealloc(pointer - sizeof(Header), header->size + sizeof(Header));
+    T::Dealloc(pointer - headerSize, header->size + headerSize);
   }
   
 protected:
