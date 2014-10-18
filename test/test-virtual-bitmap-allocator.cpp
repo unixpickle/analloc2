@@ -6,10 +6,16 @@ using namespace analloc;
 void TestConstructed(size_t pageSize, size_t pageCount, size_t headerSize);
 
 template <typename Unit>
-void TestSuccessfulPlace(size_t pageSize, size_t pageCount, size_t headerSize);
+void TestNormalPlace(size_t pageSize, size_t pageCount, size_t headerSize);
 
 template <typename Unit>
 void TestEdgePlace();
+
+template <typename Unit>
+void TestOptimalPlace();
+
+template <typename Unit>
+void ValidateOptimalPlace(size_t pageSize, size_t totalSize);
 
 int main() {
   for (int i = 0; i < 5; ++i) {
@@ -17,17 +23,22 @@ int main() {
     size_t headerSize = ansa::Max<size_t>(sizeof(size_t), size);
     const size_t pageCount = 0x100;
     TestConstructed(size, pageCount, headerSize);
-    TestSuccessfulPlace<unsigned char>(size, pageCount, headerSize);
-    TestSuccessfulPlace<unsigned short>(size, pageCount, headerSize);
-    TestSuccessfulPlace<unsigned int>(size, pageCount, headerSize);
-    TestSuccessfulPlace<unsigned long>(size, pageCount, headerSize);
-    TestSuccessfulPlace<unsigned long long>(size, pageCount, headerSize);
+    TestNormalPlace<unsigned char>(size, pageCount, headerSize);
+    TestNormalPlace<unsigned short>(size, pageCount, headerSize);
+    TestNormalPlace<unsigned int>(size, pageCount, headerSize);
+    TestNormalPlace<unsigned long>(size, pageCount, headerSize);
+    TestNormalPlace<unsigned long long>(size, pageCount, headerSize);
   }
   TestEdgePlace<unsigned char>();
   TestEdgePlace<unsigned short>();
   TestEdgePlace<unsigned int>();
   TestEdgePlace<unsigned long>();
   TestEdgePlace<unsigned long long>();
+  TestOptimalPlace<unsigned char>();
+  TestOptimalPlace<unsigned short>();
+  TestOptimalPlace<unsigned int>();
+  TestOptimalPlace<unsigned long>();
+  TestOptimalPlace<unsigned long long>();
   return 0;
 }
 
@@ -96,10 +107,10 @@ void TestConstructed(size_t pageSize, size_t pageCount, size_t headerSize) {
 }
 
 template <typename Unit>
-void TestSuccessfulPlace(size_t pageSize, size_t pageCount,
-                         size_t headerSize) {
+void TestNormalPlace(size_t pageSize, size_t pageCount,
+                     size_t headerSize) {
   ScopedPass pass("VirtualBitmapAllocator<", ansa::NumericInfo<Unit>::name,
-                  ">::Place() [successful]");
+                  ">::Place() [normal]");
   
   size_t align = ansa::Max(sizeof(Unit), pageSize);
   
@@ -201,7 +212,6 @@ void TestEdgePlace() {
       assert(!TheAllocator::Place(region, i, (size_t)1 << align));
     }
   }
-  
   // Try the smallest possible allocator that will actually give us memory
   // using a bunch of page sizes
   for (int ps = 0; ps < sizeLog + 1; ++ps) {
@@ -217,6 +227,7 @@ void TestEdgePlace() {
         pageSize), align);
     
     size_t minSize = objectSize + bitmapSize + headerSize + pageSize;
+    assert(ansa::IsAligned(minSize, pageSize));
     uint8_t tempRegion[minSize];
     for (size_t i = 0; i <= minSize; ++i) {
       auto allocator = TheAllocator::Place((uintptr_t)tempRegion, i, pageSize);
@@ -237,5 +248,64 @@ void TestEdgePlace() {
         assert(address == allocator->GetOffset() + headerSize);
       }
     }
+  }
+}
+
+template <typename T>
+void TestOptimalPlace() {
+  ScopedPass pass("VirtualBitmapAllocator<", ansa::NumericInfo<T>::name,
+                  ">::Place() [opt]");
+  for (int psLog = 0; psLog < 8; ++psLog) {
+    size_t pageSize = ((size_t)1 << psLog);
+    size_t prefixSize = ansa::Align(sizeof(VirtualBitmapAllocator<T>), 
+                                    ansa::Align(pageSize, sizeof(T)));
+    size_t maxSize = prefixSize + pageSize * 0x20;
+    for (size_t size = prefixSize; size < maxSize; ++size) {
+      ValidateOptimalPlace<T>(pageSize, size);
+    }
+  }
+}
+
+template <typename Unit>
+void ValidateOptimalPlace(size_t pageSize, size_t totalSize) {
+  typedef VirtualBitmapAllocator<Unit> TheAllocator;
+  
+  uint8_t regionBuffer[totalSize];
+  uintptr_t region = (uintptr_t)regionBuffer;
+  
+  size_t align = ansa::Align(pageSize, sizeof(Unit));
+  size_t objectSize = ansa::Align(sizeof(TheAllocator), align);
+  assert(objectSize <= totalSize);
+  size_t bitmapSize = 0;
+  size_t freeSpace = 0;
+  
+  // Brute force the optimal bitmap size. Obviously, the VirtualBitmapAllocator
+  // doesn't brute force this. The reason *I* do is that I specifically want to
+  // test whatever magical O(1) way the VirtualBitmapAllocator does it.
+  for (size_t i = 0; i <= (totalSize - objectSize) * 8; i += align * 8) {
+    size_t bytes = i / 8;
+    size_t remainingSize = ((totalSize - objectSize - bytes) / pageSize) * 
+                           pageSize;
+    size_t representable = pageSize * i;
+    size_t max = ansa::Min(remainingSize, representable);
+    if (max > freeSpace) {
+      freeSpace = max;
+      bitmapSize = bytes;
+    }
+  }
+  
+  auto allocator = TheAllocator::Place(region, totalSize, pageSize);
+  assert(allocator != nullptr);
+  assert(allocator->GetScale() == pageSize);
+  assert(allocator->GetOffset() == region + objectSize + bitmapSize);
+  
+  // make sure we can allocate the right size
+  uintptr_t addr;
+  size_t headerSize = ansa::Align(sizeof(size_t), pageSize);
+  if (freeSpace > headerSize) {
+    assert(!allocator->Alloc(addr, freeSpace - headerSize + 1));
+    assert(allocator->Alloc(addr, freeSpace - headerSize));
+  } else {
+    assert(!allocator->Alloc(addr, 1));
   }
 }

@@ -24,44 +24,76 @@ public:
    * [VirtualBitmapAllocator] object with the proper page size and unit
    * alignments.
    */
-  static VirtualBitmapAllocator * Place(uintptr_t region, size_t size,
-                                        size_t page = sizeof(uintptr_t)) {
+  template <class T = VirtualBitmapAllocator<Unit> >
+  static T * Place(uintptr_t region, size_t size,
+                   size_t page = sizeof(uintptr_t)) {
     size_t align = ansa::Align(sizeof(Unit), page);
     
     // Compute the number of bytes we have for the bitmap and buffers combined.
-    size_t structureSize = ansa::Align(sizeof(VirtualBitmapAllocator), align);
+    size_t structureSize = ansa::Align(sizeof(T), align);
     if (structureSize > size) {
       return nullptr;
     }
     size_t usableSize = ((size - structureSize) / page) * page;
     
-    // If Unit were uint8_t, this would be the number of units to use. I did
-    // some math to find this. I solved: 8*page*ideal = usable - ideal
-    size_t idealBitmapSize = usableSize / (8 * page + 1);
-    
-    // Align the ideal bitmap size.
-    size_t bitmapSize = ansa::Align(idealBitmapSize, align);
-    
-    // Figure out if we've overflowed.
-    if (bitmapSize > usableSize) {
-      // Return an empty allocator.
-      return new((void *)region) VirtualBitmapAllocator(page,
-          region + structureSize, (Unit *)(region + structureSize), 0);
-    }
+    // Compute the size of the actual bitmap data
+    size_t freeSize;
+    size_t bitmapSize = BestBitmapSize(usableSize, page, freeSize);
+    assert(!(bitmapSize % align));
+    assert(!(freeSize % page));
     
     void * ptr = (void *)region;
     Unit * buffer = (Unit *)(region + structureSize);
     uintptr_t offset = region + structureSize + bitmapSize;
-    size_t freeSize = ansa::Min(usableSize - bitmapSize,
-                                page * bitmapSize * 8);
-    assert(!(freeSize % page));
     
-    return new(ptr) VirtualBitmapAllocator(page, offset, buffer, freeSize);
+    return new(ptr) T(page, offset, buffer, freeSize);
   }
   
   VirtualBitmapAllocator(size_t pageSize, uintptr_t _offset,
                          Unit * ptr, size_t size)
       : super(pageSize, pageSize, _offset, ptr, size / pageSize) {}
+  
+protected:
+  static size_t BestBitmapSize(size_t usableSize, size_t pageSize,
+                               size_t & freeSize) {
+    size_t align = ansa::Align(sizeof(Unit), pageSize);
+    if (align >= usableSize) {
+      freeSize = 0;
+      return 0;
+    }
+    
+    // Use the byte count that results from a basic division operation
+    size_t byteCount = ansa::Align(usableSize / (pageSize * 8 + 1), align);
+    size_t result = byteCount;
+    freeSize = FreeSizeForBitmap(usableSize, pageSize, byteCount);
+    // Try rounding down
+    // TODO: rounding down may actually never be necessary
+    if (byteCount > 0) {
+      size_t f = FreeSizeForBitmap(usableSize, pageSize, byteCount - align);
+      if (f > freeSize) {
+        freeSize = f;
+        result = byteCount - align;
+      }
+    }
+    // Try rounding up
+    if (!ansa::AddWraps<size_t>(byteCount, align) &&
+        byteCount + align < usableSize) {
+      size_t f = FreeSizeForBitmap(usableSize, pageSize, byteCount + align);
+      if (f > freeSize) {
+        freeSize = f;
+        result = byteCount + align;
+      }
+    }
+    return result;
+  }
+  
+  static size_t FreeSizeForBitmap(size_t usableSize, size_t pageSize,
+                                  size_t bitmapSize) {
+    assert(ansa::IsAligned(bitmapSize, ansa::Align(sizeof(Unit), pageSize)));
+    size_t unitCount = bitmapSize / sizeof(Unit);
+    size_t representable = pageSize * unitCount * sizeof(Unit) * 8;
+    return ansa::Min(usableSize - bitmapSize, representable);
+  }
 };
 
 }
