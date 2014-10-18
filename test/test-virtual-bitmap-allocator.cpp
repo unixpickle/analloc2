@@ -5,12 +5,29 @@ using namespace analloc;
 
 void TestConstructed(size_t pageSize, size_t pageCount, size_t headerSize);
 
+template <typename Unit>
+void TestSuccessfulPlace(size_t pageSize, size_t pageCount, size_t headerSize);
+
+template <typename Unit>
+void TestEdgePlace();
+
 int main() {
   for (int i = 0; i < 5; ++i) {
     size_t size = 1UL << i;
-    TestConstructed(size, 0x100, ansa::Max<size_t>(sizeof(size_t), size));
+    size_t headerSize = ansa::Max<size_t>(sizeof(size_t), size);
+    const size_t pageCount = 0x100;
+    TestConstructed(size, pageCount, headerSize);
+    TestSuccessfulPlace<unsigned char>(size, pageCount, headerSize);
+    TestSuccessfulPlace<unsigned short>(size, pageCount, headerSize);
+    TestSuccessfulPlace<unsigned int>(size, pageCount, headerSize);
+    TestSuccessfulPlace<unsigned long>(size, pageCount, headerSize);
+    TestSuccessfulPlace<unsigned long long>(size, pageCount, headerSize);
   }
-  std::cerr << "TODO: test VirtualBitmapAllocator::Place() here" << std::endl;
+  TestEdgePlace<unsigned char>();
+  TestEdgePlace<unsigned short>();
+  TestEdgePlace<unsigned int>();
+  TestEdgePlace<unsigned long>();
+  TestEdgePlace<unsigned long long>();
   return 0;
 }
 
@@ -76,4 +93,149 @@ void TestConstructed(size_t pageSize, size_t pageCount, size_t headerSize) {
   assert(ansa::Memcmp((void *)addr, "hey", 3) == 0);
   allocator.Free(addr);
   assert(ansa::Memcmp(bitmap, zeroBitmap, sizeof(bitmap)) == 0);
+}
+
+template <typename Unit>
+void TestSuccessfulPlace(size_t pageSize, size_t pageCount,
+                         size_t headerSize) {
+  ScopedPass pass("VirtualBitmapAllocator<", ansa::NumericInfo<Unit>::name,
+                  ">::Place() [successful]");
+  
+  size_t align = ansa::Max(sizeof(Unit), pageSize);
+  
+  // Calculate a bunch of sizes
+  size_t objectSize = ansa::Align(sizeof(VirtualBitmapAllocator<Unit>), align);
+  size_t bitCount = ansa::Align<size_t>(pageCount, 8);
+  size_t bitmapSize = ansa::Align<size_t>(bitCount / 8, align);
+  size_t freeSize = pageSize * pageCount;
+  size_t totalSize = objectSize + bitmapSize + freeSize;
+  
+  uint8_t buffer[totalSize];
+  uintptr_t region = (uintptr_t)buffer;
+  auto allocator = VirtualBitmapAllocator<Unit>::Place(region, totalSize,
+                                                       pageSize);
+  assert(allocator != nullptr);
+  
+  uintptr_t freeStart = region + objectSize + bitmapSize;
+  assert(allocator->GetOffset() == freeStart);
+  assert(allocator->GetScale() == pageSize);
+  
+  uintptr_t addr;
+  
+  // Test large allocations
+  assert(!allocator->Alloc(addr, freeSize - headerSize + 1));
+  // Large allocations with Dealloc()
+  assert(allocator->Alloc(addr, freeSize - headerSize));
+  assert(addr == freeStart + headerSize);
+  allocator->Dealloc(addr, freeSize - headerSize);
+  // Large allocations with Free()
+  assert(allocator->Alloc(addr, freeSize - headerSize));
+  assert(addr == freeStart + headerSize);
+  allocator->Free(addr);
+  // Ensure that the whole buffer is now free
+  assert(allocator->Alloc(addr, freeSize - headerSize));
+  allocator->Free(addr);
+  
+  // Test simple allocation with Dealloc()
+  assert(allocator->Alloc(addr, 1));
+  assert(addr == freeStart + headerSize);
+  allocator->Dealloc(addr, 1);
+  // Test simple allocation with Free()
+  assert(allocator->Alloc(addr, 1));
+  assert(addr == freeStart + headerSize);
+  allocator->Free(addr);
+  // Ensure that the whole buffer is now free
+  assert(allocator->Alloc(addr, freeSize - headerSize));
+  allocator->Free(addr);
+  
+  // Test re-allocation
+  size_t firstSize = ansa::Align<size_t>(3, pageSize);
+  size_t nextSize = firstSize * 2;
+  assert(allocator->Alloc(addr, firstSize));
+  assert(addr == freeStart + headerSize);
+  ansa::Memcpy((void *)addr, "hey", 3);
+  assert(allocator->Realloc(addr, nextSize));
+  assert(addr == freeStart + (headerSize * 2) + firstSize);
+  allocator->Free(addr);
+  // Ensure that the whole buffer is now free
+  assert(allocator->Alloc(addr, freeSize - headerSize));
+  allocator->Free(addr);
+}
+
+template <typename Unit>
+void TestEdgePlace() {
+  typedef VirtualBitmapAllocator<Unit> TheAllocator;
+  
+  ScopedPass pass("VirtualBitmapAllocator<", ansa::NumericInfo<Unit>::name,
+                  ">::Place() [edge]");
+  
+  uint8_t dummyRegion[sizeof(TheAllocator) * 8];
+  uintptr_t region = (uintptr_t)dummyRegion;
+  
+  size_t minimumSize = ansa::Align<size_t>(sizeof(TheAllocator), sizeof(Unit));
+  
+  // Fundamental sanity checks; make sure these *do* work (although the
+  // returned allocator will be empty, of course).
+  int sizeLog = ansa::Log2Floor(minimumSize);
+  for (int i = 0; i <= sizeLog; ++i) {
+    size_t pageSize = (size_t)1 << sizeLog;
+    size_t headerSize = ansa::Align(minimumSize, pageSize);
+    auto allocator = TheAllocator::Place(region, headerSize, pageSize);
+    assert(allocator != nullptr);
+    assert(allocator->GetOffset() == region + headerSize);
+    assert(allocator->GetScale() == pageSize);
+    
+    // Prove that it's empty
+    uintptr_t addr;
+    assert(!allocator->Alloc(addr, 1));
+  }
+  
+  // Less than 1 page in the buffer; can't work.
+  assert(!TheAllocator::Place(region, sizeof(TheAllocator),
+                              ((size_t)1 << (sizeLog + 1))));
+  
+  // Try giving it every size less than sizeof(TheAllocator).
+  for (size_t i = 0; i < sizeof(TheAllocator); ++i) {
+    // Loop through the page sizes we could use for this [i].
+    for (int align = 0; align <= ansa::BitScanRight(i); ++align) {
+      assert(!TheAllocator::Place(region, i, (size_t)1 << align));
+    }
+  }
+  
+  // Try the smallest possible allocator that will actually give us memory
+  // using a bunch of page sizes
+  for (int ps = 0; ps < sizeLog + 1; ++ps) {
+    size_t pageSize = (size_t)1 << ps;
+    size_t align = ansa::Align(sizeof(Unit), pageSize);
+    size_t objectSize = ansa::Align(sizeof(TheAllocator), align);
+    
+    // This size may change according to the info stored in a memory header
+    size_t headerSize = ansa::Align(sizeof(size_t), pageSize);
+    
+    size_t dataSize = headerSize + pageSize;
+    size_t bitmapSize = ansa::Align(ansa::RoundUpDiv<size_t>(dataSize, 8 *
+        pageSize), align);
+    
+    size_t minSize = objectSize + bitmapSize + headerSize + pageSize;
+    uint8_t tempRegion[minSize];
+    for (size_t i = 0; i <= minSize; ++i) {
+      auto allocator = TheAllocator::Place((uintptr_t)tempRegion, i, pageSize);
+      if (i < objectSize) {
+        assert(!allocator);
+      } else if (i < minSize) {
+        assert(allocator != nullptr);
+        assert(allocator->GetScale() == pageSize);
+        uintptr_t address;
+        assert(!allocator->Alloc(address, 1));
+      } else {
+        assert(allocator != nullptr);
+        assert(allocator->GetOffset() == (uintptr_t)tempRegion + objectSize + 
+               bitmapSize);
+        assert(allocator->GetScale() == pageSize);
+        uintptr_t address;
+        assert(allocator->Alloc(address, 1));
+        assert(address == allocator->GetOffset() + headerSize);
+      }
+    }
+  }
 }
