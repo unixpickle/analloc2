@@ -62,20 +62,11 @@ protected:
       return 0;
     }
     
-    // Use the byte count that results from a basic division operation
+    // Use basic division to find a lower bound for the bitmap size.
     size_t byteCount = ansa::Align(usableSize / (pageSize * 8 + 1), align);
     size_t result = byteCount;
     freeSize = FreeSizeForBitmap(usableSize, pageSize, byteCount);
-    // Try rounding down
-    // TODO: rounding down may actually never be necessary
-    if (byteCount > 0) {
-      size_t f = FreeSizeForBitmap(usableSize, pageSize, byteCount - align);
-      if (f > freeSize) {
-        freeSize = f;
-        result = byteCount - align;
-      }
-    }
-    // Try rounding up
+    // Attempt to round up and see if we can represent more space.
     if (!ansa::AddWraps<size_t>(byteCount, align) &&
         byteCount + align < usableSize) {
       size_t f = FreeSizeForBitmap(usableSize, pageSize, byteCount + align);
