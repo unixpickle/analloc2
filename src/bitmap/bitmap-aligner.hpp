@@ -52,11 +52,11 @@ protected:
       // Skip to the next aligned region
       SizeType misalignment = (SizeType)i % align;
       if (misalignment) {
-        SizeType add = align - misalignment - 1;
+        SizeType add = align - misalignment;
         if (ansa::AddWraps<SizeType>(i, add)) {
           return false;
         }
-        i += add;
+        i += add - 1;
         continue;
       } else if (!this->GetBit(i)) {
         idx = i;
