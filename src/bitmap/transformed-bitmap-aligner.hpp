@@ -25,7 +25,7 @@ public:
   TransformedBitmapAligner(SizeType _scale, AddressType _offset, Unit * ptr,
                            AddressType bc) : super(_scale, _offset, ptr, bc) {
     assert(ansa::IsPowerOf2(_scale));
-    assert(ansa::IsAligned(_offset, _scale));
+    assert(ansa::IsAligned<AddressType>(_offset, _scale));
   }
   
   virtual bool Align(AddressType & addressOut, AddressType unscaledAlign,
@@ -54,19 +54,19 @@ protected:
     return scaledAlign;
   }
   
-  bool NextFreeAligned(AddressType & idx, SizeType afterSize,
+  bool NextFreeAligned(SizeType & idx, SizeType afterSize,
                        AddressType align) {
     // This is the offset of this allocator in terms of cells in the bitmap,
     // rather than in terms of the scaled output units.
     AddressType cellOffset = this->offset / this->scale;
     
-    for (AddressType i = idx; i < this->GetBitCount() - afterSize; ++i) {
+    for (SizeType i = idx; i < this->GetBitCount() - afterSize; ++i) {
       // Skip to the next aligned region
       assert(!ansa::AddWraps<AddressType>(i, cellOffset));
-      AddressType misalignment = (AddressType)(i + cellOffset) % align;
+      AddressType misalignment = (cellOffset + i) % align;
       if (misalignment) {
         AddressType add = align - misalignment - 1;
-        if (ansa::AddWraps<AddressType>(i, add)) {
+        if (ansa::AddWraps<SizeType>(i, add + 1)) {
           return false;
         }
         i += add;

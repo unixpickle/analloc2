@@ -6,11 +6,13 @@ using namespace analloc;
 void TestLargeAlignment();
 void TestUnitAlignment();
 void TestOverflowAlignment();
+void TestLastUnitAlignment();
 
 int main() {
   TestLargeAlignment();
   TestUnitAlignment();
   TestOverflowAlignment();
+  TestLastUnitAlignment();
   return 0;
 }
 
@@ -75,4 +77,18 @@ void TestOverflowAlignment() {
   assert(aligner.Align(address, 0x20, 0x20));
   assert(address == 0x60);
   assert(!aligner.Align(address, 1, 1));
+}
+
+void TestLastUnitAlignment() {
+  ScopedPass pass("BitmapAligner [last unit]");
+  
+  uint16_t address;
+  uint16_t units[0x10];
+  BitmapAligner<uint16_t, uint16_t, uint8_t> aligner(units, 0xff);
+  
+  assert(aligner.Align(address, 0x80, 1));
+  assert(address == 0);
+  assert(aligner.Align(address, 0x80, 1));
+  assert(address == 0x80);
+  assert(!aligner.Align(address, 0x80, 1));
 }

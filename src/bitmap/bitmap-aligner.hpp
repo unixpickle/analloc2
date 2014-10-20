@@ -4,6 +4,8 @@
 #include "../abstract/aligner.hpp"
 #include "bitmap-allocator.hpp"
 
+#include <iostream> // TODO: delete this
+
 namespace analloc {
 
 /**
