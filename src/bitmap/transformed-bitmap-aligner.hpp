@@ -36,11 +36,11 @@ public:
       // In this case, the alignment is less than the minimum unit size anyway.
       return this->Alloc(addressOut, unscaledSize);
     }
-    AddressType index = 0;
+    SizeType index = 0;
     while (NextFreeAligned(index, size - 1, align)) {
       if (this->Reserve(index + 1, size - 1, &index)) {
         this->SetBit(index, true);
-        addressOut = this->OutputAddress(index);
+        addressOut = this->OutputAddress((AddressType)index);
         return true;
       }
     }
@@ -65,24 +65,19 @@ protected:
       assert(!ansa::AddWraps<AddressType>(i, cellOffset));
       AddressType misalignment = (cellOffset + i) % align;
       if (misalignment) {
-        AddressType add = align - misalignment - 1;
-        if (ansa::AddWraps<SizeType>(i, add + 1)) {
+        AddressType add = align - misalignment;
+        if ((SizeType)add != add) {
+          return false;
+        } else if (ansa::AddWraps<SizeType>(i, add)) {
           return false;
         }
-        i += add;
+        i += add - 1;
         continue;
       } else if (!this->GetBit(i)) {
         idx = i;
         return true;
-      } else {
-        // Attempt to skip the entire unit
-        if (!(i % this->UnitBitCount)
-            && i + this->UnitBitCount <= this->GetBitCount()
-            && !ansa::AddWraps<AddressType>(i, this->UnitBitCount)) {
-          if (!~(this->UnitAt(i / this->UnitBitCount))) {
-            i += this->UnitBitCount - 1;
-          }
-        }
+      } else if (this->IsUnitAllocated(i)) {
+        i += this->UnitBitCount - 1;
       }
     }
     return false;
