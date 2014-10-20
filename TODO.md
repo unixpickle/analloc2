@@ -2,7 +2,8 @@
 
 ## Crucial
 
- * Test `TransformedBitmapAligner`
+ * Create a new `AlignerTransformer` and `AlignerVirtualizer` which use `OffsetAligner`.
+ * Implement `OffsetAlign()` in free-list and free-tree.
 
 ## Specific features
 
