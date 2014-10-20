@@ -7,12 +7,16 @@ void TestLargeAlignment();
 void TestUnitAlignment();
 void TestOverflowAlignment();
 void TestLastUnitAlignment();
+void TestSimpleOffsetAlignment();
+void TestMultitypeOffsetAlignment();
 
 int main() {
   TestLargeAlignment();
   TestUnitAlignment();
   TestOverflowAlignment();
   TestLastUnitAlignment();
+  TestSimpleOffsetAlignment();
+  TestMultitypeOffsetAlignment();
   return 0;
 }
 
@@ -91,4 +95,51 @@ void TestLastUnitAlignment() {
   assert(aligner.Align(address, 0x80, 1));
   assert(address == 0x80);
   assert(!aligner.Align(address, 0x80, 1));
+}
+
+void TestSimpleOffsetAlignment() {
+  ScopedPass pass("BitmapAligner [simple offset]");
+  
+  uint8_t address;
+  uint8_t units[2];
+  BitmapAligner<uint8_t, uint8_t> aligner(units, 0x10);
+  
+  assert(!aligner.OffsetAlign(address, 0x10, 1, 2));
+  assert(aligner.OffsetAlign(address, 0x10, 1, 1));
+  assert(address == 0xf);
+  assert(!aligner.OffsetAlign(address, 0x10, 1, 1));
+  
+  assert(!aligner.OffsetAlign(address, 0x10, 5, 5));
+  assert(aligner.OffsetAlign(address, 0x10, 5, 1));
+  assert(address == 0xb);
+  assert(!aligner.OffsetAlign(address, 0x10, 5, 1));
+  
+  assert(aligner.OffsetAlign(address, 4, 1, 1));
+  assert(address == 3);
+  assert(aligner.OffsetAlign(address, 4, 1, 2));
+  assert(address == 7);
+}
+
+void TestMultitypeOffsetAlignment() {
+  ScopedPass pass("BitmapAligner [multitype offset]");
+  
+  uint16_t address;
+  uint8_t units[2];
+  BitmapAligner<uint8_t, uint16_t, uint8_t> aligner(units, 0x10);
+  
+  assert(!aligner.OffsetAlign(address, 0x200, 1, 1));
+  assert(!aligner.OffsetAlign(address, 0x200, 0x201, 1));
+  assert(aligner.OffsetAlign(address, 0x200, 0x200, 1));
+  assert(address == 0);
+  assert(!aligner.OffsetAlign(address, 0x200, 0x200, 1));
+  assert(aligner.OffsetAlign(address, 0x200, 0x1f8, 1));
+  assert(address == 0x8);
+  assert(!aligner.OffsetAlign(address, 0x200, 0x1f8, 1));
+
+  // Wrap-around alignments
+  assert(aligner.OffsetAlign(address, 0x100, 0xfffe, 1));
+  assert(address == 2);
+  assert(!aligner.OffsetAlign(address, 0x100, 0xffff, 2));
+  assert(aligner.OffsetAlign(address, 0x100, 0xffff, 1));
+  assert(address == 1);
 }
