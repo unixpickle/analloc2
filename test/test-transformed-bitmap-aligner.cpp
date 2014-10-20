@@ -6,11 +6,15 @@ using namespace analloc;
 void TestTrivialCases();
 void TestSimpleOffset();
 void TestMultitypeOffset();
+void TestSimpleScaled();
+void TestMultitypeScaled();
 
 int main() {
   TestTrivialCases();
   TestSimpleOffset();
   TestMultitypeOffset();
+  TestSimpleScaled();
+  TestMultitypeScaled();
   return 0;
 }
 
@@ -114,4 +118,39 @@ void TestMultitypeOffset() {
   assert(aligner2.Align(address, 8, 1));
   assert(address == 0x208);
   assert(!aligner2.Align(address, 8, 1));
+}
+
+void TestSimpleScaled() {
+  ScopedPass pass("TransformedBitmapAligner [simple scaled]");
+  
+  uint8_t buffer[2];
+  TransformedBitmapAligner<uint8_t, uint8_t> aligner(0x10, 0, buffer, 0xf);
+  uint8_t address;
+  
+  assert(aligner.Align(address, 0x80, 0x20));
+  assert(address == 0x0);
+  assert(aligner.Align(address, 0x80, 0x41)); // take up to 0xd0
+  assert(address == 0x80);
+  assert(!aligner.Align(address, 0x80, 1));
+  assert(aligner.Align(address, 0x40, 1));
+  assert(address == 0x40);
+  assert(!aligner.Align(address, 0x40, 1)); // 0xc0 is taken
+}
+
+void TestMultitypeScaled() {
+  ScopedPass pass("TransformedBitmapAligner [multitype scaled]");
+  
+  uint8_t buffer[2];
+  TransformedBitmapAligner<uint8_t, uint16_t, uint8_t>
+      aligner(0x10, 0x210, buffer, 0x10);
+  uint16_t address;
+  
+  assert(!aligner.Align(address, 0x200, 1));
+  assert(!aligner.Align(address, 0x100, 0x11));
+  assert(aligner.Align(address, 0x100, 0x10));
+  assert(address == 0x300);
+  assert(!aligner.Align(address, 0x100, 1));
+  assert(!aligner.Align(address, 0x80, 0x81));
+  assert(aligner.Align(address, 0x80, 1));
+  assert(address == 0x280);
 }

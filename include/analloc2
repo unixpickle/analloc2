@@ -1,3 +1,4 @@
+#include "../src/abstract/offset-aligner.hpp"
 #include "../src/abstract/virtual-aligner.hpp"
 #include "../src/bitmap/bitmap-aligner.hpp"
 #include "../src/bitmap/transformed-bitmap-aligner.hpp"
