@@ -2,6 +2,7 @@
 #define __ANALLOC2_ALLOCATOR_TRANSFORMER_HPP__
 
 #include <cassert>
+#include <ansa/math>
 
 namespace analloc {
 
@@ -97,9 +98,7 @@ protected:
    * the subclass's methods.
    */
   inline SizeType ScaleSize(SizeType size) {
-    SizeType scaledSize = size / scale;
-    if (size % scale) ++scaledSize;
-    return scaledSize;
+    return ansa::RoundUpDiv<SizeType>(size, scale);
   }
   
   /**

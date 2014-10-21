@@ -4,7 +4,7 @@
 #include "../src/bitmap/transformed-bitmap-aligner.hpp"
 #include "../src/bitmap/virtual-bitmap-allocator.hpp"
 #include "../src/free-list/free-list-aligner.hpp"
-#include "../src/wrappers/allocator-transformer.hpp"
+#include "../src/wrappers/aligner-transformer.hpp"
 #include "../src/wrappers/allocator-virtualizer.hpp"
 #include "../src/free-tree/avl-tree.hpp"
 #include "../src/free-tree/free-tree-aligner.hpp"
