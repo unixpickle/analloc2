@@ -10,8 +10,9 @@ namespace analloc {
  * A virtual memory allocator which includes the functionality of realloc(),
  * posix_memalign(), and free().
  */
-class VirtualAligner : public virtual VirtualAllocator,
-                       public virtual Aligner<uintptr_t, size_t> {
+class VirtualAligner
+    : public virtual VirtualAllocator,
+      public virtual Aligner<uintptr_t, size_t> {
 };
 
 }
