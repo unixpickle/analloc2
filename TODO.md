@@ -2,10 +2,7 @@
 
 ## Crucial
 
- * Implement `AlignerVirtualizer`.
- * Rewrite `TransformedBitmapAligner` to use `TransformedAligner`.
- * Create `VirtualBitmapAligner` using `AlignerVirtualizer`.
- * Test `TransformedBitmapAligner` and `VirtualBitmapAligner`.
+ * Test `VirtualBitmapAligner`.
  * Implement `OffsetAlign()` in free-list and free-tree.
  * Create `TransformedFreeListAllocator`, `TransformedFreeListAligner`, `VirtualFreeListAllocator`, `VirtualFreeListAligner`.
  * Do the same four things with free-tree.

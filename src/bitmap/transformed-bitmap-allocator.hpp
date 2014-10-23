@@ -12,8 +12,9 @@ namespace analloc {
  */
 template <typename Unit, typename AddressType, typename SizeType = AddressType>
 class TransformedBitmapAllocator
-    : public AllocatorTransformer<BitmapAllocator<Unit, AddressType,
-                                                  SizeType> > {
+    : public AllocatorTransformer<
+          BitmapAllocator<Unit, AddressType, SizeType>
+      > {
 public:
   typedef AllocatorTransformer<BitmapAllocator<Unit, AddressType, SizeType> >
       super;

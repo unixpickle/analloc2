@@ -7,6 +7,9 @@
 
 namespace analloc {
 
+template <typename Unit>
+class VirtualBitmapAligner;
+
 template <typename Unit = unsigned int>
 class VirtualBitmapAllocator
     : public AllocatorVirtualizer<
@@ -35,6 +38,8 @@ public:
       : super(pageSize, pageSize, _offset, ptr, size / pageSize) {}
   
 protected:
+  friend class VirtualBitmapAligner<Unit>;
+  
   /**
    * Computes the optimal bitmap size to cover a region of memory.
    *

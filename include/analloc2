@@ -1,7 +1,5 @@
 #include "../src/abstract/virtual-offset-aligner.hpp"
-#include "../src/bitmap/bitmap-aligner.hpp"
-#include "../src/bitmap/transformed-bitmap-aligner.hpp"
-#include "../src/bitmap/virtual-bitmap-allocator.hpp"
+#include "../src/bitmap/virtual-bitmap-aligner.hpp"
 #include "../src/free-list/free-list-aligner.hpp"
 #include "../src/wrappers/aligner-transformer.hpp"
 #include "../src/wrappers/aligner-virtualizer.hpp"
