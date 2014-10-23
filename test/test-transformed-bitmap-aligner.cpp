@@ -7,14 +7,14 @@ void TestTrivialCases();
 void TestSimpleOffset();
 void TestMultitypeOffset();
 void TestSimpleScaled();
-void TestMultitypeScaled();
+void TestMultitypeBoth();
 
 int main() {
   TestTrivialCases();
   TestSimpleOffset();
   TestMultitypeOffset();
   TestSimpleScaled();
-  TestMultitypeScaled();
+  TestMultitypeBoth();
   return 0;
 }
 
@@ -137,8 +137,8 @@ void TestSimpleScaled() {
   assert(!aligner.Align(address, 0x40, 1)); // 0xc0 is taken
 }
 
-void TestMultitypeScaled() {
-  ScopedPass pass("TransformedBitmapAligner [multitype scaled]");
+void TestMultitypeBoth() {
+  ScopedPass pass("TransformedBitmapAligner [multitype both]");
   
   uint8_t buffer[2];
   TransformedBitmapAligner<uint8_t, uint16_t, uint8_t>
