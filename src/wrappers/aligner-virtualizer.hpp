@@ -11,6 +11,7 @@ class AlignerVirtualizer
       public virtual VirtualOffsetAligner {
 public:
   typedef AllocatorVirtualizer<T> super;
+  using typename super::Header;
   
   template <typename... Args>
   AlignerVirtualizer(Args... args) : super(args...) {}

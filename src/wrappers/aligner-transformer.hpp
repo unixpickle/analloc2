@@ -48,7 +48,7 @@ public:
   
   bool OffsetAlign(AddressType & addressOut, AddressType align,
                    AddressType anOffset, SizeType size) {
-    if (!ansa::IsAligned(anOffset, this->scale)) {
+    if (!ansa::IsAligned<AddressType>(anOffset, this->scale)) {
       return false;
     }
     
