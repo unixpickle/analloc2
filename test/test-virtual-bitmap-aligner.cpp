@@ -64,4 +64,14 @@ void TestConstructed(size_t pageSize, size_t pageCount, size_t headerSize) {
   assert(addr == start + headerSize);
   aligner.Free(addr);
   aligner.Free(start + headerSize * 2);
+  
+  // Test OffsetAlign(), basic case.
+  assert(aligner.OffsetAlign(addr, headerSize * 4, headerSize * 2, 0));
+  assert(addr == start + headerSize * 2);
+  aligner.Dealloc(addr, 0);
+  
+  if (pageSize > 1) {
+    // Make sure OffsetAlign() doesn't work when the offset is impossible.
+    assert(!aligner.OffsetAlign(addr, headerSize, 1, 0));
+  }
 }
