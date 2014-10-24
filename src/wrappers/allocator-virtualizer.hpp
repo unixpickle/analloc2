@@ -16,8 +16,7 @@ namespace analloc {
  * include caller information or performance statistics.
  */
 template <class T>
-class AllocatorVirtualizer : public T,
-                             public virtual VirtualAllocator {
+class AllocatorVirtualizer : public virtual VirtualAllocator {
 public:
   /**
    * The header structure which precedes all returned regions of memory.
@@ -27,14 +26,15 @@ public:
   };
   
   template <typename... Args>
-  AllocatorVirtualizer(size_t headerAlignment, Args... args) : T(args...) {
+  AllocatorVirtualizer(size_t headerAlignment, Args... args)
+      : wrapped(args...) {
     headerSize = ansa::Align(sizeof(Header), headerAlignment);
   }
   
   virtual bool Alloc(uintptr_t & out, size_t size) {
     // We need size + sizeof(Header) bytes in order to store the header
     uintptr_t buffer;
-    if (!T::Alloc(buffer, size + headerSize)) {
+    if (!wrapped.Alloc(buffer, size + headerSize)) {
       return false;
     }
     // Set the size in the header
@@ -51,7 +51,7 @@ public:
     
     // Deallocate the original pointer by subtracting sizeof(Header) to the
     // address and adding it to the length.
-    T::Dealloc(pointer - headerSize, size + headerSize);
+    wrapped.Dealloc(pointer - headerSize, size + headerSize);
   }
   
   /**
@@ -92,10 +92,18 @@ public:
     // Get the buffer's header.
     Header * header = RegionHeader(pointer);
     // Free the entire buffer, including the header.
-    T::Dealloc(pointer - headerSize, header->size + headerSize);
+    wrapped.Dealloc(pointer - headerSize, header->size + headerSize);
+  }
+  
+  /**
+   * The amount of overhead (in bytes) that will exist for each allocation.
+   */
+  inline size_t GetHeaderSize() {
+    return headerSize;
   }
   
 protected:
+  T wrapped;
   size_t headerSize;
   
   inline Header * RegionHeader(uintptr_t pointer) {

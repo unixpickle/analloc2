@@ -2,6 +2,7 @@
 #define __ANALLOC2_ALIGNER_VIRTUALIZER_HPP__
 
 #include "allocator-virtualizer.hpp"
+#include "../abstract/virtual-offset-aligner.hpp"
 
 namespace analloc {
 
@@ -16,14 +17,15 @@ public:
   template <typename... Args>
   AlignerVirtualizer(Args... args) : super(args...) {}
   
-  bool Align(uintptr_t & addressOut, uintptr_t align, size_t size) {
+  virtual bool Align(uintptr_t & addressOut, uintptr_t align, size_t size) {
     return this->OffsetAlign(addressOut, align, 0, size);
   }
   
-  bool OffsetAlign(uintptr_t & addressOut, uintptr_t align, uintptr_t offset,
-                   size_t size) {
+  virtual bool OffsetAlign(uintptr_t & addressOut, uintptr_t align,
+                           uintptr_t offset, size_t size) {
     uintptr_t buffer;
-    if (!T::OffsetAlign(buffer, align, offset + this->headerSize, size)) {
+    if (!this->wrapped.OffsetAlign(buffer, align, offset + this->headerSize,
+                                   size)) {
       return false;
     }
     // Set the size in the header

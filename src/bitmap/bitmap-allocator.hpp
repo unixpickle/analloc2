@@ -13,8 +13,9 @@ template <typename Unit, typename AddressType, typename SizeType = AddressType>
 class BitmapAllocator : protected Bitmap<Unit, SizeType>,
                         public virtual Allocator<AddressType, SizeType> {
 public:
-  BitmapAllocator(Unit * ptr, SizeType bc)
-      : Bitmap<Unit, SizeType>(ptr, bc) {
+  typedef Bitmap<Unit, SizeType> super;
+  
+  BitmapAllocator(Unit * ptr, SizeType bc) : super(ptr, bc) {
     // Zero the buffer as efficiently as possible without overwriting any bits
     // that this bitmap doesn't own
     SizeType fullUnits = bc / this->UnitBitCount;
@@ -54,6 +55,8 @@ public:
       this->SetBit(i, false);
     }
   }
+  
+  using super::GetBitCount;
   
 protected:
   bool NextFree(SizeType & idx, SizeType afterSize) {

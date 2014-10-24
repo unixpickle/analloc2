@@ -1,4 +1,5 @@
 #include "scoped-pass.hpp"
+#include "scoped-buffer.hpp"
 #include <analloc2>
 
 using namespace analloc;
@@ -24,16 +25,43 @@ void TestConstructed(size_t pageSize, size_t pageCount, size_t headerSize) {
   
   uint8_t bitmap[ansa::RoundUpDiv<size_t>(pageCount, 8)];
   uint8_t zeroBitmap[sizeof(bitmap)];
-  uint8_t data[pageSize * pageCount];
-  
+  size_t dataSize = pageSize * pageCount;
+  ScopedBuffer<uint8_t *> data(dataSize, dataSize);
+  uintptr_t start = data;
+
   ansa::Bzero(zeroBitmap, sizeof(zeroBitmap));
   
-  uintptr_t start = (uintptr_t)data;
-  
-  VirtualBitmapAligner<uint8_t> aligner(pageSize, start, bitmap, sizeof(data));
+  VirtualBitmapAligner<uint8_t> aligner(pageSize, start, bitmap, dataSize);
   assert(aligner.GetOffset() == start);
   assert(aligner.GetScale() == pageSize);
   
-  // TODO: write real tests here.
-  assert(false);
+  uintptr_t addr;
+  
+  // Largest allocation possible, in the form of unit alignment
+  assert(!aligner.Align(addr, 1, dataSize - headerSize + 1));
+  assert(aligner.Align(addr, 1, dataSize - headerSize));
+  assert(addr == start + headerSize);
+  aligner.Dealloc(addr, dataSize - headerSize);
+  
+  // Largest allocation possible with headerSize alignment
+  assert(aligner.Align(addr, headerSize, dataSize - headerSize));
+  assert(addr == start + headerSize);
+  aligner.Dealloc(addr, dataSize - headerSize);
+  assert(!aligner.Align(addr, headerSize * 2, dataSize - headerSize));
+  
+  // Alignment which doesn't leave enough initial space for any substantial
+  // memory.
+  assert(aligner.Align(addr, headerSize * 2, 1));
+  assert(addr == start + headerSize * 2);
+  assert(aligner.Align(addr, 1, 1));
+  assert(addr == start + pageSize + headerSize * 3);
+  aligner.Free(addr);
+  // Ensure that align and alloc do the same thing
+  assert(aligner.Alloc(addr, 0));
+  assert(addr == start + headerSize);
+  aligner.Free(addr);
+  assert(aligner.Align(addr, 1, 0));
+  assert(addr == start + headerSize);
+  aligner.Free(addr);
+  aligner.Free(start + headerSize * 2);
 }

@@ -2,6 +2,7 @@
 #define __ANALLOC2_ALIGNER_TRANSFORMER_HPP__
 
 #include "allocator-transformer.hpp"
+#include "../abstract/offset-aligner.hpp"
 
 namespace analloc {
 
@@ -9,14 +10,17 @@ namespace analloc {
  * Transforms an [OffsetAligner].
  */
 template <typename T>
-class AlignerTransformer : public AllocatorTransformer<T> {
+class AlignerTransformer
+    : public AllocatorTransformer<T>,
+      public virtual OffsetAligner<typename T::SizeType,
+                                   typename T::AddressType> {
 public:
   typedef AllocatorTransformer<T> super;
   using typename super::SizeType;
   using typename super::AddressType;
   
   /**
-   * This is restricted compared to [TransformedAllocator].
+   * Call the superclass's constructor with some added restrictions.
    * 
    * The [_scale] ought to be a power of two, and the [_offset] ought to be
    * aligned by the [_scale].
@@ -28,26 +32,14 @@ public:
     assert(ansa::IsAligned<AddressType>(_offset, _scale));
   }
   
-  bool Align(AddressType & addressOut, AddressType align, SizeType size) {
-    AddressType scaledAlign = ScaleAlign(align);
-    SizeType scaledSize = this->ScaleSize(size);
-    
-    // Check if it's a trivial allocation
-    if (scaledAlign <= 1) {
-      return this->Alloc(addressOut, size);
-    }
-    
-    AddressType scaledOffset = this->offset / this->scale;
-    AddressType addr;
-    if (!super::OffsetAlign(addr, scaledAlign, scaledOffset, scaledSize)) {
-      return false;
-    }
-    addressOut = this->OutputAddress(addr);
-    return true;
-  }
-  
-  bool OffsetAlign(AddressType & addressOut, AddressType align,
-                   AddressType anOffset, SizeType size) {
+  /**
+   * Align address space from the wrapped allocator.
+   *
+   * This works by calling the wrapped allocator's [OffsetAlign] with a
+   * compounded, scaled offset.
+   */
+  virtual bool OffsetAlign(AddressType & addressOut, AddressType align,
+                           AddressType anOffset, SizeType size) {
     if (!ansa::IsAligned<AddressType>(anOffset, this->scale)) {
       return false;
     }
@@ -65,7 +57,8 @@ public:
     // occurs.
     AddressType scaledOffset = (this->offset + anOffset) / this->scale;
     AddressType addr;
-    if (!super::OffsetAlign(addr, scaledAlign, scaledOffset, scaledSize)) {
+    if (!this->wrapped.OffsetAlign(addr, scaledAlign, scaledOffset,
+                                   scaledSize)) {
       return false;
     }
     addressOut = this->OutputAddress(addr);

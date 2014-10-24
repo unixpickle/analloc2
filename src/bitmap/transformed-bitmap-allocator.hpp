@@ -23,9 +23,13 @@ public:
                              AddressType bc)
       : super(_scale, _offset, ptr, bc) {
     // Make sure that no integer wrap-around will occur
-    assert(!ansa::MulWraps<AddressType>(this->GetBitCount(), this->scale));
-    assert(!ansa::AddWraps<AddressType>(this->GetBitCount() * this->scale,
+    assert(!ansa::MulWraps<AddressType>(GetBitCount(), this->scale));
+    assert(!ansa::AddWraps<AddressType>(GetBitCount() * this->scale,
                                         this->offset));
+  }
+  
+  inline SizeType GetBitCount() const {
+    return this->wrapped.GetBitCount();
   }
 };
 

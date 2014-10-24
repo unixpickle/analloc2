@@ -1,6 +1,7 @@
 #ifndef __ANALLOC2_ALLOCATOR_TRANSFORMER_HPP__
 #define __ANALLOC2_ALLOCATOR_TRANSFORMER_HPP__
 
+#include "../abstract/allocator.hpp"
 #include <cassert>
 #include <ansa/math>
 
@@ -23,10 +24,11 @@ namespace analloc {
  * addresses so that the address space need not begin at `nullptr`.
  */
 template <class T>
-class AllocatorTransformer : public T {
+class AllocatorTransformer
+    : public virtual Allocator<typename T::AddressType, typename T::SizeType> {
 public:
-  using typename T::AddressType;
-  using typename T::SizeType;
+  typedef typename T::AddressType AddressType;
+  typedef typename T::SizeType SizeType;
   
   /**
    * Create an [AllocatorTransformer] instance, passing [args] to [T]'s
@@ -39,21 +41,22 @@ public:
    */
   template <typename... Args>
   AllocatorTransformer(SizeType _scale, AddressType _offset, Args... args)
-      : T(args...), scale(_scale), offset(_offset) {
+      : wrapped(args...), scale(_scale), offset(_offset) {
     assert(scale != 0);
   }
   
   /**
-   * Allocate address space from the superclass and transform the resultant
-   * address.
+   * Allocate address space from the wrapped allocator and transform the
+   * resultant address.
    *
-   * The [size] argument is scaled down before being passed to the superclass.
+   * The [size] argument is scaled down before being passed to the enclosed
+   * allocator.
    *
-   * When the superclass returns an address x, [output] will be set to 
+   * When the wrapped allocator returns an address x, [output] will be set to 
    * (x * scale) + offset.
    */
   virtual bool Alloc(AddressType & output, SizeType size) {
-    if (!T::Alloc(output, ScaleSize(size))) {
+    if (!wrapped.Alloc(output, ScaleSize(size))) {
       return false;
     }
     output = OutputAddress(output);
@@ -61,21 +64,21 @@ public:
   }
   
   /**
-   * Deallocate address space from the superclass.
+   * Deallocate address space from the wrapped allocator.
    *
    * The [size] argument is scaled down before being passed to the superclass.
    *
-   * The address which is passed to the superclass is calculated by
+   * The address which is passed to the wrapped allocator is calculated by
    * ([addr] - offset) / scale.
    */
   virtual void Dealloc(AddressType addr, SizeType size) {
     assert(!((addr - offset) % scale));
-    T::Dealloc((addr - offset) / scale, ScaleSize(size));
+    wrapped.Dealloc((addr - offset) / scale, ScaleSize(size));
   }
   
   /**
    * Get the scale factor which this allocator applies to addresses from its
-   * subclass.
+   * wrapped allocator.
    */
   inline SizeType GetScale() const {
     return scale;
@@ -83,26 +86,27 @@ public:
   
   /**
    * Get the offset which this allocator applies to addresses from its
-   * subclass.
+   * wrapped allocator.
    */
   inline AddressType GetOffset() const {
     return offset;
   }
   
 protected:
+  T wrapped;
   SizeType scale;
   AddressType offset;
   
   /**
    * Scale a size from the outside world to a size which should be passed to
-   * the subclass's methods.
+   * the wrapped allocator's methods.
    */
   inline SizeType ScaleSize(SizeType size) {
     return ansa::RoundUpDiv<SizeType>(size, scale);
   }
   
   /**
-   * Translate an address from the subclass to an output address.
+   * Translate an address from the wrapped allocator to an output address.
    */
   inline AddressType OutputAddress(AddressType address) {
     return (address * scale) + offset;
