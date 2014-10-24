@@ -36,6 +36,14 @@ public:
   VirtualBitmapAligner(size_t pageSize, uintptr_t _offset, Unit * ptr,
                        size_t size)
       : super(pageSize, pageSize, _offset, ptr, size / pageSize) {}
+  
+  inline size_t GetScale() {
+    return this->wrapped.GetScale();
+  }
+
+  inline uintptr_t GetOffset() {
+    return this->wrapped.GetOffset();
+  }
 };
 
 }
