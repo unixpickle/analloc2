@@ -12,8 +12,8 @@ namespace analloc {
 template <typename T>
 class AlignerTransformer
     : public AllocatorTransformer<T>,
-      public virtual OffsetAligner<typename T::SizeType,
-                                   typename T::AddressType> {
+      public virtual OffsetAligner<typename T::AddressType,
+                                   typename T::SizeType> {
 public:
   typedef AllocatorTransformer<T> super;
   using typename super::SizeType;
