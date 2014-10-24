@@ -25,7 +25,7 @@ public:
                            uintptr_t offset, size_t size) {
     uintptr_t buffer;
     if (!this->wrapped.OffsetAlign(buffer, align, offset + this->headerSize,
-                                   size)) {
+                                   size + this->headerSize)) {
       return false;
     }
     // Set the size in the header
