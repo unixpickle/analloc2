@@ -8,6 +8,8 @@ Upcoming completion of free-list allocator.
  * Test integer overflow cases in free-list.
  * Create transformed suite for free-list.
  * Test transformed suite for free-list.
+ * Create a way to wrap a virtual region of memory with a free-list.
+ * Test virtual free list allocator.
 
 Upcoming completion of free-tree allocator:
 
