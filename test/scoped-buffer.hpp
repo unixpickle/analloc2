@@ -3,13 +3,14 @@
 
 #include <cstdlib>
 #include <cstdint>
+#include <iostream>
 
 template <typename T>
 struct ScopedBuffer {
   ScopedBuffer(size_t _size, size_t align = 1) : size(_size) {
-    if (posix_memalign(&buffer, align, size)) {
+    if (int res = posix_memalign(&buffer, align, size)) {
       std::cerr << "ScopedBuffer(" << size << ", " << align <<
-        ") failed." << std::endl;
+        ") failed." << res << std::endl;
       abort();
     }
   }
