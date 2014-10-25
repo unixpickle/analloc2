@@ -26,6 +26,8 @@ void TestScaled() {
   TransformedBitmapAllocator<uint32_t, uint16_t> allocator(3, 0, &bitmap, 16);
   assert(bitmap == 0xffff0000);
   
+  assert(allocator.GetBitCount() == 16);
+  
   uint16_t address;
   
   assert(!allocator.Alloc(address, 49));
@@ -83,6 +85,7 @@ void TestOffset() {
   TransformedBitmapAllocator<uint32_t, uint16_t, uint8_t>
       allocator(1, 0x103, &bitmap, 16);
   assert(bitmap == 0xffff0000);
+  assert(allocator.GetBitCount() == 16);
   
   uint16_t address;
   
@@ -119,6 +122,7 @@ void TestScaledOffset() {
   TransformedBitmapAllocator<uint32_t, uint16_t, uint8_t>
       allocator(3, 0x300, &bitmap, 16);
   assert(bitmap == 0xffff0000);
+  assert(allocator.GetBitCount() == 16);
   
   uint16_t address;
   const uint32_t full = 0xffffffff;

@@ -49,7 +49,7 @@ void TestConstructed(size_t pageSize, size_t pageCount, size_t headerSize) {
   assert(headerSize >= pageSize);
   assert(ansa::IsAligned(headerSize, pageSize));
   
-  uint8_t bitmap[ansa::Align<size_t>(pageCount, 8) / 8];
+  uint8_t bitmap[ansa::RoundUpDiv<size_t>(pageCount, 8)];
   uint8_t zeroBitmap[sizeof(bitmap)];
   uint8_t data[pageSize * pageCount];
   
@@ -61,6 +61,8 @@ void TestConstructed(size_t pageSize, size_t pageCount, size_t headerSize) {
                                             sizeof(data));
   assert(allocator.GetOffset() == start);
   assert(allocator.GetScale() == pageSize);
+  assert(allocator.GetBitCount() == pageCount);
+  assert(allocator.GetTotalSize() == pageSize * pageCount);
   
   uintptr_t addr;
   assert(ansa::Memcmp(bitmap, zeroBitmap, sizeof(bitmap)) == 0);

@@ -23,6 +23,10 @@ public:
     assert(ansa::IsPowerOf2(_scale));
     assert(ansa::IsAligned<AddressType>(_offset, _scale));
   }
+  
+  inline SizeType GetBitCount() const {
+    return this->wrapped.GetBitCount();
+  }
 };
 
 }

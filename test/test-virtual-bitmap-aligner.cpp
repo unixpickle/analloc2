@@ -34,6 +34,8 @@ void TestConstructed(size_t pageSize, size_t pageCount, size_t headerSize) {
   VirtualBitmapAligner<uint8_t> aligner(pageSize, start, bitmap, dataSize);
   assert(aligner.GetOffset() == start);
   assert(aligner.GetScale() == pageSize);
+  assert(aligner.GetBitCount() == pageCount);
+  assert(aligner.GetTotalSize() == pageCount * pageSize);
   
   uintptr_t addr;
   

@@ -23,6 +23,7 @@ void TestTrivialCases() {
   
   uint8_t bmData[2];
   TransformedBitmapAligner<uint8_t, uint8_t> aligner(1, 0, bmData, 16);
+  assert(aligner.GetBitCount() == 16);
   
   uint8_t address;
   
@@ -65,6 +66,7 @@ void TestSimpleOffset() {
   
   uint8_t bmData[2];
   TransformedBitmapAligner<uint8_t, uint8_t> aligner(1, 3, bmData, 14);
+  assert(aligner.GetBitCount() == 14);
   
   uint8_t address;
   
@@ -90,6 +92,7 @@ void TestMultitypeOffset() {
   uint8_t bmData[2];
   TransformedBitmapAligner<uint8_t, uint16_t, uint8_t>
       aligner(1, 0x103, bmData, 14);
+  assert(aligner.GetBitCount() == 14);
   
   uint16_t address;
   
@@ -111,6 +114,7 @@ void TestMultitypeOffset() {
   // Test alignments by sizes that exceed the SizeType
   TransformedBitmapAligner<uint8_t, uint16_t, uint8_t>
     aligner2(1, 0x1ff, bmData, 14);
+  assert(aligner2.GetBitCount() == 14);
   assert(aligner2.Align(address, 0x200, 1));
   assert(address == 0x200);
   assert(aligner2.Align(address, 1, 1));
@@ -125,6 +129,8 @@ void TestSimpleScaled() {
   
   uint8_t buffer[2];
   TransformedBitmapAligner<uint8_t, uint8_t> aligner(0x10, 0, buffer, 0xf);
+  assert(aligner.GetBitCount() == 0xf);
+  
   uint8_t address;
   
   assert(aligner.Align(address, 0x80, 0x20));
@@ -143,6 +149,7 @@ void TestMultitypeBoth() {
   uint8_t buffer[2];
   TransformedBitmapAligner<uint8_t, uint16_t, uint8_t>
       aligner(0x10, 0x210, buffer, 0x10);
+  assert(aligner.GetBitCount() == 0x10);
   uint16_t address;
   
   assert(!aligner.Align(address, 0x200, 1));

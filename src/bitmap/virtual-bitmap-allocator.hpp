@@ -40,9 +40,17 @@ public:
   inline size_t GetScale() {
     return this->wrapped.GetScale();
   }
-  
+
   inline uintptr_t GetOffset() {
     return this->wrapped.GetOffset();
+  }
+
+  inline size_t GetBitCount() {
+    return this->wrapped.GetBitCount();
+  }
+
+  inline size_t GetTotalSize() {
+    return GetBitCount() * GetScale();
   }
   
 protected:

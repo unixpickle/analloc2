@@ -45,7 +45,7 @@ uint64_t ProfileTrivialAlign() {
   Unit bitmap[1];
   
   VirtualBitmapAligner<Unit> aligner(8, (uintptr_t)data, bitmap, 0x20);
-  const size_t iterations = 10000;
+  const size_t iterations = 100000;
   uintptr_t addr;
   uint64_t start = Nanotime();
   for (size_t i = 0; i < iterations; ++i) {
@@ -63,7 +63,7 @@ uint64_t ProfileFirstAlign() {
   Unit bitmap[1];
   
   VirtualBitmapAligner<Unit> aligner(8, (uintptr_t)data, bitmap, 0x20);
-  const size_t iterations = 10000;
+  const size_t iterations = 100000;
   uintptr_t addr;
   uint64_t start = Nanotime();
   for (size_t i = 0; i < iterations; ++i) {
@@ -92,7 +92,7 @@ uint64_t ProfileLongAlign(size_t amountUsed) {
   uintptr_t addr;
   assert(aligner.Alloc(addr, amountUsed));
   
-  const size_t iterations = 10000;
+  const size_t iterations = 100000;
   uint64_t start = Nanotime();
   for (size_t i = 0; i < iterations; ++i) {
     bool res = aligner.Align(addr, 2, 1);
