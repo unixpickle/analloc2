@@ -8,8 +8,8 @@ namespace analloc {
 
 template <typename AddressType, typename SizeType = AddressType>
 class FreeListAligner
-    : public virtual Aligner<AddressType, SizeType>,
-      public FreeListAllocator<AddressType, SizeType> {
+    : public FreeListAllocator<AddressType, SizeType>,
+      public virtual OffsetAligner<AddressType, SizeType> {
 public:
   using typename FreeListAllocator<AddressType, SizeType>::FreeRegion;
   using typename FreeListAllocator<AddressType, SizeType>::FailureHandler;
@@ -17,17 +17,20 @@ public:
   FreeListAligner(VirtualAllocator & anAlloc, FailureHandler onAllocFail)
       : FreeListAllocator<AddressType, SizeType>(anAlloc, onAllocFail) {}
   
-  virtual bool Align(AddressType & out, AddressType align, SizeType size) {
+  virtual bool OffsetAlign(AddressType & out, AddressType align,
+                           AddressType alignOffset, SizeType size) {
     FreeRegion * last = nullptr;
     FreeRegion * reg = this->firstRegion;
     while (reg) {
       // Compute the offset in this region to align it properly.
       SizeType offset = 0;
-      if (reg->start % align) {
-        offset = (SizeType)(align - (reg->start % align));
-        if (offset >= reg->size) {
-          // Aligning an address in this region pushes the address out of
-          // bounds.
+      AddressType misalignment = (AddressType)(reg->start + alignOffset) %
+                                 align;
+      if (misalignment) {
+        AddressType compensation = align - misalignment;
+        offset = (SizeType)compensation;
+        if (offset != compensation || offset > reg->size) {
+          // The aligned address is out of bounds.
           last = reg;
           reg = reg->next;
           continue;

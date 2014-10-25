@@ -72,6 +72,9 @@ public:
   }
   
   virtual void Dealloc(AddressType address, SizeType size) {
+    assert(!ansa::AddWraps<AddressType>(address, size) ||
+           (AddressType)(address + size) == 0);
+    
     // Find the regions that surround the freed address
     FreeRegion * after = firstRegion;
     FreeRegion * before = nullptr;
@@ -83,6 +86,9 @@ public:
         after = after->next;
       }
     }
+    
+    assert(!after || address + size <= after->start);
+    
     if (before && before->start + before->size == address) {
       // The region before the freed address extends to the freed address.
       assert(!ansa::AddWraps<SizeType>(before->size, size));
