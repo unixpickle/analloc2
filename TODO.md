@@ -2,9 +2,17 @@
 
 ## Crucial
 
- * Implement `OffsetAlign()` in free-list and free-tree.
- * Create transformed suite for `FreeListAllocator`
- * Create transformed suite for `FreeTreeAllocator`
+Upcoming completion of free-list allocator.
+
+ * Test `FreeListAligner::OffsetAlign()` with non-zero offsets.
+ * Test integer overflow cases in free-list.
+ * Create transformed suite for free-list.
+ * Test transformed suite for free-list.
+
+Upcoming completion of free-tree allocator:
+
+ * Implement `OffsetAlign()` in free-tree.
+ * Create transformed suite for `FreeTreeAllocator`.
 
 ## Specific features
 
