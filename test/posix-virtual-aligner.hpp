@@ -1,7 +1,7 @@
 #ifndef __TEST_POSIX_VIRTUAL_ALIGNER_HPP__
 #define __TEST_POSIX_VIRTUAL_ALIGNER_HPP__
 
-#include <analloc2>
+#include <analloc2/abstract>
 
 class PosixVirtualAligner : public analloc::VirtualAligner {
 public:

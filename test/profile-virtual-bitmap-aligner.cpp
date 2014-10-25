@@ -1,6 +1,6 @@
 #include "nanotime.hpp"
 #include "scoped-buffer.hpp"
-#include <analloc2>
+#include <analloc2/bitmap>
 
 using namespace analloc;
 

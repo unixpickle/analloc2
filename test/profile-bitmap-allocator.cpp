@@ -1,6 +1,6 @@
 #include <iostream>
 #include <cstddef>
-#include <analloc2>
+#include <analloc2/bitmap>
 #include "nanotime.hpp"
 
 using namespace analloc;

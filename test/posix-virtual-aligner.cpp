@@ -1,5 +1,6 @@
 #include "posix-virtual-aligner.hpp"
-#include <stdlib.h>
+#include <cassert>
+#include <cstdlib>
 
 bool PosixVirtualAligner::Alloc(uintptr_t & out, size_t size) {
   void * buf = malloc(size);

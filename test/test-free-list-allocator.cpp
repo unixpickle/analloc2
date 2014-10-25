@@ -1,6 +1,7 @@
 #include "scoped-pass.hpp"
 #include "posix-virtual-aligner.hpp"
-#include <analloc2>
+#include <analloc2/free-list>
+#include <cassert>
 
 using namespace analloc;
 

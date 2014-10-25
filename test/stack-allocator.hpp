@@ -1,7 +1,8 @@
 #ifndef __TEST_STACK_ALLOCATOR_HPP__
 #define __TEST_STACK_ALLOCATOR_HPP__
 
-#include <analloc2>
+#include <analloc2/abstract>
+#include <cassert>
 
 template <size_t ObjSize>
 class StackAllocator : public analloc::VirtualAllocator {

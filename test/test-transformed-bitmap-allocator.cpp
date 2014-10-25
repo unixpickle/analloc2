@@ -1,5 +1,5 @@
 #include "scoped-pass.hpp"
-#include <analloc2>
+#include <analloc2/bitmap>
 
 using namespace analloc;
 
