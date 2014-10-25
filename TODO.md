@@ -11,8 +11,6 @@
  * Performance monitoring template argument for AVL tree
  * Add LastUsedAddress() to `BitmapAllocator` and `FreeListAllocator`.
  * Add RegionCount() to `FreeListAllocator`.
- * The free list allocator should be a singly-linked list.
- * Create a virtual allocator and aligner wrapper for the free list and bitmap classes.
  * (Possibly) add some sort of standard deviation algorithm to see how fragmented allocators are.
  * Implement red-black tree
  * Implement splay tree

@@ -2,11 +2,14 @@
 #define __ANALLOC2_FREE_LIST_ALIGNER_HPP__
 
 #include "free-list-allocator.hpp"
+#include "../abstract/aligner.hpp"
 
 namespace analloc {
 
 template <typename AddressType, typename SizeType = AddressType>
-class FreeListAligner : public FreeListAllocator<AddressType, SizeType> {
+class FreeListAligner
+    : public virtual Aligner<AddressType, SizeType>,
+      public FreeListAllocator<AddressType, SizeType> {
 public:
   using typename FreeListAllocator<AddressType, SizeType>::FreeRegion;
   using typename FreeListAllocator<AddressType, SizeType>::FailureHandler;
@@ -15,6 +18,7 @@ public:
       : FreeListAllocator<AddressType, SizeType>(anAlloc, onAllocFail) {}
   
   virtual bool Align(AddressType & out, AddressType align, SizeType size) {
+    FreeRegion * last = nullptr;
     FreeRegion * reg = this->firstRegion;
     while (reg) {
       // Compute the offset in this region to align it properly.
@@ -24,6 +28,7 @@ public:
         if (offset >= reg->size) {
           // Aligning an address in this region pushes the address out of
           // bounds.
+          last = reg;
           reg = reg->next;
           continue;
         }
@@ -39,7 +44,7 @@ public:
       } else if (offset == 0 && size == reg->size) {
         // Remove the region from the list
         out = reg->start;
-        this->Remove(reg);
+        this->Remove(last, reg);
         return true;
       } else if (offset == 0 && size < reg->size) {
         // Take the first chunk out of the region

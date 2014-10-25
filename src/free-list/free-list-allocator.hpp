@@ -2,6 +2,7 @@
 #define __ANALLOC2_FREE_LIST_ALLOCATOR_HPP__
 
 #include "../abstract/virtual-allocator.hpp"
+#include <ansa/math>
 #include <new>
 
 namespace analloc {
@@ -10,11 +11,11 @@ namespace analloc {
  * An allocator which allocates and frees address space in O(n), where n is
  * the number of disjoint fragments of free space.
  *
- * This may be useful for virtual memory management where there may be a small
+ * This may be useful for virtual memory management where there is a small
  * number of active memory regions at any given time.
  */
 template <typename AddressType, typename SizeType = AddressType>
-class FreeListAllocator : public Allocator<AddressType, SizeType> {
+class FreeListAllocator : public virtual Allocator<AddressType, SizeType> {
 public:
   /**
    * The function signature of a callback which a [FreeListAllocator] will call
@@ -43,19 +44,21 @@ public:
    */
   virtual ~FreeListAllocator() {
     while (firstRegion) {
-      Remove(firstRegion);
+      Remove(nullptr, firstRegion);
     }
   }
   
   virtual bool Alloc(AddressType & out, SizeType size) {
+    FreeRegion * last = nullptr;
     FreeRegion * reg = firstRegion;
     while (reg) {
       if (reg->size < size) {
+        last = reg;
         reg = reg->next;
       } else if (reg->size == size) {
         // Remove the region from the list
         out = reg->start;
-        Remove(reg);
+        Remove(last, reg);
         return true;
       } else {
         // Take a chunk out of the region
@@ -82,13 +85,16 @@ public:
     }
     if (before && before->start + before->size == address) {
       // The region before the freed address extends to the freed address.
+      assert(!ansa::AddWraps<SizeType>(before->size, size));
       before->size += size;
       if (after && after->start == before->start + before->size) {
         // The expanded before region extends all the way to the after region.
+        assert(!ansa::AddWraps<SizeType>(before->size, after->size));
         before->size += after->size;
-        Remove(after);
+        Remove(before, after);
       }
     } else if (after && address + size == after->start) {
+      assert(!ansa::AddWraps<SizeType>(after->size, size));
       // The freed region does not touch the region before it, but it does
       // reach the region after it.
       after->start -= size;
@@ -101,7 +107,7 @@ public:
   }
   
   struct FreeRegion {
-    FreeRegion * next, * last;
+    FreeRegion * next;
     AddressType start;
     SizeType size;
   };
@@ -122,30 +128,19 @@ protected:
     insert->start = addr;
     insert->size = size;
     if (before) {
-      if (before->next) {
-        before->next->last = insert;
-      }
       insert->next = before->next;
-      insert->last = before;
       before->next = insert;
     } else {
-      if (firstRegion) {
-        firstRegion->last = insert;
-      }
       insert->next = firstRegion;
-      insert->last = nullptr;
       firstRegion = insert;
     }
   }
   
-  void Remove(FreeRegion * region) {
-    if (region->last) {
-      region->last->next = region->next;
+  void Remove(FreeRegion * last, FreeRegion * region) {
+    if (last) {
+      last->next = region->next;
     } else {
       firstRegion = region->next;
-    }
-    if (region->next) {
-      region->next->last = region->last;
     }
     allocator.Dealloc((uintptr_t)region, sizeof(FreeRegion));
   }
