@@ -27,7 +27,7 @@ public:
    */
   template <typename... Args>
   AlignerTransformer(SizeType _scale, AddressType _offset, Args... args)
-      : super(_scale, _offset, args...) {
+      : super(_scale, _offset, args...), scaledOffset(_offset / _scale) {
     assert(ansa::IsPowerOf2(_scale));
     assert(ansa::IsAligned<AddressType>(_offset, _scale));
   }
@@ -40,24 +40,23 @@ public:
    */
   virtual bool OffsetAlign(AddressType & addressOut, AddressType align,
                            AddressType anOffset, SizeType size) {
-    if (!ansa::IsAligned<AddressType>(anOffset, this->scale)) {
-      return false;
-    }
-    
     AddressType scaledAlign = ScaleAlign(align);
-    SizeType scaledSize = this->ScaleSize(size);
     
-    // Check if it's a trivial allocation
-    if (scaledAlign <= 1) {
+    if (!ansa::IsAligned<AddressType>(anOffset, this->scale)) {
+      // The offset is impossible to achieve
+      return false;
+    } else if (scaledAlign <= 1) {
+      // It's a trivial allocation
       return this->Alloc(addressOut, size);
     }
     
-    // The integer wrap-around from `this->offset + anOffset` is acceptable
-    // since the result will be "correct" by definition even if wrap-around
-    // occurs.
-    AddressType scaledOffset = (this->offset + anOffset) / this->scale;
+    // The integer wrap-around from `scaledOffset + anOffset / this->scale`
+    // is acceptable since the result will be "correct" by definition even if
+    // wrap-around occurs.
+    AddressType specificOffset = scaledOffset + (anOffset / this->scale);
+    SizeType scaledSize = this->ScaleSize(size);
     AddressType addr;
-    if (!this->wrapped.OffsetAlign(addr, scaledAlign, scaledOffset,
+    if (!this->wrapped.OffsetAlign(addr, scaledAlign, specificOffset,
                                    scaledSize)) {
       return false;
     }
@@ -66,6 +65,8 @@ public:
   }
   
 protected:
+  AddressType scaledOffset;
+  
   inline AddressType ScaleAlign(AddressType align) {
     return ansa::RoundUpDiv<AddressType>(align, this->scale);
   }

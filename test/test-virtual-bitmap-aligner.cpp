@@ -26,7 +26,7 @@ void TestConstructed(size_t pageSize, size_t pageCount, size_t headerSize) {
   uint8_t bitmap[ansa::RoundUpDiv<size_t>(pageCount, 8)];
   uint8_t zeroBitmap[sizeof(bitmap)];
   size_t dataSize = pageSize * pageCount;
-  ScopedBuffer<uint8_t *> data(dataSize, dataSize);
+  ScopedBuffer data(dataSize, dataSize);
   uintptr_t start = data;
 
   ansa::Bzero(zeroBitmap, sizeof(zeroBitmap));

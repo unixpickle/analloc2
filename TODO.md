@@ -2,7 +2,6 @@
 
 ## Crucial
 
- * Figure out minor ways to improve `VirtualBitmapAligner` performance.
  * Implement `OffsetAlign()` in free-list and free-tree.
  * Create transformed suite for `FreeListAllocator`
  * Create transformed suite for `FreeTreeAllocator`

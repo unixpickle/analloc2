@@ -5,12 +5,18 @@
 #include <cstdint>
 #include <iostream>
 
-template <typename T>
 struct ScopedBuffer {
   ScopedBuffer(size_t _size, size_t align = 1) : size(_size) {
-    if (int res = posix_memalign(&buffer, align, size)) {
+    if (align == 1) {
+      buffer = malloc(size);
+      if (!buffer) {
+        std::cerr << "ScopedBuffer(" << size << ", " << align <<
+          ") failed." << std::endl;
+        abort();
+      }
+    } else if (posix_memalign(&buffer, align, size)) {
       std::cerr << "ScopedBuffer(" << size << ", " << align <<
-        ") failed." << res << std::endl;
+        ") failed." << std::endl;
       abort();
     }
   }

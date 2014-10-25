@@ -17,10 +17,6 @@ public:
   template <typename... Args>
   AlignerVirtualizer(Args... args) : super(args...) {}
   
-  virtual bool Align(uintptr_t & addressOut, uintptr_t align, size_t size) {
-    return this->OffsetAlign(addressOut, align, 0, size);
-  }
-  
   virtual bool OffsetAlign(uintptr_t & addressOut, uintptr_t align,
                            uintptr_t offset, size_t size) {
     uintptr_t buffer;
