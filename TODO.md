@@ -2,13 +2,11 @@
 
 ## Crucial
 
- * Create `AllocatorVirtualizer::HeaderSize` public `size_t` field.
- * Create `GetTotalSize()` for `BitmapAllocator` & `TransformedBitmapAllocator`.
- * Use new `HeaderSize` field throughout tests for `VirtualBitmapAllocator` and `VirtualBitmapAligner`.
- * Test `VirtualBitmapAligner`.
+ * Separate headers into categories
+ * Figure out minor ways to improve `VirtualBitmapAligner` performance.
  * Implement `OffsetAlign()` in free-list and free-tree.
- * Create `TransformedFreeListAllocator`, `TransformedFreeListAligner`, `VirtualFreeListAllocator`, `VirtualFreeListAligner`.
- * Do the same four things with free-tree.
+ * Create transformed suite for `FreeListAllocator`
+ * Create transformed suite for `FreeTreeAllocator`
 
 ## Specific features
 
