@@ -61,7 +61,7 @@ build/profile-virtual-bitmap-allocator: build/objects
 	$(CXX) $(CXXFLAGS) $(EXTRA_FLAGS) $(OBJECTS) -O3 profile-virtual-bitmap-allocator.cpp -o build/profile-virtual-bitmap-allocator
 
 build/objects: build
-	anbuild --output build ../build.dart
+	anbuild --output build --deps ../dependencies ../build.dart
 	make -C build
 
 build:

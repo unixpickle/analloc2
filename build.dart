@@ -1,7 +1,7 @@
 import 'package:anbuild/anbuild.dart';
 
-void main(_, port) {
-  runFailureGuard(port, () {
+void main(args, port) {
+  runBuildMain(args, port, () {
     var result = new TargetResult();
     result.addScanSources(['src']);
     result.addIncludes('c', ['includes']);
@@ -11,8 +11,8 @@ void main(_, port) {
 
     // fetch "ansa" dependency
     var ansaUrl = 'https://github.com/unixpickle/ansa.git';
-    fetchGitDependency('ansa', ansaUrl, branch: 'v0.2.1').then((_) {
-      return runDependency('dependencies/ansa/build.dart');
+    fetchGitDependency('ansa', ansaUrl, branch: 'v0.2.2').then((_) {
+      return runDependency('ansa/build.dart');
     }).then((res) {
       result.addFromTargetResult(res);
       port.send(result.pack());
