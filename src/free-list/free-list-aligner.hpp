@@ -2,7 +2,7 @@
 #define __ANALLOC2_FREE_LIST_ALIGNER_HPP__
 
 #include "free-list-allocator.hpp"
-#include "../abstract/aligner.hpp"
+#include "../abstract/offset-aligner.hpp"
 
 namespace analloc {
 
