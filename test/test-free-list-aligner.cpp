@@ -5,12 +5,27 @@
 
 using namespace analloc;
 
-bool HandleFailure(FreeListAllocator<uint16_t, uint8_t> *);
+PosixVirtualAligner posixAligner;
+
+void TestSplitCases();
+void TestOffsetAlign();
+void TestEmptyAlign();
+
+template <typename T>
+bool HandleFailure(T *);
 
 int main() {
-  ScopedPass pass("FreeListAligner");
-  
-  PosixVirtualAligner posixAligner;
+  TestSplitCases();
+  assert(posixAligner.GetAllocCount() == 0);
+  TestOffsetAlign();
+  assert(posixAligner.GetAllocCount() == 0);
+  TestEmptyAlign();
+  assert(posixAligner.GetAllocCount() == 0);
+  return 0;
+}
+
+void TestSplitCases() {
+  ScopedPass pass("FreeListAligner [split cases]");
   FreeListAligner<uint16_t, uint8_t> aligner(posixAligner, HandleFailure);
   uint16_t addr;
   
@@ -54,13 +69,49 @@ int main() {
   assert(aligner.Alloc(addr, 0x10));
   assert(addr == 0x20);
   assert(!aligner.Alloc(addr, 1));
-  
-  assert(posixAligner.GetAllocCount() == 0);
-  
-  return 0;
 }
 
-bool HandleFailure(FreeListAllocator<uint16_t, uint8_t> *) {
+void TestOffsetAlign() {
+  ScopedPass pass("FreeListAligner [offset align]");
+  FreeListAligner<uint16_t, uint8_t> aligner(posixAligner, HandleFailure);
+  uint16_t addr;
+  
+  aligner.Dealloc(0xf, 1);
+  assert(!aligner.Align(addr, 0x10, 1));
+  assert(aligner.OffsetAlign(addr, 0x10, 1, 1));
+  assert(addr == 0xf);
+  
+  aligner.Dealloc(0x101, 0x10);
+  // Align from the end of the chunk
+  assert(aligner.Align(addr, 0x10, 1));
+  assert(addr == 0x110);
+  assert(!aligner.Align(addr, 0x10, 1));
+  assert(posixAligner.GetAllocCount() == 1);
+  // Align from the beginning of the chunk
+  assert(aligner.OffsetAlign(addr, 0x100, 0xff, 1));
+  assert(addr == 0x101);
+  assert(posixAligner.GetAllocCount() == 1);
+  // Align from the middle of the chunk
+  assert(aligner.OffsetAlign(addr, 0x100, 0xfb, 1));
+  assert(addr == 0x105);
+  assert(posixAligner.GetAllocCount() == 2);
+}
+
+void TestEmptyAlign() {
+  ScopedPass pass("FreeListAligner [empty align]");
+  FreeListAligner<uint8_t> aligner(posixAligner, HandleFailure);
+  uint8_t addr;
+  
+  aligner.Dealloc(8, 8);
+  assert(!aligner.Align(addr, 0x10, 1));
+  assert(aligner.Align(addr, 0x10, 0));
+  assert(addr == 0x10);
+  assert(aligner.Alloc(addr, 8));
+  assert(addr == 8);
+}
+
+template <typename T>
+bool HandleFailure(T *) {
   std::cerr << "allocation failure!" << std::endl;
   abort();
 }

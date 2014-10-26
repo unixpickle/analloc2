@@ -138,6 +138,8 @@ void TestEmptyAlloc() {
   assert(!allocator.Alloc(addr, 0));
   allocator.Dealloc(1, 1);
   
+  assert(aligner.GetAllocCount() == 1);
+  
   // Allocate a zero-sized buffer multiple times
   assert(allocator.Alloc(addr, 0));
   assert(addr == 1);
@@ -148,18 +150,24 @@ void TestEmptyAlloc() {
   assert(allocator.Alloc(addr, 0));
   assert(addr == 1);
   
+  assert(aligner.GetAllocCount() == 1);
+  
   // Actually allocate the buffer
   assert(allocator.Alloc(addr, 1));
   assert(addr == 1);
+  assert(aligner.GetAllocCount() == 0);
   // Make sure that zero-sized allocations are no longer possible
   assert(!allocator.Alloc(addr, 0));
   allocator.Dealloc(1, 0);
+  assert(aligner.GetAllocCount() == 0);
   assert(!allocator.Alloc(addr, 0));
-  // Actually deallocate th buffer
+  // Actually deallocate the buffer
   allocator.Dealloc(1, 1);
+  assert(aligner.GetAllocCount() == 1);
   // Ensure that zero-sized allocation works again
   assert(allocator.Alloc(addr, 0));
   assert(addr == 1);
+  assert(aligner.GetAllocCount() == 1);
 }
 
 void TestOverflow() {

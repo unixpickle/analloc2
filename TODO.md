@@ -4,8 +4,7 @@
 
 Upcoming completion of free-list allocator.
 
- * Test `FreeListAligner::OffsetAlign()` with non-zero offsets.
- * Test integer overflow cases in free-list.
+ * Figure out how to use address and size types that aren't integers
  * Create transformed suite for free-list.
  * Test transformed suite for free-list.
  * Create a way to wrap a virtual region of memory with a free-list.
