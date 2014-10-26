@@ -8,7 +8,11 @@ using namespace analloc;
 void TestFullRegion();
 void TestPartialRegion();
 void TestJoins();
-bool HandleFailure(FreeListAllocator<uint16_t, uint8_t> *);
+void TestEmptyAlloc();
+void TestOverflow();
+
+template <typename T>
+bool HandleFailure(T *);
 
 PosixVirtualAligner aligner;
 
@@ -16,6 +20,8 @@ int main() {
   TestFullRegion();
   TestPartialRegion();
   TestJoins();
+  TestEmptyAlloc();
+  TestOverflow();
   assert(aligner.GetAllocCount() == 0);
   return 0;
 }
@@ -124,7 +130,63 @@ void TestJoins() {
   assert(!allocator.Alloc(addr, 1));
 }
 
-bool HandleFailure(FreeListAllocator<uint16_t, uint8_t> *) {
+void TestEmptyAlloc() {
+  ScopedPass pass("FreeListAllocator [empty]");
+  FreeListAllocator<uint8_t> allocator(aligner, HandleFailure);
+  
+  uint8_t addr;
+  assert(!allocator.Alloc(addr, 0));
+  allocator.Dealloc(1, 1);
+  
+  // Allocate a zero-sized buffer multiple times
+  assert(allocator.Alloc(addr, 0));
+  assert(addr == 1);
+  assert(allocator.Alloc(addr, 0));
+  assert(addr == 1);
+  // Ensure that deallocating an empty buffer does nothing
+  allocator.Dealloc(addr, 0);
+  assert(allocator.Alloc(addr, 0));
+  assert(addr == 1);
+  
+  // Actually allocate the buffer
+  assert(allocator.Alloc(addr, 1));
+  assert(addr == 1);
+  // Make sure that zero-sized allocations are no longer possible
+  assert(!allocator.Alloc(addr, 0));
+  allocator.Dealloc(1, 0);
+  assert(!allocator.Alloc(addr, 0));
+  // Actually deallocate th buffer
+  allocator.Dealloc(1, 1);
+  // Ensure that zero-sized allocation works again
+  assert(allocator.Alloc(addr, 0));
+  assert(addr == 1);
+}
+
+void TestOverflow() {
+  ScopedPass pass("FreeListAllocator [overflow]");
+  
+  FreeListAllocator<uint8_t> allocator(aligner, HandleFailure);
+  allocator.Dealloc(0x80, 0x10);
+  allocator.Dealloc(0xf0, 0x10);
+  uint8_t region;
+  assert(allocator.Alloc(region, 8));
+  assert(region == 0x80);
+  assert(allocator.Alloc(region, 9));
+  assert(region == 0xf0);
+  assert(allocator.Alloc(region, 8));
+  assert(region == 0x88);
+  assert(allocator.Alloc(region, 7));
+  assert(region == 0xf9);
+  assert(!allocator.Alloc(region, 1));
+  
+  allocator.Dealloc(0xf0, 0x10);
+  assert(allocator.Alloc(region, 0x10));
+  assert(region == 0xf0);
+  assert(!allocator.Alloc(region, 1));
+}
+
+template <typename T>
+bool HandleFailure(T *) {
   std::cerr << "allocation failure!" << std::endl;
   abort();
 }

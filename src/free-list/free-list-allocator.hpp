@@ -72,6 +72,8 @@ public:
   }
   
   virtual void Dealloc(AddressType address, SizeType size) {
+    if (!size) return;
+    
     assert(!ansa::AddWraps<AddressType>(address, size) ||
            (AddressType)(address + size) == 0);
     
