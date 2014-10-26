@@ -21,12 +21,7 @@ public:
   
   TransformedBitmapAllocator(SizeType _scale, AddressType _offset, Unit * ptr,
                              AddressType bc)
-      : super(_scale, _offset, ptr, bc) {
-    // Make sure that no integer wrap-around will occur
-    assert(!ansa::MulWraps<AddressType>(GetBitCount(), this->scale));
-    assert(!ansa::AddWraps<AddressType>(GetBitCount() * this->scale,
-                                        this->offset));
-  }
+      : super(_scale, _offset, ptr, bc) {}
   
   inline SizeType GetBitCount() const {
     return this->wrapped.GetBitCount();
