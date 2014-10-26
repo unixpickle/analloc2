@@ -6,6 +6,9 @@
 
 namespace analloc {
 
+/**
+ * A [FreeListAllocator] which can align address space in O(n).
+ */
 template <typename AddressType, typename SizeType = AddressType>
 class FreeListAligner
     : public FreeListAllocator<AddressType, SizeType>,

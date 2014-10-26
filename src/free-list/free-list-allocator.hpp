@@ -13,6 +13,10 @@ namespace analloc {
  *
  * This may be useful for virtual memory management where there is a small
  * number of active memory regions at any given time.
+ *
+ * Note: if you specify an AddressType which is bigger than SizeType, you
+ * cannot have contiguous regions of free space which are larger than the
+ * maximum value of SizeType.
  */
 template <typename AddressType, typename SizeType = AddressType>
 class FreeListAllocator : public virtual Allocator<AddressType, SizeType> {
@@ -48,6 +52,17 @@ public:
     }
   }
   
+  /**
+   * Allocate memory from a chunk.
+   *
+   * This finds the first chunk which is big enough to accommodate the
+   * requested allocation. It slices off the beginning of the found chunk and
+   * returns it. The chunk will be completely removed if it is exactly [size]
+   * units large.
+   *
+   * If and only if no chunk is found which is big enough to fit [size], this
+   * method will return `false`.
+   */
   virtual bool Alloc(AddressType & out, SizeType size) {
     FreeRegion * last = nullptr;
     FreeRegion * reg = firstRegion;
@@ -71,6 +86,12 @@ public:
     return false;
   }
   
+  /**
+   * Add a chunk to the chunk list which starts at [address] and is [size] 
+   * units large.
+   *
+   * This will merge the added chunk with its neighboring chunks if possible.
+   */
   virtual void Dealloc(AddressType address, SizeType size) {
     if (!size) return;
     
@@ -114,6 +135,9 @@ public:
     }
   }
   
+  /**
+   * The structure which is used to represent a region of memory.
+   */
   struct FreeRegion {
     FreeRegion * next;
     AddressType start;
