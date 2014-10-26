@@ -14,7 +14,7 @@ class Allocator : public ansa::NoCopy {
 public:
   static_assert(ansa::NumericInfo<_AddressType>::max >= 
                 ansa::NumericInfo<_SizeType>::max,
-                "AddressType must be greater or equal to SizeType in size.");
+                "AddressType cannot be smaller than SizeType.");
   
   /**
    * The type which can address any individual unit within this allocator.
