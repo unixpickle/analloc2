@@ -21,10 +21,6 @@ public:
                            FailureHandler onAllocFail)
       : super(anAlloc, onAllocFail), chunkSize(_chunkSize) {}
   
-  ChunkedFreeListAllocator(size_t _chunkSize, VirtualAllocator * anAlloc,
-                           FailureHandler onAllocFail)
-      : super(*anAlloc, onAllocFail), chunkSize(_chunkSize) {}
-  
   virtual bool Alloc(AddressType & addressOut, SizeType size) {
     return super::Alloc(addressOut, ansa::Align(size, chunkSize));
   }
@@ -40,6 +36,13 @@ public:
   
 protected:
   SizeType chunkSize;
+  
+  template <typename T>
+  friend class AllocatorVirtualizer;
+  
+  ChunkedFreeListAllocator(size_t _chunkSize, VirtualAllocator * anAlloc,
+                           FailureHandler onAllocFail)
+      : super(*anAlloc, onAllocFail), chunkSize(_chunkSize) {}
 };
 
 }
