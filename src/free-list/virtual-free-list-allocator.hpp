@@ -29,7 +29,7 @@ public:
    */
   VirtualFreeListAllocator(size_t chunkSize, VirtualAllocator & allocator,
                            FailureHandler failure)
-      : super(chunkSize, chunkSize, allocator, failure) {}
+      : super(chunkSize, chunkSize, &allocator, failure) {}
 };
 
 }

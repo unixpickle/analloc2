@@ -21,6 +21,10 @@ public:
                            FailureHandler onAllocFail)
       : super(anAlloc, onAllocFail), chunkSize(_chunkSize) {}
   
+  ChunkedFreeListAligner(size_t _chunkSize, VirtualAllocator * anAlloc,
+                         FailureHandler onAllocFail)
+      : super(*anAlloc, onAllocFail), chunkSize(_chunkSize) {}
+  
   virtual bool Alloc(AddressType & addressOut, SizeType size) {
     return super::Alloc(addressOut, ansa::Align(size, chunkSize));
   }
