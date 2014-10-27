@@ -4,18 +4,20 @@
 
 Upcoming completion of free-list allocator.
 
- * Figure out how to use address and size types that aren't integers
- * Create transformed suite for free-list.
- * Test transformed suite for free-list.
+ * Test chunked suite for free-list.
+ * Test virtual suite for free-list.
  * Create a way to wrap a virtual region of memory with a free-list.
+   * Idea: class called `BufferedStackAllocator`
  * Test virtual free list allocator.
 
 Upcoming completion of free-tree allocator:
 
+ * Use proper subclass structure in `FreeTreeAllocator` and `FreeTreeAligner`.
  * Implement `OffsetAlign()` in free-tree.
- * Create transformed suite for `FreeTreeAllocator`.
+ * Create chunked & virtual suite for free-tree.
+ * Attempt to use `BufferedStackAllocator` for placement in memory.
 
-## Specific features
+## Features that would be nice
 
  * Performance monitoring template argument for AVL tree
  * Add LastUsedAddress() to `BitmapAllocator` and `FreeListAllocator`.
@@ -29,13 +31,15 @@ Upcoming completion of free-tree allocator:
 I will focus on the following features for version 1.0.0:
 
  * Template-determined integer types
- * Scalable memory management
+ * Scalability
+   * Distributed allocators for "NUMA" domains
  * Sub-allocators
- * Distributed allocators for "NUMA" domains
  * Multiple types of allocators:
    * Buddy allocation
    * Page allocation queue
    * Free bitmap
+   * Free list
+   * Free tree
 
 Here is my current TODO list. I will update it as I think of new things to implement:
 
