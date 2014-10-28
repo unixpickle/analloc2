@@ -34,7 +34,8 @@ void TestGeneral() {
   aligner.Dealloc(0x10, 0x20);
   assert(aligner.Align(addr, 0x20, 1));
   assert(addr == 0x20);
-  assert(aligner.Align(addr, 0x10, 1));
+  assert(!aligner.OffsetAlign(addr, 0x10, 0x8, 1));
+  assert(aligner.OffsetAlign(addr, 0x10, 0x10, 1));
   assert(addr == 0x10);
   assert(!aligner.Align(addr, 1, 1));
 }
