@@ -4,11 +4,9 @@
 
 Upcoming completion of free-list allocator.
 
- * Test chunked suite for free-list.
- * Test virtual suite for free-list.
  * Create a way to wrap a virtual region of memory with a free-list.
    * Idea: class called `BufferedStackAllocator`
- * Test virtual free list allocator.
+ * Test virtual suite for free-list.
 
 Upcoming completion of free-tree allocator:
 
