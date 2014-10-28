@@ -4,7 +4,7 @@ export EXTRA_FLAGS=-I../include -I../dependencies/ansa/include
 export OBJECTS=build/objects/*.o
 export CXXFLAGS=-std=c++11 -Wall -Wextra
 
-all: build/test-bitmap build/test-bitmap-allocator build/profile-bitmap-allocator build/test-bitmap-aligner build/test-free-list-allocator build/test-free-list-aligner build/profile-free-list-allocator build/test-avl-tree build/profile-avl-tree build/test-free-tree-allocator build/test-free-tree-aligner build/profile-free-tree-allocator build/test-transformed-bitmap-allocator build/test-virtual-bitmap-allocator build/test-transformed-bitmap-aligner build/test-virtual-bitmap-aligner build/profile-virtual-bitmap-aligner build/profile-virtual-bitmap-allocator
+all: build/test-bitmap build/test-bitmap-allocator build/profile-bitmap-allocator build/test-bitmap-aligner build/test-free-list-allocator build/test-free-list-aligner build/profile-free-list-allocator build/test-avl-tree build/profile-avl-tree build/test-free-tree-allocator build/test-free-tree-aligner build/profile-free-tree-allocator build/test-transformed-bitmap-allocator build/test-virtual-bitmap-allocator build/test-transformed-bitmap-aligner build/test-virtual-bitmap-aligner build/profile-virtual-bitmap-aligner build/profile-virtual-bitmap-allocator build/test-chunked-free-list-allocator
 
 build/test-bitmap: build/objects
 	$(CXX) $(CXXFLAGS) $(EXTRA_FLAGS) $(OBJECTS) test-bitmap.cpp -o build/test-bitmap
@@ -59,6 +59,9 @@ build/profile-virtual-bitmap-aligner: build/objects
 
 build/profile-virtual-bitmap-allocator: build/objects
 	$(CXX) $(CXXFLAGS) $(EXTRA_FLAGS) $(OBJECTS) -O3 profile-virtual-bitmap-allocator.cpp -o build/profile-virtual-bitmap-allocator
+
+build/test-chunked-free-list-allocator: build/objects
+	$(CXX) $(CXXFLAGS) $(EXTRA_FLAGS) $(OBJECTS) test-chunked-free-list-allocator.cpp posix-virtual-aligner.cpp -o build/test-chunked-free-list-allocator
 
 build/objects: build
 	anbuild --output build --deps ../dependencies ../build.dart

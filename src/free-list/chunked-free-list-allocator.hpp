@@ -9,7 +9,7 @@ namespace analloc {
  * A [FreeListAllocator] which forces a natural alignment.  This is useful when
  * you are implementing a back-end for `new` and `delete`.
  */
-template <typename AddressType, typename SizeType>
+template <typename AddressType, typename SizeType = AddressType>
 class ChunkedFreeListAllocator
     : public FreeListAllocator<AddressType, SizeType> {
 public:

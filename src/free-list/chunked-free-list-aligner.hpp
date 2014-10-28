@@ -9,7 +9,7 @@ namespace analloc {
  * A [FreeListAligner] which forces a natural alignment.  This is useful when
  * you are implementing a back-end for `malloc`, `posix_memalign`, and `free`.
  */
-template <typename AddressType, typename SizeType>
+template <typename AddressType, typename SizeType = AddressType>
 class ChunkedFreeListAligner
     : public FreeListAligner<AddressType, SizeType> {
 public:
