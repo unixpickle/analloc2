@@ -1,15 +1,15 @@
-#ifndef __ANALLOC2_FREE_LIST_ALLOCATOR_HPP__
-#define __ANALLOC2_FREE_LIST_ALLOCATOR_HPP__
+#ifndef __ANALLOC2_FREE_LIST_HPP__
+#define __ANALLOC2_FREE_LIST_HPP__
 
 #include "../abstract/virtual-allocator.hpp"
+#include "../abstract/offset-aligner.hpp"
 #include <ansa/math>
-#include <new>
 
 namespace analloc {
 
 /**
- * An allocator which allocates and frees address space in O(n), where n is
- * the number of disjoint fragments of free space.
+ * An offset aligner which allocates and frees address space in O(n), where n
+ * is the number of disjoint fragments of free space.
  *
  * This may be useful for virtual memory management where there is a small
  * number of active memory regions at any given time.
@@ -19,7 +19,7 @@ namespace analloc {
  * maximum value of SizeType.
  */
 template <typename AddressType, typename SizeType = AddressType>
-class FreeListAllocator : public virtual Allocator<AddressType, SizeType> {
+class FreeList : public virtual OffsetAligner<AddressType, SizeType> {
 public:
   /**
    * The function signature of a callback which a [FreeListAllocator] will call
@@ -28,7 +28,7 @@ public:
    *
    * If this function returns true, the caller will re-attempt the allocation.
    */
-  typedef bool (* FailureHandler)(FreeListAllocator<AddressType, SizeType> *);
+  typedef bool (* FailureHandler)(FreeList<AddressType, SizeType> *);
   
   /**
    * Create a new [FreeListAllocator] with no free memory regions.
@@ -40,13 +40,13 @@ public:
    * this allocation fails, [onAllocFail] will be called with this allocator as
    * the argument.
    */
-  FreeListAllocator(VirtualAllocator & anAlloc, FailureHandler onAllocFail)
+  FreeList(VirtualAllocator & anAlloc, FailureHandler onAllocFail)
       : allocator(anAlloc), failureHandler(onAllocFail) {}
   
   /**
    * Deallocates all free regions.
    */
-  virtual ~FreeListAllocator() {
+  virtual ~FreeList() {
     while (firstRegion) {
       Remove(nullptr, firstRegion);
     }
@@ -133,6 +133,67 @@ public:
       // after it.
       InsertAfter(before, address, size);
     }
+  }
+  
+  /**
+   * Align address space.
+   *
+   * If the first region matching the alignment criteria is nested within a
+   * region, a chunk will be split into two separate chunks.
+   */
+  virtual bool OffsetAlign(AddressType & out, AddressType align,
+                           AddressType alignOffset, SizeType size) {
+    FreeRegion * last = nullptr;
+    FreeRegion * reg = this->firstRegion;
+    while (reg) {
+      // Compute the offset in this region to align it properly.
+      SizeType offset = 0;
+      AddressType misalignment = (AddressType)(reg->start + alignOffset) %
+                                 align;
+      if (misalignment) {
+        AddressType compensation = align - misalignment;
+        offset = (SizeType)compensation;
+        if (offset != compensation || offset > reg->size) {
+          // The aligned address is out of bounds.
+          last = reg;
+          reg = reg->next;
+          continue;
+        }
+      }
+      // Check for the five cases:
+      // - there isn't enough room in this region
+      // - there is exactly enough room in this region and offset = 0
+      // - there is more than enough room in this region and offset = 0
+      // - there is just enough room in this region with offset != 0
+      // - there is more than enough room in this region with offset != 0
+      if (reg->size - offset < size) {
+        reg = reg->next;
+      } else if (offset == 0 && size == reg->size) {
+        // Remove the region from the list
+        out = reg->start;
+        this->Remove(last, reg);
+        return true;
+      } else if (offset == 0 && size < reg->size) {
+        // Take the first chunk out of the region
+        out = reg->start;
+        reg->size -= size;
+        reg->start += size;
+        return true;
+      } else if (offset != 0 && size + offset == reg->size) {
+        // Take the last chunk out of the region
+        out = reg->start + offset;
+        reg->size = offset;
+        return true;
+      } else {
+        // Carve out the middle of the region
+        out = reg->start + offset;
+        this->InsertAfter(reg, reg->start + offset + size,
+                          reg->size - (offset + size));
+        reg->size = offset;
+        return true;
+      }
+    }
+    return false;
   }
   
   /**

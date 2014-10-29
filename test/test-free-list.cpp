@@ -11,24 +11,35 @@ void TestJoins();
 void TestEmptyAlloc();
 void TestOverflow();
 
+void TestSplitCases();
+void TestOffsetAlign();
+void TestEmptyAlign();
+
 template <typename T>
 bool HandleFailure(T *);
 
 PosixVirtualAligner aligner;
 
 int main() {
+  // Alloc
   TestFullRegion();
   TestPartialRegion();
   TestJoins();
   TestEmptyAlloc();
   TestOverflow();
+  
+  // Align
+  TestSplitCases();
+  TestOffsetAlign();
+  TestEmptyAlign();
+  
   assert(aligner.GetAllocCount() == 0);
   return 0;
 }
 
 void TestFullRegion() {
-  ScopedPass pass("FreeListAllocator [full-region]");
-  FreeListAllocator<uint16_t, uint8_t> allocator(aligner, HandleFailure);
+  ScopedPass pass("FreeList::Alloc() [full-region]");
+  FreeList<uint16_t, uint8_t> allocator(aligner, HandleFailure);
   uint16_t addr;
   
   allocator.Dealloc(0x100, 0x10);
@@ -48,8 +59,8 @@ void TestFullRegion() {
 }
 
 void TestPartialRegion() {
-  ScopedPass pass("FreeListAllocator [partial]");
-  FreeListAllocator<uint16_t, uint8_t> allocator(aligner, HandleFailure);
+  ScopedPass pass("FreeList::Alloc() [partial]");
+  FreeList<uint16_t, uint8_t> allocator(aligner, HandleFailure);
   uint16_t addr;
   
   allocator.Dealloc(0x100, 0x10);
@@ -82,9 +93,9 @@ void TestPartialRegion() {
 }
 
 void TestJoins() {
-  ScopedPass pass("FreeListAllocator [joins]");
+  ScopedPass pass("FreeList::Alloc() [joins]");
   
-  FreeListAllocator<uint16_t, uint8_t> allocator(aligner, HandleFailure);
+  FreeList<uint16_t, uint8_t> allocator(aligner, HandleFailure);
   uint16_t addr;
   
   // Joining a middle region to two outer regions
@@ -131,8 +142,8 @@ void TestJoins() {
 }
 
 void TestEmptyAlloc() {
-  ScopedPass pass("FreeListAllocator [empty]");
-  FreeListAllocator<uint8_t> allocator(aligner, HandleFailure);
+  ScopedPass pass("FreeList::Alloc() [empty]");
+  FreeList<uint8_t> allocator(aligner, HandleFailure);
   
   uint8_t addr;
   assert(!allocator.Alloc(addr, 0));
@@ -171,9 +182,9 @@ void TestEmptyAlloc() {
 }
 
 void TestOverflow() {
-  ScopedPass pass("FreeListAllocator [overflow]");
+  ScopedPass pass("FreeList::Alloc() [overflow]");
   
-  FreeListAllocator<uint8_t> allocator(aligner, HandleFailure);
+  FreeList<uint8_t> allocator(aligner, HandleFailure);
   allocator.Dealloc(0x80, 0x10);
   allocator.Dealloc(0xf0, 0x10);
   uint8_t region;
@@ -191,6 +202,92 @@ void TestOverflow() {
   assert(allocator.Alloc(region, 0x10));
   assert(region == 0xf0);
   assert(!allocator.Alloc(region, 1));
+}
+
+void TestSplitCases() {
+  ScopedPass pass("FreeList::Align() [split cases]");
+  FreeList<uint16_t, uint8_t> allocator(aligner, HandleFailure);
+  uint16_t addr;
+  
+  // Test when the region doesn't have enough room
+  allocator.Dealloc(0, 0x20);
+  assert(!allocator.Align(addr, 0x100, 0x21));
+  assert(allocator.Alloc(addr, 0x1));
+  assert(addr == 0x0);
+  assert(!allocator.Align(addr, 0x2, 0x1f));
+  assert(allocator.Alloc(addr, 0x1f));
+  assert(addr == 0x1);
+  
+  // There is exactly enough room in this region and offset = 0
+  allocator.Dealloc(0x10, 0x20);
+  assert(allocator.Align(addr, 8, 0x20));
+  assert(addr == 0x10);
+  assert(!allocator.Alloc(addr, 1));
+  
+  // More than enough room with offset = 0
+  allocator.Dealloc(0x10, 0x20);
+  assert(allocator.Align(addr, 8, 0x10));
+  assert(addr == 0x10);
+  assert(allocator.Alloc(addr, 0x10));
+  assert(addr == 0x20);
+  assert(!allocator.Alloc(addr, 1));
+  
+  // Just enough room with offset != 0
+  allocator.Dealloc(0xf, 0x21);
+  assert(allocator.Align(addr, 0x10, 0x20));
+  assert(addr == 0x10);
+  assert(allocator.Alloc(addr, 1));
+  assert(addr == 0xf);
+  assert(!allocator.Alloc(addr, 1));
+  
+  // More than enough room with offset != 0
+  allocator.Dealloc(0xf, 0x21);
+  assert(allocator.Align(addr, 0x10, 0x10));
+  assert(addr == 0x10);
+  assert(allocator.Alloc(addr, 1));
+  assert(addr == 0xf);
+  assert(allocator.Alloc(addr, 0x10));
+  assert(addr == 0x20);
+  assert(!allocator.Alloc(addr, 1));
+}
+
+void TestOffsetAlign() {
+  ScopedPass pass("FreeList::Align() [offset align]");
+  FreeList<uint16_t, uint8_t> allocator(aligner, HandleFailure);
+  uint16_t addr;
+  
+  allocator.Dealloc(0xf, 1);
+  assert(!allocator.Align(addr, 0x10, 1));
+  assert(allocator.OffsetAlign(addr, 0x10, 1, 1));
+  assert(addr == 0xf);
+  
+  allocator.Dealloc(0x101, 0x10);
+  // Align from the end of the chunk
+  assert(allocator.Align(addr, 0x10, 1));
+  assert(addr == 0x110);
+  assert(!allocator.Align(addr, 0x10, 1));
+  assert(aligner.GetAllocCount() == 1);
+  // Align from the beginning of the chunk
+  assert(allocator.OffsetAlign(addr, 0x100, 0xff, 1));
+  assert(addr == 0x101);
+  assert(aligner.GetAllocCount() == 1);
+  // Align from the middle of the chunk
+  assert(allocator.OffsetAlign(addr, 0x100, 0xfb, 1));
+  assert(addr == 0x105);
+  assert(aligner.GetAllocCount() == 2);
+}
+
+void TestEmptyAlign() {
+  ScopedPass pass("FreeList::Align() [empty align]");
+  FreeList<uint8_t> allocator(aligner, HandleFailure);
+  uint8_t addr;
+  
+  allocator.Dealloc(8, 8);
+  assert(!allocator.Align(addr, 0x10, 1));
+  assert(allocator.Align(addr, 0x10, 0));
+  assert(addr == 0x10);
+  assert(allocator.Alloc(addr, 8));
+  assert(addr == 8);
 }
 
 template <typename T>

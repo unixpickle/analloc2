@@ -1,24 +1,23 @@
-#ifndef __ANALLOC2_CHUNKED_FREE_LIST_ALIGNER_HPP__
-#define __ANALLOC2_CHUNKED_FREE_LIST_ALIGNER_HPP__
+#ifndef __ANALLOC2_CHUNKED_FREE_LIST_HPP__
+#define __ANALLOC2_CHUNKED_FREE_LIST_HPP__
 
-#include "free-list-aligner.hpp"
+#include "free-list.hpp"
 
 namespace analloc {
 
 /**
- * A [FreeListAligner] which forces a natural alignment.  This is useful when
- * you are implementing a back-end for `malloc`, `posix_memalign`, and `free`.
+ * A [FreeList] which forces a natural alignment.  This is useful when you are
+ * implementing a back-end for `malloc`, `posix_memalign`, and `free`.
  */
 template <typename AddressType, typename SizeType = AddressType>
-class ChunkedFreeListAligner
-    : public FreeListAligner<AddressType, SizeType> {
+class ChunkedFreeList : public FreeList<AddressType, SizeType> {
 public:
-  typedef FreeListAligner<AddressType, SizeType> super;
+  typedef FreeList<AddressType, SizeType> super;
   
   using typename super::FailureHandler;
   
-  ChunkedFreeListAligner(size_t _chunkSize, VirtualAllocator & anAlloc,
-                           FailureHandler onAllocFail)
+  ChunkedFreeList(size_t _chunkSize, VirtualAllocator & anAlloc,
+                  FailureHandler onAllocFail)
       : super(anAlloc, onAllocFail), chunkSize(_chunkSize) {}
   
   virtual bool Alloc(AddressType & addressOut, SizeType size) {
@@ -52,8 +51,8 @@ protected:
   template <typename T>
   friend class AllocatorVirtualizer;
   
-  ChunkedFreeListAligner(size_t _chunkSize, VirtualAllocator * anAlloc,
-                         FailureHandler onAllocFail)
+  ChunkedFreeList(size_t _chunkSize, VirtualAllocator * anAlloc,
+                  FailureHandler onAllocFail)
       : super(*anAlloc, onAllocFail), chunkSize(_chunkSize) {}
 };
 

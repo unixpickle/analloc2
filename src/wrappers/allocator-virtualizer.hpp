@@ -3,6 +3,7 @@
 
 #include "../abstract/virtual-allocator.hpp"
 #include <ansa/cstring>
+#include <ansa/math>
 
 namespace analloc {
 
