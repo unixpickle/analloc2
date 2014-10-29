@@ -22,16 +22,15 @@ template <typename AddressType, typename SizeType = AddressType>
 class FreeList : public virtual OffsetAligner<AddressType, SizeType> {
 public:
   /**
-   * The function signature of a callback which a [FreeListAllocator] will call
-   * when a free region cannot be recorded because memory could not be
-   * obtained.
+   * The function signature of a callback which a [FreeList] will call when a
+   * free region cannot be recorded because memory could not be obtained.
    *
    * If this function returns true, the caller will re-attempt the allocation.
    */
   typedef bool (* FailureHandler)(FreeList<AddressType, SizeType> *);
   
   /**
-   * Create a new [FreeListAllocator] with no free memory regions.
+   * Create a new [FreeList] with no free memory regions.
    *
    * The [anAlloc] argument is saved by this allocator to be used throughout
    * its lifetime. This allocator will be used to allocate free regions.
@@ -44,7 +43,7 @@ public:
       : allocator(anAlloc), failureHandler(onAllocFail) {}
   
   /**
-   * Deallocates all free regions.
+   * Deallocate all free regions.
    */
   virtual ~FreeList() {
     while (firstRegion) {
@@ -85,61 +84,12 @@ public:
     }
     return false;
   }
-  
-  /**
-   * Add a chunk to the chunk list which starts at [address] and is [size] 
-   * units large.
-   *
-   * This will merge the added chunk with its neighboring chunks if possible.
-   */
-  virtual void Dealloc(AddressType address, SizeType size) {
-    if (!size) return;
-    
-    assert(!ansa::AddWraps<AddressType>(address, size) ||
-           (AddressType)(address + size) == 0);
-    
-    // Find the regions that surround the freed address
-    FreeRegion * after = firstRegion;
-    FreeRegion * before = nullptr;
-    while (after) {
-      if (after->start > address) {
-        break;
-      } else {
-        before = after;
-        after = after->next;
-      }
-    }
-    
-    assert(!after || address + size <= after->start);
-    
-    if (before && before->start + before->size == address) {
-      // The region before the freed address extends to the freed address.
-      assert(!ansa::AddWraps<SizeType>(before->size, size));
-      before->size += size;
-      if (after && after->start == before->start + before->size) {
-        // The expanded before region extends all the way to the after region.
-        assert(!ansa::AddWraps<SizeType>(before->size, after->size));
-        before->size += after->size;
-        Remove(before, after);
-      }
-    } else if (after && address + size == after->start) {
-      assert(!ansa::AddWraps<SizeType>(after->size, size));
-      // The freed region does not touch the region before it, but it does
-      // reach the region after it.
-      after->start -= size;
-      after->size += size;
-    } else {
-      // The freed region touches neither the region before it nor the one
-      // after it.
-      InsertAfter(before, address, size);
-    }
-  }
-  
+
   /**
    * Align address space.
    *
    * If the first region matching the alignment criteria is nested within a
-   * region, a chunk will be split into two separate chunks.
+   * chunk, that chunk will be split into two separate chunks.
    */
   virtual bool OffsetAlign(AddressType & out, AddressType align,
                            AddressType alignOffset, SizeType size) {
@@ -195,9 +145,61 @@ public:
     }
     return false;
   }
+ 
+  /**
+   * Add a chunk to the chunk list which starts at [address] and is [size] 
+   * units large.
+   *
+   * This will merge the added chunk with its neighboring chunks if possible.
+   */
+  virtual void Dealloc(AddressType address, SizeType size) {
+    if (!size) return;
+    
+    assert(!ansa::AddWraps<AddressType>(address, size) ||
+           (AddressType)(address + size) == 0);
+    
+    // Find the regions that surround the freed address
+    FreeRegion * after = firstRegion;
+    FreeRegion * before = nullptr;
+    while (after) {
+      if (after->start > address) {
+        break;
+      } else {
+        before = after;
+        after = after->next;
+      }
+    }
+    
+    assert(!after || address + size <= after->start);
+    
+    if (before && before->start + before->size == address) {
+      // The region before the freed address extends to the freed address.
+      assert(!ansa::AddWraps<SizeType>(before->size, size));
+      before->size += size;
+      if (after && after->start == before->start + before->size) {
+        // The expanded before region extends all the way to the after region.
+        assert(!ansa::AddWraps<SizeType>(before->size, after->size));
+        before->size += after->size;
+        Remove(before, after);
+      }
+    } else if (after && address + size == after->start) {
+      assert(!ansa::AddWraps<SizeType>(after->size, size));
+      // The freed region does not touch the region before it, but it does
+      // reach the region after it.
+      after->start -= size;
+      after->size += size;
+    } else {
+      // The freed region touches neither the region before it nor the one
+      // after it.
+      InsertAfter(before, address, size);
+    }
+  }
   
   /**
    * The structure which is used to represent a region of memory.
+   *
+   * All allocations that [FreeList] needs from its allocator will be of size
+   * `sizeof(FreeRegion)`.
    */
   struct FreeRegion {
     FreeRegion * next;

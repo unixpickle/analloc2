@@ -6,7 +6,7 @@
 namespace analloc {
 
 /**
- * A [FreeList] which forces a natural alignment.  This is useful when you are
+ * A [FreeList] which forces a natural alignment. This is useful when you are
  * implementing a back-end for `malloc`, `posix_memalign`, and `free`.
  */
 template <typename AddressType, typename SizeType = AddressType>
