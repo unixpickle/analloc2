@@ -79,7 +79,7 @@ public:
   using super::GetBitCount;
   
 protected:
-  bool NextFree(SizeType & idx, SizeType afterSize) {
+  inline bool NextFree(SizeType & idx, SizeType afterSize) {
     assert(afterSize <= this->GetBitCount());
     for (SizeType i = idx; i < this->GetBitCount() - afterSize; ++i) {
       if (this->GetBit(i)) {
@@ -96,7 +96,7 @@ protected:
     return false;
   }
   
-  bool NextFreeAligned(SizeType & idx, AddressType offset,
+  inline bool NextFreeAligned(SizeType & idx, AddressType offset,
                        AddressType align, SizeType afterSize) {
     if (afterSize >= this->GetBitCount()) {
       return false;
@@ -121,7 +121,7 @@ protected:
     return false;
   }
   
-  bool Reserve(SizeType idx, SizeType size, SizeType * firstUsed) {
+  inline bool Reserve(SizeType idx, SizeType size, SizeType * firstUsed) {
     assert(!ansa::AddWraps<SizeType>(idx, size));
     assert(idx + size <= this->GetBitCount());
     // Make sure that the next [size] cells are free.
@@ -143,7 +143,7 @@ protected:
   /**
    * Returns `true` only if the entire unit starting with [idx] is allocated.
    */
-  bool IsUnitAllocated(SizeType i) {
+  inline bool IsUnitAllocated(SizeType i) {
     // I love short-circuit evaluation; don't you?
     return !(i % this->UnitBitCount) &&
            i + this->UnitBitCount <= this->GetBitCount() &&
