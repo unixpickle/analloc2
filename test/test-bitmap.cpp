@@ -31,22 +31,22 @@ int main() {
   TestAllAllocation<unsigned int>();
   TestAllAllocation<unsigned long>();
   TestAllAllocation<unsigned long long>();
-  /*
+  
   TestLargeAlignment();
   TestUnitAlignment();
   TestOverflowAlignment();
   TestLastUnitAlignment();
   TestSimpleOffsetAlignment();
-  TestMultitypeOffsetAlignment();*/
+  TestMultitypeOffsetAlignment();
   
   return 0;
 }
 
 template <typename T>
 void TestAllAllocation() {
-  //TestStepAllocation<T>();
+  TestStepAllocation<T>();
   TestIntOverflowAllocation<T>();
-  //TestFragmentedAllocation<T>();
+  TestFragmentedAllocation<T>();
 }
 
 template <typename T>

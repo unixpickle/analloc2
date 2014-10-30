@@ -91,7 +91,10 @@ protected:
       } else {
         // BitScanRight will allow us to quickly process the value
         Unit unit = this->UnitAt(i / this->UnitBitCount);
-        int add = ansa::BitScanRight<Unit>(~unit);
+        unsigned int add = (unsigned int)ansa::BitScanRight<Unit>(~unit);
+        if ((SizeType)add != add || ansa::AddWraps<SizeType>(i, add)) {
+          return false;
+        }
         i += add;
       }
     }
