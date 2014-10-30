@@ -17,6 +17,9 @@ uint64_t ProfileAllocLast(size_t iterations, size_t bitCount);
 template <typename T>
 uint64_t ProfileAllocFragmented(size_t iterations, size_t bitCount);
 
+template <typename T>
+uint64_t ProfileAllocPartiallyFragmented(size_t iterations, size_t bitCount);
+
 int main() {
   ProfileBoth<unsigned char>();
   ProfileBoth<unsigned short>();
@@ -40,6 +43,9 @@ void ProfileBoth() {
     std::cout << "Bitmap<" << ansa::NumericInfo<T>::name <<
       ">::Alloc() [fragmented, " << bc << "] ... " << std::flush <<
       ProfileAllocFragmented<T>(iters >> (i + 2), bc) << std::endl;
+    std::cout << "Bitmap<" << ansa::NumericInfo<T>::name <<
+      ">::Alloc() [partial, " << bc << "] ... " << std::flush <<
+      ProfileAllocPartiallyFragmented<T>(iters >> (i + 2), bc) << std::endl;
   }
 }
 
@@ -97,6 +103,30 @@ uint64_t ProfileAllocFragmented(size_t iterations, size_t bitCount) {
     allocator.Alloc(result, 2);
     assert(result == bitCount - 2);
     allocator.Dealloc(result, 2);
+  }
+  uint64_t endTime = Nanotime();
+  
+  delete list;
+  return (endTime - startTime) / iterations;
+}
+
+template <typename T>
+uint64_t ProfileAllocPartiallyFragmented(size_t iterations, size_t bitCount) {
+  assert(bitCount % (sizeof(T) * 8) == 0);
+  T * list = new T[bitCount / (sizeof(T) * 8)];
+  Bitmap<T, size_t> allocator(list, bitCount);
+  
+  uint64_t startTime = Nanotime();
+  size_t result;
+  for (size_t i = 0; i < (bitCount / 8) - 1; ++i) {
+    allocator.Alloc(result, 8);
+    assert(result == i * 8);
+    allocator.Dealloc(result, 1);
+  }
+  for (size_t i = 0; i < iterations; ++i) {
+    allocator.Alloc(result, 8);
+    assert(result == bitCount - 8);
+    allocator.Dealloc(result, 8);
   }
   uint64_t endTime = Nanotime();
   

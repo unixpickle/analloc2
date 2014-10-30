@@ -81,16 +81,17 @@ public:
 protected:
   inline bool NextFree(SizeType & idx, SizeType afterSize) {
     assert(afterSize <= this->GetBitCount());
-    for (SizeType i = idx; i < this->GetBitCount() - afterSize; ++i) {
-      if (this->GetBit(i)) {
-        // Skip this entire unit if we can
-        if (IsUnitAllocated(i)) {
-          // We subtract 1 from UnitBitCount for the ++i in the for-loop.
-          i += this->UnitBitCount - 1;
-        }
-      } else {
+    SizeType i = idx;
+    while (i < this->GetBitCount() - afterSize) {
+      if (!this->GetBit(i)) {
         idx = i;
         return true;
+      } else if (i % this->UnitBitCount) {
+        ++i;
+      } else {
+        // BitScanRight will allow us to quickly process the value
+        Unit unit = this->UnitAt(i / this->UnitBitCount);
+        i += ansa::BitScanRight<Unit>(~unit);
       }
     }
     return false;

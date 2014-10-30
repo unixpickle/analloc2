@@ -6,9 +6,9 @@ Running my benchmarks has given me a decent set of results on a 2.6 GHz Intel Co
 
 The allocation time is **O**(*n*), where *n* is the number of bits which must be read before a set of free bits are found.
 
-On a dataset in which only the last bit is free, the algorithm scans about *7 bits per clockcycle*. This is because a heuristic allows the allocator to skip 64-bits at a time.
+On a dataset in which only the last bit is free, the algorithm scans about *16 bits per clockcycle*. This is because a heuristic allows the allocator to skip 64-bits at a time.
 
-On a dataset which is as fragmented as possible (i.e. every other bit it set), it takes about *70 clockcycles per bit*.  This is unreasonably high, and will hopefully be improved in the future.
+On a dataset which is as fragmented as possible (i.e. every other bit it set), it takes about *60 clockcycles per bit*.  When one out of every 8 bits is set, it takes about *20 clockcycles per bit*.
 
 ## Free-list Allocator
 
