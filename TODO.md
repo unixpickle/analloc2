@@ -4,7 +4,6 @@
 
 Upcoming completion of free-list allocator.
 
- * Refactor bitmap allocator to not separate offset-aligner from allocator.
  * Create a way to wrap a virtual region of memory with a free-list.
    * Idea: class called `BufferedStackAllocator`
  * Test virtual suite for free-list.

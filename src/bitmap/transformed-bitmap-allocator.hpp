@@ -1,7 +1,7 @@
 #ifndef __ANALLOC2_TRANSFORMED_BITMAP_ALLOCATOR_HPP__
 #define __ANALLOC2_TRANSFORMED_BITMAP_ALLOCATOR_HPP__
 
-#include "bitmap-allocator.hpp"
+#include "bitmap.hpp"
 #include "../wrappers/allocator-transformer.hpp"
 
 namespace analloc {
@@ -12,12 +12,9 @@ namespace analloc {
  */
 template <typename Unit, typename AddressType, typename SizeType = AddressType>
 class TransformedBitmapAllocator
-    : public AllocatorTransformer<
-          BitmapAllocator<Unit, AddressType, SizeType>
-      > {
+    : public AllocatorTransformer<Bitmap<Unit, AddressType, SizeType> > {
 public:
-  typedef AllocatorTransformer<BitmapAllocator<Unit, AddressType, SizeType> >
-      super;
+  typedef AllocatorTransformer<Bitmap<Unit, AddressType, SizeType> > super;
   
   TransformedBitmapAllocator(SizeType _scale, AddressType _offset, Unit * ptr,
                              AddressType bc)

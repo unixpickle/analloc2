@@ -1,17 +1,16 @@
 #ifndef __ANALLOC2_TRANSFORMED_BITMAP_ALIGNER_HPP__
 #define __ANALLOC2_TRANSFORMED_BITMAP_ALIGNER_HPP__
 
-#include "bitmap-aligner.hpp"
+#include "bitmap.hpp"
 #include "../wrappers/aligner-transformer.hpp"
 
 namespace analloc {
 
 template <typename Unit, typename AddressType, typename SizeType = AddressType>
 class TransformedBitmapAligner
-    : public AlignerTransformer<BitmapAligner<Unit, AddressType, SizeType> > {
+    : public AlignerTransformer<Bitmap<Unit, AddressType, SizeType> > {
 public:
-  typedef AlignerTransformer<BitmapAligner<Unit, AddressType, SizeType> >
-      super;
+  typedef AlignerTransformer<Bitmap<Unit, AddressType, SizeType> > super;
   
   /**
    * The [_scale] ought to be a power of two, and the [_offset] ought to be
