@@ -7,7 +7,13 @@ using namespace ansa;
 using namespace analloc;
 
 template <typename T>
+void TestAllAllocation();
+
+template <typename T>
 void TestStepAllocation();
+
+template <typename T>
+void TestIntOverflowAllocation();
 
 template <typename T>
 void TestFragmentedAllocation();
@@ -20,25 +26,27 @@ void TestSimpleOffsetAlignment();
 void TestMultitypeOffsetAlignment();
 
 int main() {
-  TestStepAllocation<unsigned char>();
-  TestStepAllocation<unsigned short>();
-  TestStepAllocation<unsigned int>();
-  TestStepAllocation<unsigned long>();
-  TestStepAllocation<unsigned long long>();
-  TestFragmentedAllocation<unsigned char>();
-  TestFragmentedAllocation<unsigned short>();
-  TestFragmentedAllocation<unsigned int>();
-  TestFragmentedAllocation<unsigned long>();
-  TestFragmentedAllocation<unsigned long long>();
-  
+  TestAllAllocation<unsigned char>();
+  TestAllAllocation<unsigned short>();
+  TestAllAllocation<unsigned int>();
+  TestAllAllocation<unsigned long>();
+  TestAllAllocation<unsigned long long>();
+  /*
   TestLargeAlignment();
   TestUnitAlignment();
   TestOverflowAlignment();
   TestLastUnitAlignment();
   TestSimpleOffsetAlignment();
-  TestMultitypeOffsetAlignment();
+  TestMultitypeOffsetAlignment();*/
   
   return 0;
+}
+
+template <typename T>
+void TestAllAllocation() {
+  //TestStepAllocation<T>();
+  TestIntOverflowAllocation<T>();
+  //TestFragmentedAllocation<T>();
 }
 
 template <typename T>
@@ -69,9 +77,23 @@ void TestStepAllocation() {
 }
 
 template <typename T>
-void TestFragmentedAllocation() {
+void TestIntOverflowAllocation() {
   ScopedPass pass("Bitmap<", NumericInfo<T>::name,
-                  ", uint32_t, uint16_t>::Alloc()");
+                  ", uint8_t>::Alloc() [overflow]");
+  uint8_t addr;
+  T cells[256 / (sizeof(T) * 8)];
+  
+  cells[(sizeof(cells) / sizeof(T)) - 1] = ~(T)0;
+  
+  Bitmap<T, uint8_t> allocator(cells, 0xff);
+  assert(allocator.Alloc(addr, 0xff));
+  assert(addr == 0);
+  assert(!allocator.Alloc(addr, 1));
+}
+
+template <typename T>
+void TestFragmentedAllocation() {
+  ScopedPass pass("Bitmap<", NumericInfo<T>::name, ", uint16_t>::Alloc()");
   uint16_t addr;
   T cells[256 / (sizeof(T) * 8)];
   
