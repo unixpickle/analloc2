@@ -11,6 +11,7 @@ class VirtualFreeList
 public:
   typedef AlignerVirtualizer<ChunkedFreeList<uintptr_t, size_t> > super;
   typedef ChunkedFreeList<uintptr_t, size_t>::FailureHandler FailureHandler;
+  typedef FreeList<uintptr_t, size_t>::FreeRegion FreeRegion;
   
   /**
    * Create an empty [VirtualFreeList].
@@ -23,6 +24,13 @@ public:
   VirtualFreeList(size_t chunkSize, VirtualAllocator & allocator,
                   FailureHandler failure)
       : super(chunkSize, chunkSize, &allocator, failure) {}
+
+  /**
+   * Returns the number of free regions.
+   */
+  inline size_t GetRegionCount() {
+    return this->wrapped.GetRegionCount();
+  }
 };
 
 }

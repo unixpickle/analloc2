@@ -25,9 +25,9 @@ int main() {
 
 template <template <class T> class Tree, template <class T> class Node>
 uint64_t ProfileFreeTreeEnd(size_t length, size_t iterations) {
-  typedef Node<typename FreeTreeAllocator<Tree, size_t>::FreeRegion> Region;
+  typedef Node<typename FreeTree<Tree, size_t>::FreeRegion> Region;
   StackAllocator<sizeof(Region)> stack((length + 1) * 2, aligner);
-  FreeTreeAllocator<Tree, size_t> allocator(stack, HandleFailure);
+  FreeTree<Tree, size_t> allocator(stack, HandleFailure);
   
   // Carve out [length] regions of size 1, and then one final region of size 2.
   for (size_t i = 0; i < length; ++i) {

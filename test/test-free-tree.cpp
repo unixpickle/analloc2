@@ -4,27 +4,32 @@
 
 using namespace analloc;
 
-PosixVirtualAligner aligner;
-typedef FreeTreeAllocator<AvlTree, uint16_t, uint8_t> AllocatorClass;
+PosixVirtualAligner posixAligner;
+typedef FreeTree<AvlTree, uint16_t, uint8_t> AllocatorClass;
 
 void TestFullRegion();
 void TestPartialRegion();
 void TestJoins();
-bool HandleFailure(AllocatorClass *);
+void TestSplits();
+
+template <typename T>
+bool HandleFailure(T *);
 
 int main() {
   TestFullRegion();
-  assert(aligner.GetAllocCount() == 0);
+  assert(posixAligner.GetAllocCount() == 0);
   TestPartialRegion();
-  assert(aligner.GetAllocCount() == 0);
+  assert(posixAligner.GetAllocCount() == 0);
   TestJoins();
-  assert(aligner.GetAllocCount() == 0);
+  assert(posixAligner.GetAllocCount() == 0);
+  TestSplits();
+  assert(posixAligner.GetAllocCount() == 0);
   return 0;
 }
 
 void TestFullRegion() {
-  ScopedPass pass("FreeTreeAllocator [full-region]");
-  AllocatorClass allocator(aligner, HandleFailure);
+  ScopedPass pass("FreeTree::Alloc() [full-region]");
+  AllocatorClass allocator(posixAligner, HandleFailure);
   
   allocator.Dealloc(0x100, 0x10);
   allocator.Dealloc(0x111, 0x1);
@@ -41,8 +46,8 @@ void TestFullRegion() {
 }
 
 void TestPartialRegion() {
-  ScopedPass pass("FreeTreeAllocator [partial]");
-  AllocatorClass allocator(aligner, HandleFailure);
+  ScopedPass pass("FreeTree::Alloc() [partial]");
+  AllocatorClass allocator(posixAligner, HandleFailure);
   uint16_t addr;
   
   allocator.Dealloc(0x100, 0x10);
@@ -75,9 +80,9 @@ void TestPartialRegion() {
 }
 
 void TestJoins() {
-  ScopedPass pass("FreeTreeAllocator [joins]");
+  ScopedPass pass("FreeTree::Alloc() [joins]");
   
-  AllocatorClass allocator(aligner, HandleFailure);
+  AllocatorClass allocator(posixAligner, HandleFailure);
   uint16_t addr;
   
   // Joining a middle region to two outer regions
@@ -123,7 +128,56 @@ void TestJoins() {
   assert(!allocator.Alloc(addr, 1));
 }
 
-bool HandleFailure(FreeTreeAllocator<AvlTree, uint16_t, uint8_t> *) {
+void TestSplits() {
+  ScopedPass pass("FreeTree::Align() [splits]");
+  
+  AllocatorClass aligner(posixAligner, HandleFailure);
+  uint16_t addr;
+  
+  // Test when the region doesn't have enough room
+  aligner.Dealloc(0, 0x20);
+  assert(!aligner.Align(addr, 0x100, 0x21));
+  assert(aligner.Alloc(addr, 0x1));
+  assert(addr == 0x0);
+  assert(!aligner.Align(addr, 0x2, 0x1f));
+  assert(aligner.Alloc(addr, 0x1f));
+  assert(addr == 0x1);
+  
+  // There is exactly enough room in this region and offset = 0
+  aligner.Dealloc(0x10, 0x20);
+  assert(aligner.Align(addr, 8, 0x20));
+  assert(addr == 0x10);
+  assert(!aligner.Alloc(addr, 1));
+  
+  // More than enough room with offset = 0
+  aligner.Dealloc(0x10, 0x20);
+  assert(aligner.Align(addr, 8, 0x10));
+  assert(addr == 0x10);
+  assert(aligner.Alloc(addr, 0x10));
+  assert(addr == 0x20);
+  assert(!aligner.Alloc(addr, 1));
+  
+  // Just enough room with offset != 0
+  aligner.Dealloc(0xf, 0x21);
+  assert(aligner.Align(addr, 0x10, 0x20));
+  assert(addr == 0x10);
+  assert(aligner.Alloc(addr, 1));
+  assert(addr == 0xf);
+  assert(!aligner.Alloc(addr, 1));
+  
+  // More than enough room with offset != 0
+  aligner.Dealloc(0xf, 0x21);
+  assert(aligner.Align(addr, 0x10, 0x10));
+  assert(addr == 0x10);
+  assert(aligner.Alloc(addr, 1));
+  assert(addr == 0xf);
+  assert(aligner.Alloc(addr, 0x10));
+  assert(addr == 0x20);
+  assert(!aligner.Alloc(addr, 1));
+}
+
+template <typename T>
+bool HandleFailure(T *) {
   std::cerr << "HandleFailure()" << std::endl;
   abort();
 }

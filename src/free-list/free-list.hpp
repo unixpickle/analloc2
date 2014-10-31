@@ -196,6 +196,19 @@ public:
   }
   
   /**
+   * Returns the number of free regions.
+   */
+  size_t GetRegionCount() {
+    size_t count = 0;
+    FreeRegion * region = firstRegion;
+    while (region) {
+      ++count;
+      region = region->next;
+    }
+    return count;
+  }
+  
+  /**
    * The structure which is used to represent a region of memory.
    *
    * All allocations that [FreeList] needs from its allocator will be of size

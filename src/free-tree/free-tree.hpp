@@ -1,26 +1,24 @@
-#ifndef __ANALLOC2_FREE_TREE_ALLOCATOR_HPP__
-#define __ANALLOC2_FREE_TREE_ALLOCATOR_HPP__
+#ifndef __ANALLOC2_FREE_TREE_HPP__
+#define __ANALLOC2_FREE_TREE_HPP__
 
-#include "../abstract/allocator.hpp"
+#include "../abstract/aligner.hpp"
 
 namespace analloc {
 
 template <template <class T> class Tree, typename AddressType,
           typename SizeType = AddressType>
-class FreeTreeAllocator : public Allocator<AddressType, SizeType> {
+class FreeTree : public virtual Aligner<AddressType, SizeType> {
 public:
-  typedef FreeTreeAllocator<Tree, AddressType, SizeType> ThisType;
-  
   /**
-   * The function signature of a callback which a [FreeTreeAllocator] will call
-   * when a free region cannot be recorded because memory could not be
-   * obtained for its node in a tree.
+   * The function signature of a callback which a [FreeTree] will call when a
+   * free region cannot be recorded because memory could not be obtained for
+   * its node in a tree.
    *
    * If this returns `true`, the caller will re-attempt the allocation.
    */
-  typedef bool (* FailureHandler)(ThisType *);
+  typedef bool (* FailureHandler)(FreeTree<Tree, AddressType, SizeType> *);
   
-  FreeTreeAllocator(VirtualAllocator & allocator, FailureHandler handler)
+  FreeTree(VirtualAllocator & allocator, FailureHandler handler)
       : sizedTree(allocator), addressedTree(allocator),
         failureHandler(handler) {}
   
@@ -77,6 +75,37 @@ public:
       // Simple case: insert the free region
       AddRegion(FreeRegion(address, size));
     }
+  }
+  
+  virtual bool Align(AddressType & addressOut, AddressType align,
+                     SizeType size) {
+    FittingEnumerator callback(align, size);
+    if (addressedTree.Enumerate(callback)) {
+      // The callback didn't find a suitable region
+      return false;
+    }
+    addressedTree.Remove(callback.result);
+    sizedTree.Remove(SizedRegion(callback.result));
+    // Return the allocated address.
+    addressOut = callback.result.address + callback.offset;
+    // Split up the block as needed.
+    if (callback.offset > 0) {
+      // A sliver of free space remains at the beginning of the affected
+      // region.
+      AddRegion(FreeRegion(callback.result.address, 
+                           (SizeType)callback.offset));
+    }
+    if (callback.offset + size < callback.result.size) {
+      // A sliver of free space remains at the end of the affected region.
+      
+      // We can cast callback.offset to a SizeType in this case because we know
+      // it is smaller than callback.result.size which *is* a SizeType.
+      SizeType remainingSize = callback.result.size -
+          (SizeType)(callback.offset + size);
+      
+      AddRegion(FreeRegion(addressOut + size, remainingSize));
+    }
+    return true;
   }
   
   /**
@@ -174,6 +203,40 @@ public:
                 "invalid FreeRegion subclasses");
   static_assert(sizeof(AddressedRegion) == sizeof(FreeRegion),
                 "invalid FreeRegion subclasses");
+  
+  /**
+   * An enumerator which allows the [Align] method to work.
+   */
+  class FittingEnumerator
+      : public DynamicTree<AddressedRegion>::EnumerateCallback {
+  public:
+    FittingEnumerator(AddressType _align, SizeType _size)
+        : align(_align), size(_size) {}
+    
+    bool Yield(const AddressedRegion & region) {
+      offset = 0;
+      if (region.address % align) {
+        offset = align - (region.address % align);
+      }
+      if (offset + size > region.size) {
+        // Continue enumerating
+        return true;
+      } else {
+        // Stop enumerating
+        result = region;
+        return false;
+      }
+    }
+    
+    // Result
+    AddressType offset;
+    AddressedRegion result;
+    
+  protected:
+    // Parameters
+    AddressType align;
+    SizeType size;
+  };
   
 protected:
   Tree<SizedRegion> sizedTree;

@@ -4,8 +4,6 @@
 
 Upcoming completion of free-list allocator.
 
- * Create a way to wrap a virtual region of memory with a free-list.
-   * Idea: class called `BufferedStackAllocator`
  * Test virtual suite for free-list.
 
 Upcoming completion of free-tree allocator:
@@ -13,13 +11,11 @@ Upcoming completion of free-tree allocator:
  * Use proper subclass structure in `FreeTreeAllocator` and `FreeTreeAligner`.
  * Implement `OffsetAlign()` in free-tree.
  * Create chunked & virtual suite for free-tree.
- * Attempt to use `BufferedStackAllocator` for placement in memory.
 
 ## Features that would be nice
 
  * Performance monitoring template argument for AVL tree
- * Add LastUsedAddress() to `BitmapAllocator` and `FreeListAllocator`.
- * Add RegionCount() to `FreeListAllocator`.
+ * Add LastUsedAddress() to `Bitmap` and `FreeList`.
  * (Possibly) add some sort of standard deviation algorithm to see how fragmented allocators are.
  * Implement red-black tree
  * Implement splay tree
