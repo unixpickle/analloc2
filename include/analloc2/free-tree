@@ -1,2 +1,2 @@
-#include "../src/free-tree/avl-tree.hpp"
-#include "../src/free-tree/free-tree-aligner.hpp"
+#include "../../src/free-tree/avl-tree.hpp"
+#include "../../src/free-tree/free-tree-aligner.hpp"

@@ -1,2 +1,2 @@
-#include "../src/wrappers/aligner-transformer.hpp"
-#include "../src/wrappers/aligner-virtualizer.hpp"
+#include "../../src/wrappers/aligner-transformer.hpp"
+#include "../../src/wrappers/aligner-virtualizer.hpp"
