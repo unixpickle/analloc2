@@ -93,10 +93,12 @@ public:
    */
   bool ApplyBuffer() {
     while (count < softMinimum) {
-      if (!source.Alloc(stack[count], objectSize)) {
+      AddressType address;
+      if (!source.Alloc(address, objectSize)) {
         return false;
       }
-      ++count;
+      assert(count < Capacity);
+      stack[count++] = address;
     }
     while (count > softMaximum) {
       source.Dealloc(stack[--count], objectSize);
