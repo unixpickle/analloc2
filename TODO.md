@@ -8,7 +8,6 @@ Upcoming completion of free-list allocator.
 
 Upcoming completion of free-tree allocator:
 
- * Use proper subclass structure in `FreeTreeAllocator` and `FreeTreeAligner`.
  * Implement `OffsetAlign()` in free-tree.
  * Create chunked & virtual suite for free-tree.
 
