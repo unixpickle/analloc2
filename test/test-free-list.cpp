@@ -43,18 +43,24 @@ void TestFullRegion() {
   uint16_t addr;
   
   allocator.Dealloc(0x100, 0x10);
+  assert(allocator.GetRegionCount() == 1);
   assert(allocator.Alloc(addr, 0x10));
   assert(addr == 0x100);
+  assert(allocator.GetRegionCount() == 0);
   assert(!allocator.Alloc(addr, 1));
   allocator.Dealloc(0x140, 0x20);
   allocator.Dealloc(0x120, 0x10);
   allocator.Dealloc(0x100, 0x10);
+  assert(allocator.GetRegionCount() == 3);
   assert(allocator.Alloc(addr, 0x10));
   assert(addr == 0x100);
+  assert(allocator.GetRegionCount() == 2);
   assert(allocator.Alloc(addr, 0x10));
   assert(addr == 0x120);
+  assert(allocator.GetRegionCount() == 1);
   assert(allocator.Alloc(addr, 0x20));
   assert(addr == 0x140);
+  assert(allocator.GetRegionCount() == 0);
   assert(!allocator.Alloc(addr, 1));
 }
 
