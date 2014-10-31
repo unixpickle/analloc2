@@ -17,13 +17,14 @@ public:
   typedef BufferedStack<Capacity, uintptr_t, size_t> super;
   
   using typename super::OverflowHandler;
+  using typename super::SourceType;
   
-  VirtualBufferedStack(Allocator & source, size_t softMinimum,
+  VirtualBufferedStack(SourceType & source, size_t softMinimum,
                        size_t softMaximum, SizeType objectSize,
                        OverflowHandler overflowHandler)
       : super(source, softMinimum, softMaximum, objectSize, overflowHandler) {}
   
-  virtual bool Realloc(uintptr_t & address, size_t newSize) {
+  virtual bool Realloc(uintptr_t &, size_t newSize) {
     return newSize <= this->objectSize;
   }
   

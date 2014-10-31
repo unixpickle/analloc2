@@ -20,13 +20,15 @@ template <size_t Capacity, typename AddressType,
           typename SizeType = AddressType>
 class BufferedStack : public virtual Allocator<AddressType, SizeType> {
 public:
+  typedef Allocator<AddressType, SizeType> SourceType;
+  
   /**
    * A function which is called when a [BufferedStack] overflows.
    *
    * The calling [BufferedStack] will not be able to save the specified region.
    */
-  void (* OverflowHandler)(BufferedStack<Capacity, AddressType, SizeType> *,
-                           AddressType, SizeType);
+  typedef void (* OverflowHandler)(BufferedStack<Capacity, AddressType,
+      SizeType> *, AddressType, SizeType);
   
   /**
    * Create a new [BufferedStack] which obtains objects from a [source].
@@ -39,12 +41,18 @@ public:
    * The [overflowHandler] is called when [Dealloc] is called on this instance
    * while it is full.
    */
-  BufferedStack(Allocator & source, size_t softMinimum, size_t softMaximum,
+  BufferedStack(SourceType & source, size_t softMinimum, size_t softMaximum,
                 SizeType objectSize, OverflowHandler overflowHandler)
       : source(source), softMinimum(softMinimum), softMaximum(softMaximum),
         objectSize(objectSize), overflowHandler(overflowHandler) {
     assert(softMinimum <= softMaximum);
     assert(objectSize > 0);
+  }
+  
+  virtual ~BufferedStack() {
+    while (count) {
+      source.Dealloc(stack[--count], objectSize);
+    }
   }
   
   /**
@@ -79,17 +87,21 @@ public:
   /**
    * Apply the soft minimum and maximum by allocating or freeing objects from
    * the source allocator.
+   *
+   * Returns `false` if and only if an allocation from the source allocator 
+   * fails.
    */
-  void ApplyBuffer() {
+  bool ApplyBuffer() {
     while (count < softMinimum) {
       if (!source.Alloc(stack[count], objectSize)) {
-        break;
+        return false;
       }
       ++count;
     }
     while (count > softMaximum) {
       source.Dealloc(stack[--count], objectSize);
     }
+    return true;
   }
   
   inline size_t GetCount() {
@@ -109,7 +121,7 @@ public:
   }
   
 protected:
-  Allocator & source;
+  SourceType & source;
   AddressType stack[Capacity];
   size_t count = 0;
   size_t softMinimum;
