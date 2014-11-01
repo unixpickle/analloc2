@@ -46,9 +46,16 @@ public:
   }
   
   virtual void Dealloc(uintptr_t address, size_t size) {
+    // Zero-sized deallocations are no good; we need at least enough room in
+    // the deallocation to store a region structure.
+    if (!size) {
+      return;
+    }
+    
     if (!super::Dealloc(address, size)) {
       return false;
     }
+    
     bool result = stack.ApplyBuffer();
     assert(result);
     (void)result;
@@ -57,8 +64,9 @@ public:
 protected:
   StackType & stack;
   
-  template <typename T>
-  T * PlaceInstance(uintptr_t start, size_t size, size_t objectAlign) {
+  template <typename T, typename... Args>
+  T * PlaceInstance(uintptr_t start, size_t size, size_t objectAlign,
+                    Args... constructorArgs) {
     assert(ansa::IsPowerOf2(objectAlign));
     assert(ansa::IsAligned2(start, objectAlign));
     
@@ -87,12 +95,13 @@ protected:
     size_t remainingSize = size - metadataSize;
     remainingSize &= ~(regionSize - 1);
     
+    // Welcome to placement-new hell. Where C++ goes to die.
     T * freeList = (T *)(start + stackSize);
     StackType * stack = (StackType *)start;
     stack = new(stack) StackType(*freeList, 1, StackSize - 2, regionSize,
         StackOverflowHandler);
-    freeList = new(freeList) T(regionSize, stack, start + metadataSize,
-        remainingSize);
+    freeList = new(freeList) T(constructorArgs..., regionSize, stack,
+        start + metadataSize, remainingSize);
     return freeList;
   }
   
