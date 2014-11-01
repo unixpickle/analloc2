@@ -16,7 +16,7 @@ public:
   
   using typename super::FailureHandler;
   
-  ChunkedFreeList(size_t _chunkSize, VirtualAllocator & anAlloc,
+  ChunkedFreeList(size_t _chunkSize, Allocator<uintptr_t, size_t> & anAlloc,
                   FailureHandler onAllocFail)
       : super(anAlloc, onAllocFail), chunkSize(_chunkSize) {
     assert(ansa::IsPowerOf2(chunkSize));
@@ -53,7 +53,7 @@ protected:
   template <typename T>
   friend class AllocatorVirtualizer;
   
-  ChunkedFreeList(size_t _chunkSize, VirtualAllocator * anAlloc,
+  ChunkedFreeList(size_t _chunkSize, Allocator<uintptr_t, size_t> * anAlloc,
                   FailureHandler onAllocFail)
       : super(*anAlloc, onAllocFail), chunkSize(_chunkSize) {}
 };

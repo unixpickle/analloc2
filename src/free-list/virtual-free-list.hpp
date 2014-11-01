@@ -21,7 +21,7 @@ public:
    * means that you should think twice before passing a [chunkSize] which is
    * greater than `sizeof(size_t)`.
    */
-  VirtualFreeList(size_t chunkSize, VirtualAllocator & allocator,
+  VirtualFreeList(size_t chunkSize, Allocator<uintptr_t, size_t> & allocator,
                   FailureHandler failure)
       : super(chunkSize, chunkSize, &allocator, failure) {}
 

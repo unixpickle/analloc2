@@ -2,7 +2,7 @@
 #define __ANALLOC2_PLACED_FREE_LIST_HPP__
 
 #include "chunked-free-list.hpp"
-#include "../buffered-stack/virtual-buffered-stack.hpp"
+#include "../buffered-stack/dependent-buffered-stack.hpp"
 #include <new>
 
 namespace analloc {
@@ -15,7 +15,7 @@ class PlacedFreeList : public ChunkedFreeList<uintptr_t, size_t> {
 public:
   static_assert(StackSize >= 4, "Stack must contain at least four objects.");
   
-  typedef VirtualBufferedStack<StackSize> StackType;
+  typedef DependentBufferedStack<StackSize, uintptr_t, size_t> StackType;
   typedef ChunkedFreeList<uintptr_t, size_t> super;
   using super::FreeRegion;
   
@@ -93,39 +93,40 @@ protected:
     remainingSize &= ~(regionSize - 1);
     
     // Welcome to placement-new hell. Where C++ goes to die.
-    T * freeList = (T *)(start + stackSize);
     StackType * stack = (StackType *)start;
-    stack = new(stack) StackType(*freeList, 1, StackSize - 2, regionSize,
+    T * freeList = (T *)(start + stackSize);
+    new((void *)start) StackType(1, StackSize - 1, regionSize,
         StackOverflowHandler);
-    freeList = new(freeList) T(constructorArgs..., regionSize, stack,
+    new(freeList) T(constructorArgs..., regionSize, stack,
         start + metadataSize, remainingSize);
     return freeList;
   }
   
   PlacedFreeList(size_t regionSize, StackType * _stack, uintptr_t start,
                  size_t size)
-      : super(regionSize, _stack, GetRegionFailureHandler), stack(*_stack) {
+      : super(regionSize, static_cast<Allocator<uintptr_t, size_t> &>(*_stack),
+              GetRegionFailureHandler), stack(*_stack) {
+    stack.SetSource(this);
     assert(size > 0);
     assert(ansa::IsPowerOf2(regionSize));
     assert(ansa::IsAligned2(size, regionSize));
     assert(ansa::IsAligned2<uintptr_t>(start, regionSize));
+    stack.Dealloc(start, regionSize);
     if (size >= regionSize * 2) {
-      stack.Free(start);
-      stack.Free(start + regionSize);
+      stack.Dealloc(start + regionSize, regionSize);
       if (size > regionSize * 2) {
         this->Dealloc(start + regionSize * 2, size - regionSize * 2);
       }
-    } else {
-      stack.Free(start);
     }
   }
   
 private:
-  static void StackOverflowHandler(StackType *, uintptr_t, size_t) {
+  static void StackOverflowHandler(typename StackType::super *, uintptr_t,
+                                   size_t) {
     assert(false);
   }
   
-  static void GetRegionFailureHandler(FreeList<uintptr_t, size_t> *) {
+  static bool GetRegionFailureHandler(FreeList<uintptr_t, size_t> *) {
     assert(false);
   }
 };

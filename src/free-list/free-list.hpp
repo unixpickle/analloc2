@@ -1,9 +1,10 @@
 #ifndef __ANALLOC2_FREE_LIST_HPP__
 #define __ANALLOC2_FREE_LIST_HPP__
 
-#include "../abstract/virtual-allocator.hpp"
 #include "../abstract/offset-aligner.hpp"
 #include <ansa/math>
+#include <cstdint>
+#include <cstddef>
 
 namespace analloc {
 
@@ -39,7 +40,7 @@ public:
    * this allocation fails, [onAllocFail] will be called with this allocator as
    * the argument.
    */
-  FreeList(VirtualAllocator & anAlloc, FailureHandler onAllocFail)
+  FreeList(Allocator<uintptr_t, size_t> & anAlloc, FailureHandler onAllocFail)
       : allocator(anAlloc), failureHandler(onAllocFail) {}
   
   /**
@@ -222,7 +223,7 @@ public:
 
 protected:  
   FreeRegion * firstRegion = nullptr;
-  VirtualAllocator & allocator;
+  Allocator<uintptr_t, size_t> & allocator;
   FailureHandler failureHandler;
   
   void InsertAfter(FreeRegion * before, AddressType addr, SizeType size) {

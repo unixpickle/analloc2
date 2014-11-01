@@ -31,6 +31,11 @@ public:
   virtual void Free(uintptr_t ptr) {
     this->Dealloc(ptr, this->objectSize);
   }
+  
+protected:
+  VirtualBufferedStack(size_t softMinimum, size_t softMaximum,
+                       SizeType objectSize, OverflowHandler overflowHandler)
+      : super(softMinimum, softMaximum, objectSize, overflowHandler) {}
 };
 
 }

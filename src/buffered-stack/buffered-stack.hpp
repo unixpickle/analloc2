@@ -43,15 +43,13 @@ public:
    */
   BufferedStack(SourceType & source, size_t softMinimum, size_t softMaximum,
                 SizeType objectSize, OverflowHandler overflowHandler)
-      : source(source), softMinimum(softMinimum), softMaximum(softMaximum),
-        objectSize(objectSize), overflowHandler(overflowHandler) {
-    assert(softMinimum <= softMaximum);
-    assert(objectSize > 0);
-  }
+      : BufferedStack(softMinimum, softMaximum, objectSize, overflowHandler),
+        source(&source) {}
   
   virtual ~BufferedStack() {
+    assert(source != nullptr);
     while (count) {
-      source.Dealloc(stack[--count], objectSize);
+      source->Dealloc(stack[--count], objectSize);
     }
   }
   
@@ -96,13 +94,14 @@ public:
    * immediately.
    */
   bool ApplyBuffer() {
+    assert(source != nullptr);
     if (buffering) {
       return true;
     }
     buffering = true;
     while (count < softMinimum) {
       AddressType address;
-      if (!source.Alloc(address, objectSize)) {
+      if (!source->Alloc(address, objectSize)) {
         buffering = false;
         return false;
       }
@@ -110,7 +109,7 @@ public:
       stack[count++] = address;
     }
     while (count > softMaximum) {
-      source.Dealloc(stack[--count], objectSize);
+      source->Dealloc(stack[--count], objectSize);
     }
     buffering = false;
     return true;
@@ -133,7 +132,7 @@ public:
   }
   
 protected:
-  SourceType & source;
+  SourceType * source = nullptr;
   AddressType stack[Capacity];
   size_t count = 0;
   size_t softMinimum;
@@ -141,6 +140,14 @@ protected:
   SizeType objectSize;
   OverflowHandler overflowHandler;
   bool buffering = false;
+  
+  BufferedStack(size_t softMinimum, size_t softMaximum, SizeType objectSize,
+                OverflowHandler overflowHandler)
+      : softMinimum(softMinimum), softMaximum(softMaximum), 
+        objectSize(objectSize), overflowHandler(overflowHandler) {
+    assert(softMinimum <= softMaximum);
+    assert(objectSize > 0);
+  }
 };
 
 }
