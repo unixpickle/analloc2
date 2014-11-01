@@ -36,6 +36,9 @@ template <size_t Capacity>
 void TestDoubleAllocOverflow();
 
 template <size_t Capacity>
+void TestDoubleDeallocOverflow();
+
+template <size_t Capacity>
 size_t ComputePreambleSize();
 
 template <size_t Capacity>
@@ -56,6 +59,7 @@ void TestAll() {
   TestOffsetPlace<Capacity>();
   TestNormalAllocOverflow<Capacity>();
   TestDoubleAllocOverflow<Capacity>();
+  TestDoubleDeallocOverflow<Capacity>();
 }
 
 template <size_t Capacity>
@@ -237,6 +241,8 @@ void TestNormalAllocOverflow() {
   // We should now be able to allocate 2*R and find it in the first block
   assert(pfl->Alloc(addr, regionSize * 2));
   assert(addr == start + headingSize + regionSize * 2);
+  
+  free(buffer);
 }
 
 template <size_t Capacity>
@@ -317,6 +323,76 @@ void TestDoubleAllocOverflow() {
   // The first free region is now located near the end of the heading.
   assert(pfl->Alloc(addr, regionSize));
   assert(addr == start + headingSize - (regionSize * 3));
+  
+  free(buffer);
+}
+
+template <size_t Capacity>
+void TestDoubleDeallocOverflow() {
+  ScopedPass pass("PlacedFreeList<", Capacity,
+                  ">::Dealloc() [double overflow]");
+
+  typedef PlacedFreeList<Capacity> Pfl;
+
+  uintptr_t addr;
+
+  size_t preambleSize = ComputePreambleSize<Capacity>();
+  size_t regionSize = ComputeRegionSize<Capacity>();
+
+  // Let R=regionSize, N=Capacity
+  // We will have:
+  // - one region of size R*(N+3)
+  // - N regions of size R
+  // - Every region will be separated by R bytes
+  // Total size needed = R*(N+3) + 2*R*N
+  
+  size_t headingSize = regionSize * (Capacity + 3);
+  size_t totalSize = preambleSize + headingSize + 2 * Capacity * regionSize;
+  
+  void * buffer;
+  assert(!posix_memalign(&buffer, regionSize, totalSize));
+  
+  Pfl * pfl = Pfl::Place((uintptr_t)buffer, preambleSize + headingSize);
+  assert(pfl != nullptr);
+  assert(pfl->GetStackCount() == 1);
+  
+  uintptr_t start = (uintptr_t)buffer + preambleSize;
+  
+  // Currently, the allocator looks like this: [S|R| |...]
+  
+  // Perform N deallocations
+  for (size_t i = 0; i < Capacity; ++i) {
+    size_t offset = headingSize + (2 * i + 1) * regionSize;
+    pfl->Dealloc(start + offset, regionSize);
+    assert(pfl->GetStackCount() == 1);
+  }
+  
+  // Now the allocator looks like this:
+  // [R|R|...|S| ] [ ] ... [ ]
+  
+  // Join the N regions into a big region and one tiny one
+  for (size_t i = 1; i < Capacity - 1; ++i) {
+    size_t offset = headingSize + 2 * i * regionSize;
+    pfl->Dealloc(start + offset, regionSize);
+    assert(pfl->GetStackCount() == i + 1);
+  }
+  
+  // Now the allocator looks like this:
+  // [R|R|S|...|R|S| ] [ |...] [ ]
+  
+  // Perform the final join, causing the stack to exceed its maximum.
+  pfl->Dealloc(start + headingSize + 2 * (Capacity - 1) * regionSize,
+      regionSize);
+  
+  // Now the allocator looks like this:
+  // [R|R|S|...|R| |S| ] [ |...]
+  assert(pfl->GetStackCount() == Capacity - 2);
+  
+  // Ensure that the single space is available for allocation
+  assert(pfl->Alloc(addr, regionSize));
+  assert(addr == start + Capacity * regionSize);
+  
+  free(buffer);
 }
 
 template <size_t Capacity>
