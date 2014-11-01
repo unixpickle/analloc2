@@ -16,7 +16,7 @@ public:
   static_assert(StackSize >= 4, "Stack must contain at least four objects.");
   
   typedef VirtualBufferedStack<StackSize> StackType;
-  typedef VirtualFreeList super;
+  typedef ChunkedFreeList<uintptr_t, size_t> super;
   using super::FreeRegion;
   
   static PlacedFreeList * Place(uintptr_t start, size_t size,
@@ -52,10 +52,7 @@ public:
       return;
     }
     
-    if (!super::Dealloc(address, size)) {
-      return false;
-    }
-    
+    super::Dealloc(address, size);
     bool result = stack.ApplyBuffer();
     assert(result);
     (void)result;
@@ -65,8 +62,8 @@ protected:
   StackType & stack;
   
   template <typename T, typename... Args>
-  T * PlaceInstance(uintptr_t start, size_t size, size_t objectAlign,
-                    Args... constructorArgs) {
+  static T * PlaceInstance(uintptr_t start, size_t size, size_t objectAlign,
+                           Args... constructorArgs) {
     assert(ansa::IsPowerOf2(objectAlign));
     assert(ansa::IsAligned2(start, objectAlign));
     
@@ -105,9 +102,9 @@ protected:
     return freeList;
   }
   
-  PlacedFreeList(size_t regionSize, StackType * stack, uintptr_t start,
+  PlacedFreeList(size_t regionSize, StackType * _stack, uintptr_t start,
                  size_t size)
-      : super(regionSize, stack, GetRegionFailureHandler), stack(*stack) {
+      : super(regionSize, _stack, GetRegionFailureHandler), stack(*_stack) {
     assert(size > 0);
     assert(ansa::IsPowerOf2(regionSize));
     assert(ansa::IsAligned2(size, regionSize));

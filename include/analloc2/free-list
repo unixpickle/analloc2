@@ -1,1 +1,2 @@
 #include "../../src/free-list/virtual-free-list.hpp"
+#include "../../src/free-list/virtual-placed-free-list.hpp"

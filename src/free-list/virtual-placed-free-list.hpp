@@ -10,7 +10,8 @@ template <size_t StackSize = 0x10>
 class VirtualPlacedFreeList
     : public AlignerVirtualizer<PlacedFreeList<StackSize> > {
 public:
-  typedef public AlignerVirtualizer<PlacedFreeList<StackSize> > super;
+  typedef AlignerVirtualizer<PlacedFreeList<StackSize> > super;
+  typedef typename PlacedFreeList<StackSize>::StackType StackType;
   
   static VirtualPlacedFreeList * Place(uintptr_t start, size_t size,
                                        size_t objectAlign = sizeof(void *)) {
