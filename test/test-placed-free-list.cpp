@@ -132,6 +132,10 @@ void TestNormalAllocOverflow() {
 
 template <size_t Capacity>
 void TestDoubleAllocOverflow() {
+  // NOTE: most of the visual examples in this test make use of a large
+  // Capacity to give a good depiction of what's going on. This test works for
+  // Capacity >= 3, but the visual examples don't.
+  
   ScopedPass pass("PlacedFreeList<", Capacity, ">::Alloc() [double overflow]");
   
   typedef PlacedFreeList<Capacity> Pfl;
@@ -146,19 +150,22 @@ void TestDoubleAllocOverflow() {
   // - one region of size R*(N+2)
   // - N-1 regions of size R*(N+3)
   // - Every region will be separated by R bytes
-  // Total size needed = R*(N+2) + (N-1)*R*(N+3) + R*N
+  // Total size needed = R*(N+2) + (N-1)*R*(N+3) + R*(N - 1)
   
   size_t headingSize = regionSize * (Capacity + 2);
   size_t blockSize = regionSize * (Capacity + 3);
   
-  size_t totalSize = headingSize + blockSize * (Capacity - 1) + 
-      regionSize * Capacity;
+  size_t totalSize = preambleSize + headingSize + blockSize * (Capacity - 1) + 
+      regionSize * (Capacity - 1);
   
   void * buffer;
   assert(!posix_memalign(&buffer, regionSize, totalSize));
-  uintptr_t start = (uintptr_t)buffer;
-  Pfl * pfl = Pfl::Place(start, regionSize * (Capacity + 1));
+  
+  Pfl * pfl = Pfl::Place((uintptr_t)buffer, preambleSize + headingSize);
+  assert(pfl != nullptr);
   assert(pfl->GetStackCount() == 1);
+  
+  uintptr_t start = (uintptr_t)buffer + preambleSize;
   
   // Currently, the allocator looks like this: [S|R| |...]
   
@@ -181,12 +188,12 @@ void TestDoubleAllocOverflow() {
   // items:
   // [S|R|S|S|S|...|R|S| ]
   
-  for (size_t i = Capacity - 1; i > 1; --i) {
+  for (size_t i = 1; i < Capacity - 1; ++i) {
+    assert(pfl->GetStackCount() == i);
     size_t offset = headingSize + i * regionSize + (i - 1) * blockSize;
     assert(pfl->Alloc(addr, blockSize));
     assert(addr == start + offset);
-    size_t stackCount = 1 + (Capacity - i);
-    assert(pfl->GetStackCount() == stackCount);
+    assert(pfl->GetStackCount() == i + 1);
   }
   
   // When we allocate the next block, the heading will at first look like this:
@@ -197,12 +204,12 @@ void TestDoubleAllocOverflow() {
   // the stack as well:
   // [S|R|S|S|...|R| |S| ]
   
-  assert(pfl->Alloc(addr, regionSize));
-  assert(addr == start + headingSize + regionSize);
+  assert(pfl->Alloc(addr, blockSize));
+  assert(addr == start + headingSize + regionSize * (Capacity - 1) +
+                 blockSize * (Capacity - 2));
   assert(pfl->GetStackCount() == Capacity - 2);
   
   // The first free region is now located near the end of the heading.
-  uintptr_t addr;
   assert(pfl->Alloc(addr, regionSize));
   assert(addr == start + headingSize - (regionSize * 3));
 }
