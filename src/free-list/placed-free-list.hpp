@@ -13,7 +13,7 @@ namespace analloc {
 template <size_t StackSize = 0x10>
 class PlacedFreeList : public ChunkedFreeList<uintptr_t, size_t> {
 public:
-  static_assert(StackSize >= 4, "Stack must contain at least four objects.");
+  static_assert(StackSize >= 3, "Stack must contain at least three objects.");
   
   typedef DependentBufferedStack<StackSize, uintptr_t, size_t> StackType;
   typedef ChunkedFreeList<uintptr_t, size_t> super;
@@ -56,6 +56,10 @@ public:
     bool result = stack.ApplyBuffer();
     assert(result);
     (void)result;
+  }
+  
+  inline size_t GetStackCount() {
+    return stack.GetCount();
   }
   
 protected:
