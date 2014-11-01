@@ -90,11 +90,20 @@ public:
    *
    * Returns `false` if and only if an allocation from the source allocator 
    * fails.
+   *
+   * This method prevents recursion.  If `source.Alloc()` or `source.Dealloc()`
+   * calls [ApplyBuffer], the inner call to [ApplyBuffer] will return `true`
+   * immediately.
    */
   bool ApplyBuffer() {
+    if (buffering) {
+      return true;
+    }
+    buffering = true;
     while (count < softMinimum) {
       AddressType address;
       if (!source.Alloc(address, objectSize)) {
+        buffering = false;
         return false;
       }
       assert(count < Capacity);
@@ -103,6 +112,7 @@ public:
     while (count > softMaximum) {
       source.Dealloc(stack[--count], objectSize);
     }
+    buffering = false;
     return true;
   }
   
@@ -130,6 +140,7 @@ protected:
   size_t softMaximum;
   SizeType objectSize;
   OverflowHandler overflowHandler;
+  bool buffering = false;
 };
 
 }
