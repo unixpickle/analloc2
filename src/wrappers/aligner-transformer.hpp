@@ -29,7 +29,7 @@ public:
   AlignerTransformer(SizeType _scale, AddressType _offset, Args... args)
       : super(_scale, _offset, args...), scaledOffset(_offset / _scale) {
     assert(ansa::IsPowerOf2(_scale));
-    assert(ansa::IsAligned<AddressType>(_offset, _scale));
+    assert(ansa::IsAligned2<AddressType>(_offset, _scale));
   }
   
   /**
@@ -42,7 +42,7 @@ public:
                            AddressType anOffset, SizeType size) {
     AddressType scaledAlign = ScaleAlign(align);
     
-    if (!ansa::IsAligned<AddressType>(anOffset, this->scale)) {
+    if (!ansa::IsAligned2<AddressType>(anOffset, this->scale)) {
       // The offset is impossible to achieve
       return false;
     } else if (scaledAlign <= 1) {

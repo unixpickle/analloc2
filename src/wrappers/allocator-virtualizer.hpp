@@ -29,7 +29,8 @@ public:
   template <typename... Args>
   AllocatorVirtualizer(size_t headerAlignment, Args... args)
       : wrapped(args...) {
-    headerSize = ansa::Align(sizeof(Header), headerAlignment);
+    assert(ansa::IsPowerOf2(headerAlignment));
+    headerSize = ansa::Align2(sizeof(Header), headerAlignment);
   }
   
   virtual bool Alloc(uintptr_t & out, size_t size) {
