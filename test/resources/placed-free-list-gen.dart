@@ -2,16 +2,26 @@ import 'dart:math';
 
 PlacedFreeList freeList;
 Random randomizer;
-String currentLine = '';
+OutputBuffer output;
+int maxNesting = 0;
 
 void main() {
-  // Configuration for randomized test.
+  print('This may take some time. Theoretically, it could take forever.');
+  while (!generateWithMaxNesting(3)) {
+  }
+}
+
+bool generateWithMaxNesting(int requiredNesting) {
+  // Configuration for randomized test
   var totalSize = 0x100;
   var operationCount = 0x400;
   var capacity = 4;
   
+  // Setup global environment
+  maxNesting = 0;
   freeList = new PlacedFreeList(capacity, totalSize);
   randomizer = new Random();
+  output = new OutputBuffer();
   
   // Perform random operations
   for (var i = 0; i < operationCount; ++i) {
@@ -21,7 +31,12 @@ void main() {
       performDeallocation();
     }
   }
-  print(currentLine);
+  if (maxNesting >= requiredNesting) {
+    print(output.fullContents);
+    return true;
+  } else {
+    return false;
+  }
 }
 
 bool nextRandomIsAllocation() {
@@ -38,7 +53,7 @@ void performAllocation() {
   var size = randomizer.nextInt(freeList.computeLargestFreeRegion()) + 1;
   var address = freeList.alloc(size);
   assert(address != null);
-  printNext("{1, $address, $size, ${freeList.stack.length}}");
+  output.add("{1, $address, $size, ${freeList.stack.length}}");
 }
 
 void performDeallocation() {
@@ -48,7 +63,7 @@ void performDeallocation() {
   var size = randomizer.nextInt(choice.size - offset) + 1;
   var address = choice.start + offset;
   freeList.dealloc(address, size);
-  printNext("{-1, $address, $size, ${freeList.stack.length}}");
+  output.add("{-1, $address, $size, ${freeList.stack.length}}");
 }
 
 void printNext(String line) {
@@ -60,6 +75,25 @@ void printNext(String line) {
     printNext(line);
   } else {
     currentLine = currentLine + ' ' + line + ',';
+  }
+}
+
+class OutputBuffer {
+  String fullContents = '';
+  int lineLength = 0;
+  
+  void add(String str) {
+    if (lineLength == 0) {
+      fullContents += '    ' + str + ',';
+      lineLength = str.length + 5;
+    } else if (lineLength + 2 + str.length > 79) {
+      fullContents += '\n';
+      lineLength = 0;
+      add(str);
+    } else {
+      fullContents = fullContents + ' ' + str + ',';
+      lineLength += 2 + str.length;
+    }
   }
 }
 
@@ -155,10 +189,15 @@ class PlacedFreeList {
       }
       stack.add(next);
     }
+    int nestCount = 0;
     while (stack.length == capacity) {
       int last = stack.last;
       stack.removeLast();
       dealloc(last, 1);
+      if (nestCount > maxNesting) {
+        maxNesting = nestCount;
+      }
+      ++nestCount;
     }
     applyingBuffer = false;
   }
