@@ -4,7 +4,8 @@
 
 Upcoming completion of free-list allocator.
 
- * Test virtual suite for free-list.
+ * Test `PlacedFreeList::Align()` through more random tests.
+ * Test `VirtualPlacedFreeList`.
 
 Upcoming completion of free-tree allocator:
 
