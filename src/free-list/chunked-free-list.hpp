@@ -36,7 +36,7 @@ public:
     if (!ansa::IsAligned2(offset, chunkSize)) {
       return false;
     } else if (align <= chunkSize) {
-      return Alloc(addressOut, size);
+      return ChunkedFreeList::Alloc(addressOut, size);
     } else {
       return super::OffsetAlign(addressOut, align, offset,
                                 ansa::Align2(size, chunkSize));

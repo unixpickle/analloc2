@@ -118,6 +118,7 @@ public:
       // - there is just enough room in this region with offset != 0
       // - there is more than enough room in this region with offset != 0
       if (reg->size - offset < size) {
+        last = reg;
         reg = reg->next;
       } else if (offset == 0 && size == reg->size) {
         // Remove the region from the list
