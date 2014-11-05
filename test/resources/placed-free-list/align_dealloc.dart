@@ -55,7 +55,7 @@ void performAlignment() {
     int align = 1 << randomizer.nextInt(8);
     int offset = randomizer.nextInt(freeList.totalSize);
     int size = randomizer.nextInt(freeList.totalSize);
-    var address = freeList.offsetAlign(align, offset, 1);
+    var address = freeList.offsetAlign(align, offset, size);
     if (address != null) {
       output.add("{1, $address, $align, $offset, $size,"
           " ${freeList.stack.length}}");

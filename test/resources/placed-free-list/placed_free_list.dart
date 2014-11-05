@@ -75,7 +75,7 @@ class PlacedFreeList {
     for (var region in regions) {
       int misalign = (region.start + alignOffset) % align;
       int offset = 0;
-      if (misalign) {
+      if (misalign != 0) {
         offset = align - misalign;
       }
       int result = null;
