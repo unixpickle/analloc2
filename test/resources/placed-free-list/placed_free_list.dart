@@ -1,82 +1,8 @@
+library placed_free_list;
+
 import 'dart:math';
 
-PlacedFreeList freeList;
-Random randomizer;
-OutputBuffer output;
 int maxNesting = 0;
-
-void main() {
-  print('This may take some time. Theoretically, it could take forever.');
-  while (!generateWithMaxNesting(3)) {
-  }
-}
-
-bool generateWithMaxNesting(int requiredNesting) {
-  // Configuration for randomized test
-  var totalSize = 0x100;
-  var operationCount = 0x400;
-  var capacity = 4;
-  
-  // Setup global environment
-  maxNesting = 0;
-  freeList = new PlacedFreeList(capacity, totalSize);
-  randomizer = new Random();
-  output = new OutputBuffer();
-  
-  // Perform random operations
-  for (var i = 0; i < operationCount; ++i) {
-    if (nextRandomIsAllocation()) {
-      performAllocation();
-    } else {
-      performDeallocation();
-    }
-  }
-  if (maxNesting >= requiredNesting) {
-    print(output.fullContents);
-    return true;
-  } else {
-    return false;
-  }
-}
-
-bool nextRandomIsAllocation() {
-  if (freeList.computeLargestFreeRegion() == 0) {
-    return false;
-  } else if (freeList.computeAllocatedRegions().length == 0) {
-    return true;
-  } else {
-    return randomizer.nextBool();
-  }
-}
-
-void performAllocation() {
-  var size = randomizer.nextInt(freeList.computeLargestFreeRegion()) + 1;
-  var address = freeList.alloc(size);
-  assert(address != null);
-  output.add("{1, $address, $size, ${freeList.stack.length}}");
-}
-
-void performDeallocation() {
-  var regions = freeList.computeAllocatedRegions();
-  var choice = regions[randomizer.nextInt(regions.length)];
-  var offset = randomizer.nextInt(choice.size);
-  var size = randomizer.nextInt(choice.size - offset) + 1;
-  var address = choice.start + offset;
-  freeList.dealloc(address, size);
-  output.add("{-1, $address, $size, ${freeList.stack.length}}");
-}
-
-void printNext(String line) {
-  if (currentLine.length == 0) {
-    currentLine = '    ' + line + ',';
-  } else if (currentLine.length + 2 + line.length > 79) {
-    print(currentLine);
-    currentLine = '';
-    printNext(line);
-  } else {
-    currentLine = currentLine + ' ' + line + ',';
-  }
-}
 
 class OutputBuffer {
   String fullContents = '';
@@ -141,6 +67,42 @@ class PlacedFreeList {
         applyBuffer();
         return result;
       }
+    }
+    return null;
+  }
+  
+  int offsetAlign(int align, int alignOffset, int size) {
+    for (var region in regions) {
+      int misalign = (region.start + alignOffset) % align;
+      int offset = 0;
+      if (misalign) {
+        offset = align - misalign;
+      }
+      int result = null;
+      if (region.size - offset < size) {
+        continue;
+      } else if (offset == 0 && size == region.size) {
+        result = region.start;
+        regions.remove(region);
+        stack.add(region.address);
+      } else if (offset == 0 && size < region.size) {
+        result = region.start;
+        region.start += size;
+        region.size -= size;
+      } else if (offset != 0 && size + offset == region.size) {
+        result = region.start + offset;
+        region.size = offset;
+      } else {
+        result = region.start + offset;
+        int regionAddr = stack.last;
+        stack.removeLast();
+        var newRegion = new FreeRegion(regionAddr, region.start + offset +
+            size, region.size - (offset + size));
+        region.size = offset;
+        regions.insert(regions.indexOf(region) + 1, newRegion);
+      }
+      applyBuffer();
+      return result;
     }
     return null;
   }
