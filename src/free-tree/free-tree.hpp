@@ -1,13 +1,13 @@
 #ifndef __ANALLOC2_FREE_TREE_HPP__
 #define __ANALLOC2_FREE_TREE_HPP__
 
-#include "../abstract/aligner.hpp"
+#include "../abstract/offset-aligner.hpp"
 
 namespace analloc {
 
 template <template <class T> class Tree, typename AddressType,
           typename SizeType = AddressType>
-class FreeTree : public virtual Aligner<AddressType, SizeType> {
+class FreeTree : public virtual OffsetAligner<AddressType, SizeType> {
 public:
   /**
    * The function signature of a callback which a [FreeTree] will call when a
@@ -77,9 +77,9 @@ public:
     }
   }
   
-  virtual bool Align(AddressType & addressOut, AddressType align,
-                     SizeType size) {
-    FittingEnumerator callback(align, size);
+  virtual bool OffsetAlign(AddressType & addressOut, AddressType align,
+                           AddressType offset, SizeType size) {
+    FittingEnumerator callback(align, offset, size);
     if (addressedTree.Enumerate(callback)) {
       // The callback didn't find a suitable region
       return false;
@@ -210,13 +210,13 @@ public:
   class FittingEnumerator
       : public DynamicTree<AddressedRegion>::EnumerateCallback {
   public:
-    FittingEnumerator(AddressType _align, SizeType _size)
-        : align(_align), size(_size) {}
+    FittingEnumerator(AddressType _align, AddressType _offset, SizeType _size)
+        : align(_align), alignOffset(_offset), size(_size) {}
     
     bool Yield(const AddressedRegion & region) {
       offset = 0;
-      if (region.address % align) {
-        offset = align - (region.address % align);
+      if ((region.address + alignOffset) % align) {
+        offset = align - ((region.address + alignOffset) % align);
       }
       if (offset + size > region.size) {
         // Continue enumerating
@@ -235,6 +235,7 @@ public:
   protected:
     // Parameters
     AddressType align;
+    AddressType alignOffset;
     SizeType size;
   };
   
