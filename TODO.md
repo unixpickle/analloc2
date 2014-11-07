@@ -4,12 +4,11 @@
 
 Upcoming completion of free-list allocator.
 
- * Test `PlacedFreeList::Align()` through more random tests.
  * Test `VirtualPlacedFreeList`.
 
 Upcoming completion of free-tree allocator:
 
- * Implement `OffsetAlign()` in free-tree.
+ * Test `OffsetAlign()` in free-tree
  * Create chunked & virtual suite for free-tree.
 
 ## Features that would be nice
