@@ -49,5 +49,13 @@ void TestRealloc() {
 }
 
 void TestOffsetAlign() {
-  assert(false);
+  ScopedPass pass("VirtualPlacedFreeList::OffsetAlign()");
+  ScopedBuffer buffer(0x1000, 0x1000);
+  Vpfl * allocator = Vpfl::Place(buffer, 0x1000);
+  uintptr_t addr;
+  for (size_t i = 0; i < 0x1000; ++i) {
+    assert(allocator->OffsetAlign(addr, 0x100, 0x80, 1));
+    assert((addr + 0x80) % 0x100 == 0);
+    allocator->Free(addr);
+  }
 }

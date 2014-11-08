@@ -71,9 +71,8 @@ protected:
   
   StackType & stack;
   
-  template <typename T, typename... Args>
-  static T * PlaceInstance(uintptr_t start, size_t size, size_t objectAlign,
-                           Args... constructorArgs) {
+  template <typename T>
+  static T * PlaceInstance(uintptr_t start, size_t size, size_t objectAlign) {
     assert(ansa::IsPowerOf2(objectAlign));
     assert(ansa::IsAligned2(start, objectAlign));
     
@@ -107,8 +106,7 @@ protected:
     T * freeList = (T *)(start + stackSize);
     new((void *)start) StackType(1, StackSize - 1, regionSize,
         StackOverflowHandler);
-    new(freeList) T(constructorArgs..., regionSize, stack,
-        start + metadataSize, remainingSize);
+    new(freeList) T(regionSize, stack, start + metadataSize, remainingSize);
     return freeList;
   }
   

@@ -16,8 +16,8 @@ public:
   static VirtualPlacedFreeList * Place(uintptr_t start, size_t size,
                                        size_t objectAlign = sizeof(void *)) {
     return PlacedFreeList<StackSize>::
-    template PlaceInstance<VirtualPlacedFreeList<StackSize>, size_t>
-    (start, size, objectAlign, objectAlign);
+    template PlaceInstance<VirtualPlacedFreeList<StackSize>>
+    (start, size, objectAlign);
   }
   
   /**
@@ -58,9 +58,9 @@ protected:
   template <size_t S>
   friend class PlacedFreeList;
   
-  VirtualPlacedFreeList(size_t objectAlign, size_t regionSize,
-                        StackType * stack, uintptr_t start, size_t size)
-      : super(objectAlign, regionSize, stack, start, size) {}
+  VirtualPlacedFreeList(size_t regionSize, StackType * stack, uintptr_t start,
+                        size_t size)
+      : super(regionSize, regionSize, stack, start, size) {}
 };
 
 }
