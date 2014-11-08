@@ -43,7 +43,8 @@ public:
    */
   BufferedStack(SourceType & source, size_t softMinimum, size_t softMaximum,
                 SizeType objectSize, OverflowHandler overflowHandler)
-      : BufferedStack(softMinimum, softMaximum, objectSize, overflowHandler),
+      : softMinimum(softMinimum), softMaximum(softMaximum), 
+        objectSize(objectSize), overflowHandler(overflowHandler),
         source(&source) {}
   
   virtual ~BufferedStack() {
@@ -132,13 +133,13 @@ public:
   }
   
 protected:
-  SourceType * source = nullptr;
   AddressType stack[Capacity];
   size_t count = 0;
   size_t softMinimum;
   size_t softMaximum;
   SizeType objectSize;
   OverflowHandler overflowHandler;
+  SourceType * source = nullptr;
   bool buffering = false;
   
   BufferedStack(size_t softMinimum, size_t softMaximum, SizeType objectSize,
