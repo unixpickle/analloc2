@@ -63,6 +63,12 @@ public:
   }
   
 protected:
+  template <class T>
+  friend class AllocatorVirtualizer;
+  
+  template <size_t S>
+  friend class VirtualPlacedFreeList;
+  
   StackType & stack;
   
   template <typename T, typename... Args>

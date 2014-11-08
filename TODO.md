@@ -34,11 +34,6 @@ I will focus on the following features for version 1.0.0:
    * Free list
    * Free tree
 
-Here is my current TODO list. I will update it as I think of new things to implement:
-
- * Depend on ansa for bitmap, logarithm, and locking features
- * Bitmap allocator class
-
 ## Concerns from version 0.1.0
 
 Performance: I have found that allocating memory on a typical x86-64 system usually takes upwards of 3,000 clock-cycles. I think this is rather high, considering that a linked-list implementation would only take a few hundred cycles.
